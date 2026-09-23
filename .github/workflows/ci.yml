@@ -1,0 +1,52 @@
+# Проверка при каждом изменении: типы, тесты трёх пакетов, сборка, интеграционный тест бота,
+# аудит зависимостей, сборка Docker-образа по compose.yaml и проверка /healthz.
+name: CI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci --no-audit --no-fund
+      - run: npm run typecheck
+      - run: npm test
+      - run: npm run build
+      - run: npm run test:integration
+      - name: Аудит зависимостей
+        run: npm audit --omit=dev --audit-level=moderate
+      - name: Справочник домов, опись схем и документы совпадают с исходными данными
+        run: |
+          npm run data:import
+          npm run docs
+          git diff --exit-code -- packages/core/src/data/city.json docs/SCHEMES.md docs/NORMS.md docs/PRIVACY.md docs/TERMS.md
+
+  docker:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - name: Сборка образа (бюджет – 5 минут без загрузки базовых образов)
+        timeout-minutes: 5
+        run: |
+          cp .env.example .env
+          docker compose build
+      - name: Запуск и проверка /healthz
+        run: |
+          docker compose up -d
+          for i in $(seq 1 30); do
+            if curl -fsS http://localhost:8080/healthz; then echo; break; fi
+            sleep 2
+          done
+          curl -fsS http://localhost:8080/healthz | grep '"ok":true'
+          curl -fsS http://localhost:8080/ | grep -q '<title>Если что</title>'
+          docker compose logs app
+          docker compose down

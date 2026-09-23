@@ -1,0 +1,82 @@
+{
+  "$comment": "Какая подпись на иллюстрации относится к какому объекту: примерная точка внутри плашки. Точные границы зон вычисляет tools/detect-hotspots.mjs по пикселям картинки.",
+  "outside": {
+    "image": "outside.webp",
+    "labels": {
+      "roof": [569, 107],
+      "facade": [234, 266],
+      "facade_windows": [790, 306],
+      "portal:entrance": [535, 433],
+      "trees": [166, 500],
+      "elevator": [837, 528],
+      "yard_light": [703, 745],
+      "playground": [213, 795],
+      "trash_area": [819, 945],
+      "parking": [205, 1049],
+      "yard": [730, 1166],
+      "utilities": [224, 1328],
+      "yard_gate": [760, 1442]
+    }
+  },
+  "entrance": {
+    "image": "entrance.webp",
+    "labels": {
+      "lamp_entrance": [578, 61],
+      "stair_walls": [813, 116],
+      "elevator": [210, 252],
+      "floor_shield": [442, 272],
+      "garbage_chute": [579, 388],
+      "stair_window": [801, 319],
+      "fire_safety": [205, 546],
+      "stair_heating": [846, 567],
+      "telecom_cables": [197, 806],
+      "stairs": [745, 847],
+      "door_entrance": [319, 1196],
+      "intercom": [630, 1170],
+      "mailbox": [819, 1268]
+    }
+  },
+  "technical": {
+    "image": "technical.webp",
+    "labels": {
+      "risers": [202, 242],
+      "vru": [792, 326],
+      "heat_node": [489, 592],
+      "water_node": [196, 630],
+      "heat_meter": [820, 749],
+      "basement": [365, 952]
+    }
+  },
+  "plan": {
+    "image": "flat.webp",
+    "labels": {
+      "balcony": [404, 71],
+      "flat_vent": [820, 167],
+      "window": [367, 242],
+      "gas_heater": [818, 295],
+      "aircon": [177, 362],
+      "radiator": [419, 365],
+      "gas_meter": [832, 480],
+      "ceiling": [350, 508],
+      "gas_stove": [667, 536],
+      "tap": [827, 629],
+      "pipes_valves": [786, 750],
+      "floor_walls": [361, 787],
+      "sewer": [732, 846],
+      "flat_shield": [781, 942],
+      "meter_water": [359, 945],
+      "riser_flat": [125, 953],
+      "toilet": [195, 1043],
+      "interior_doors": [630, 1051],
+      "meter_electric": [838, 1065],
+      "telecom_flat": [690, 1148],
+      "bathtub": [326, 1153],
+      "towel_dryer": [204, 1218],
+      "intercom_handset": [796, 1222],
+      "outlets": [789, 1290],
+      "appliances": [266, 1336],
+      "bill": [774, 1374],
+      "front_door": [616, 1426]
+    }
+  }
+}

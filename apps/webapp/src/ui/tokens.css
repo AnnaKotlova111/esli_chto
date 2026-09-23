@@ -1,0 +1,136 @@
+/*
+ * Дизайн-токены «Calm Civic UI».
+ * Цвета, радиусы и размеры задаются только здесь; в компонентах используются переменные.
+ * Цвет всегда передаёт функцию: синий – действие, красный – только реальная опасность,
+ * оранжевый – срочность, зелёный – подтверждённый результат.
+ */
+:root {
+  /* палитра дизайн-кода, раздел 27 */
+  --color-primary: #2563eb;
+  --color-primary-dark: #173b6c;
+  --color-primary-soft: #dceeff;
+  --color-background: #f6f8fa;
+  --color-surface: #ffffff;
+  --color-text: #172033;
+  --color-text-secondary: #667085;
+  --color-critical: #d92d20;
+  --color-warning: #e98a15;
+  --color-success: #1f8a5b;
+
+  /* производные для состояний (из той же палитры) */
+  --color-primary-pressed: #1d4fd8;
+  --color-heading: var(--color-primary-dark);
+  --color-on-primary: #ffffff;
+  --color-disabled: #d0d5dd;
+  --color-on-disabled: #667085;
+  --color-border: #e4e7ec;
+  --color-divider: #eef1f5;
+  --color-critical-pressed: #b42318;
+  --color-on-critical: #ffffff;
+  --color-marker-ring: #ffffff;
+  --color-critical-soft: #fee4e2;
+  --color-warning-soft: #fef3e2;
+  /* оранжевый дизайн-кода плохо читается мелким текстом, поэтому текст на жёлтом фоне – темнее */
+  --color-warning-text: #9a4a05;
+  --color-success-soft: #dcf5e8;
+  --color-scrim: rgba(23, 32, 51, 0.42);
+  --color-scene-dim: rgba(246, 248, 250, 0.72);
+
+  /* форма и поверхность, раздел 8 */
+  --radius-card: 16px;
+  --radius-control: 12px;
+  --radius-small: 8px;
+  --radius-pill: 999px;
+  --button-height: 52px;
+  --button-height-secondary: 48px;
+  --icon-size: 24px;
+  --shadow-card: 0 1px 2px rgba(16, 24, 40, 0.06);
+  --shadow-sheet: 0 -2px 12px rgba(16, 24, 40, 0.08);
+  --focus-ring: 0 0 0 3px rgba(37, 99, 235, 0.45);
+
+  /* маркеры, раздел 14 */
+  --marker-size: 32px;
+  --marker-size-active: 40px;
+  --marker-size-home: 48px;
+
+  /* отступы (шаг 4 px) */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-8: 32px;
+
+  /* типографика, раздел 7: одно семейство Inter */
+  --font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  --text-h1: 700 28px/34px var(--font-family);
+  --text-h2: 700 22px/28px var(--font-family);
+  --text-h3: 600 18px/24px var(--font-family);
+  --text-body: 400 16px/24px var(--font-family);
+  --text-body-strong: 600 16px/24px var(--font-family);
+  --text-secondary: 400 14px/20px var(--font-family);
+  --text-button: 600 16px/20px var(--font-family);
+  --text-micro: 500 12px/16px var(--font-family);
+
+  --app-max-width: 560px;
+  --nav-height: 68px;
+
+  color-scheme: light;
+}
+
+/* Тёмная тема: та же семантика, оттенки подобраны под тёмный фон. Включается по настройке MAX или системы. */
+:root[data-theme='dark'] {
+  --color-primary: #5b8def;
+  --color-primary-dark: #dce8ff;
+  --color-primary-soft: #1a3358;
+  --color-background: #0e1420;
+  --color-surface: #182131;
+  --color-text: #e8edf5;
+  --color-text-secondary: #a3adbf;
+  --color-critical: #f04438;
+  --color-warning: #f79009;
+  --color-success: #3ccb7f;
+
+  --color-primary-pressed: #7aa3f3;
+  --color-on-primary: #0b1220;
+  --color-disabled: #344054;
+  --color-on-disabled: #98a2b3;
+  --color-border: #2a3547;
+  --color-divider: #222c3c;
+  --color-critical-pressed: #f97066;
+  --color-critical-soft: #3d1a17;
+  --color-warning-soft: #3a2a12;
+  --color-warning-text: #fdb022;
+  --color-success-soft: #113325;
+  --color-scrim: rgba(0, 0, 0, 0.6);
+  --color-scene-dim: rgba(14, 20, 32, 0.72);
+  --shadow-card: none;
+  --shadow-sheet: 0 -2px 12px rgba(0, 0, 0, 0.4);
+  --focus-ring: 0 0 0 3px rgba(91, 141, 239, 0.6);
+
+  color-scheme: dark;
+}
+
+/*
+ * Официальный UI-кит MAX берёт цвета и шрифт из своих переменных.
+ * Направляем их на токены – кнопки, поля и спиннер кита выглядят как часть дизайн-системы.
+ */
+.maxui-root {
+  --family-base: var(--font-family);
+  --family-headers: var(--font-family);
+  --background-primary: var(--color-background);
+  --background-card: var(--color-surface);
+  --text-primary: var(--color-text);
+  --text-secondary: var(--color-text-secondary);
+  --text-tertiary: var(--color-text-secondary);
+  --text-themed: var(--color-primary);
+  --text-primary-inverse-static: var(--color-on-primary);
+  --button-primary: var(--color-primary);
+  --states-button-primary-pressed: var(--color-primary-pressed);
+  --controls-active: var(--color-primary);
+  --icon-tertiary: var(--color-text-secondary);
+  --size-border-radius-button-large: var(--radius-control);
+  --size-border-radius-button-medium: var(--radius-control);
+  --size-border-radius-button-small: var(--radius-small);
+}

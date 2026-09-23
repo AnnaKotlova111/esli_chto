@@ -1,0 +1,6 @@
+# Обратный прокси с автоматическим HTTPS (Let's Encrypt).
+# Домен задаётся переменной DOMAIN в .env.
+{$DOMAIN} {
+	encode gzip
+	reverse_proxy app:8080
+}

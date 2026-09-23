@@ -1,0 +1,2611 @@
+{
+  "city": "Вичуга",
+  "region": "Ивановская область",
+  "settlements": {
+    "Вичуга": "г. Вичуга",
+    "Каменка": "пос. Каменка (Вичугский район)"
+  },
+  "source": "Открытые данные: карточки управляющих организаций на mingkh.ru и сводный перечень ТСЖ, ЖСК и ТСН г. Вичуги",
+  "updatedAt": "2026-09-23",
+  "services": {
+    "water_utility": {
+      "name": "«Городской водопровод» (г. Вичуга)",
+      "phones": [
+        {
+          "label": "Водоснабжение",
+          "number": "+7 (49354) 2-22-79"
+        }
+      ],
+      "email": "voda37@yandex.ru"
+    },
+    "heat_utility": {
+      "name": "МУП «ОК и ТС» (котельные и тепловые сети)",
+      "phones": [
+        {
+          "label": "Диспетчерская",
+          "number": "+7 (49354) 2-44-72"
+        },
+        {
+          "label": "Приёмная",
+          "number": "+7 (49354) 2-23-46"
+        }
+      ],
+      "email": "mypokits@yandex.ru"
+    },
+    "energy_utility": {
+      "name": "ЭнергосбыТ Плюс или Ивановоэнергосбыт",
+      "phones": [
+        {
+          "label": "ЭнергосбыТ Плюс, офис в Вичуге",
+          "number": "+7 (49354) 3-58-33"
+        },
+        {
+          "label": "Ивановоэнергосбыт, горячая линия",
+          "number": "8 (800) 350-42-12"
+        }
+      ],
+      "hours": "ЭнергосбыТ Плюс: вт–пт 8:00–17:00, сб 8:00–16:00",
+      "address": "ЭнергосбыТ Плюс: ул. Ульяновская, д. 15; Ивановоэнергосбыт: ул. Покровского, д. 17",
+      "site": "ivanovo.esplus.ru",
+      "note": "Ваша компания указана в квитанции за свет. Обрыв проводов на улице – Вичугский РЭС «Ивэнерго», ул. Кинешемская, д. 42."
+    },
+    "gas_service": {
+      "name": "АО «Газпром газораспределение Иваново»",
+      "phones": [
+        {
+          "label": "Справки и техобслуживание",
+          "number": "+7 (49354) 2-90-45"
+        },
+        {
+          "label": "Справки",
+          "number": "+7 (49354) 2-32-89"
+        },
+        {
+          "label": "Начисления и счётчики («Газпром межрегионгаз»)",
+          "number": "+7 (49354) 3-00-74"
+        }
+      ],
+      "hours": "Начисления: пн, вт, чт 8:00–17:00; ср 8:00–20:00; пт 8:00–15:45",
+      "address": "Начисления: ул. Ленинградская, д. 18А",
+      "note": "При запахе газа сразу звоните 104."
+    },
+    "tko_operator": {
+      "name": "ООО «Вторресурсхолдинг» – вывоз мусора",
+      "phones": [
+        {
+          "label": "Контакт-центр",
+          "number": "+7 (4932) 950-950"
+        },
+        {
+          "label": "Контакт-центр",
+          "number": "+7 (901) 681-56-17"
+        }
+      ],
+      "hours": "будни 9:00–17:00, выходные 10:00–17:00",
+      "site": "vk.ru/vr.holding"
+    },
+    "municipality": {
+      "name": "Администрация городского округа Вичуга",
+      "phones": [
+        {
+          "label": "Дежурная служба (ЕДДС)",
+          "number": "+7 (49354) 2-50-27"
+        },
+        {
+          "label": "Приёмная главы",
+          "number": "+7 (49354) 2-10-11"
+        }
+      ]
+    },
+    "housing_inspection": {
+      "name": "Государственная жилищная инспекция Ивановской области",
+      "phones": [
+        {
+          "label": "Единый телефон",
+          "number": "+7 (4932) 41-05-61"
+        }
+      ],
+      "address": "г. Иваново, ул. Театральная, д. 16"
+    },
+    "lift_service": {
+      "name": "Аварийная служба вашей УК",
+      "phones": [],
+      "note": "Отдельной лифтовой службы в городе нет: заявки принимает аварийная служба вашей УК. Номер диспетчера лифта есть и в кабине."
+    },
+    "intercom_service": {
+      "name": "Организация по обслуживанию домофона",
+      "phones": [],
+      "note": "Название и телефон – на панели домофона или в квитанции."
+    }
+  },
+  "organizations": [
+    {
+      "id": "uk_zhilishchno_remontnyy_uchastok_1",
+      "name": "Управляющая компания «Жилищно-ремонтный участок №1»",
+      "short": "УК «Жилищно-ремонтный участок №1»",
+      "kind": "УК",
+      "address": "Ивановская обл., г. Вичуга, ул. Ленинградская, д. 22",
+      "phones": [
+        "+7 (493) 542-57-60"
+      ],
+      "dispatch": [
+        "+7 (493) 542-34-73"
+      ],
+      "housesDeclared": 88,
+      "inn": "3701043128",
+      "ogrn": "1083701000074",
+      "email": "jru1.vichuga@inbox.ru"
+    },
+    {
+      "id": "uk_vichugskaya_upravlyayushchaya_kompaniya",
+      "name": "Управляющая компания «Вичугская управляющая компания»",
+      "short": "УК «Вичугская управляющая компания»",
+      "kind": "УК",
+      "address": "Ивановская обл., г. Вичуга, ул. Мира, д. 29Б",
+      "phones": [
+        "+7 (493) 542-42-06"
+      ],
+      "dispatch": [
+        "+7 (493) 542-42-92"
+      ],
+      "housesDeclared": 61,
+      "inn": "3701047242",
+      "ogrn": "1113701000808",
+      "email": "zru4@yandex.ru",
+      "site": "zru37.ru"
+    },
+    {
+      "id": "uk_zhru_2",
+      "name": "Управляющая компания «ЖРУ №2»",
+      "short": "УК «ЖРУ №2»",
+      "kind": "УК",
+      "address": "Ивановская обл., г. Вичуга, ул. Ленинградская, д. 22",
+      "phones": [
+        "+7 (493) 542-57-60"
+      ],
+      "dispatch": [
+        "+7 (493) 542-34-73"
+      ],
+      "housesDeclared": 44,
+      "inn": "3701047468",
+      "ogrn": "1123701000488",
+      "email": "jru1.vichuga@inbox.ru"
+    },
+    {
+      "id": "uk_stoun",
+      "name": "Управляющая компания «Стоун»",
+      "short": "УК «Стоун»",
+      "kind": "УК",
+      "address": "Ивановская обл., г. Вичуга, ул. Володарского, д. 1",
+      "phones": [
+        "+7 (493) 542-34-37"
+      ],
+      "dispatch": [
+        "+7 (910) 982-43-20"
+      ],
+      "housesDeclared": 16,
+      "inn": "3701042974",
+      "ogrn": "1073701000966",
+      "email": "stown37@mail.ru"
+    },
+    {
+      "id": "tszh_noginets_3",
+      "name": "ТСЖ «Ногинец-3»",
+      "short": "ТСЖ «Ногинец-3»",
+      "kind": "ТСЖ",
+      "address": "Ивановская обл., г. Вичуга, ул. Покровского, д. 3Б",
+      "phones": [
+        "+7 (920) 360-33-63"
+      ],
+      "dispatch": [],
+      "housesDeclared": 2
+    },
+    {
+      "id": "zhsk_zarya_2",
+      "name": "ЖСК «Заря-2»",
+      "short": "ЖСК «Заря-2»",
+      "kind": "ЖСК",
+      "address": "Ивановская обл., г. Вичуга, ул. Ульяновская, д. 36",
+      "phones": [
+        "+7 (915) 846-15-83"
+      ],
+      "dispatch": [],
+      "housesDeclared": 1
+    },
+    {
+      "id": "zhsk_mayak_2",
+      "name": "ЖСК «Маяк-2»",
+      "short": "ЖСК «Маяк-2»",
+      "kind": "ЖСК",
+      "address": "Ивановская обл., г. Вичуга, ул. Богдана Хмельницкого, д. 3А",
+      "phones": [
+        "+7 (901) 287-49-77"
+      ],
+      "dispatch": [],
+      "housesDeclared": 1
+    },
+    {
+      "id": "zhsk_mayak_3",
+      "name": "ЖСК «Маяк-3»",
+      "short": "ЖСК «Маяк-3»",
+      "kind": "ЖСК",
+      "address": "Ивановская обл., г. Вичуга, ул. Филиппенковская, д. 10",
+      "phones": [
+        "+7 (960) 508-62-97"
+      ],
+      "dispatch": [],
+      "housesDeclared": 1
+    },
+    {
+      "id": "zhsk_mayak",
+      "name": "ЖСК «Маяк»",
+      "short": "ЖСК «Маяк»",
+      "kind": "ЖСК",
+      "address": "Ивановская обл., г. Вичуга, ул. Ульяновская, д. 30",
+      "phones": [
+        "+7 (962) 168-11-66"
+      ],
+      "dispatch": [],
+      "housesDeclared": 1
+    },
+    {
+      "id": "zhsk_mir_2",
+      "name": "ЖСК «Мир-2»",
+      "short": "ЖСК «Мир-2»",
+      "kind": "ЖСК",
+      "address": "Ивановская обл., г. Вичуга, ул. Ленинградская, д. 50",
+      "phones": [
+        "+7 (915) 812-86-19"
+      ],
+      "dispatch": [],
+      "housesDeclared": 1
+    },
+    {
+      "id": "zhsk_mir",
+      "name": "ЖСК «Мир»",
+      "short": "ЖСК «Мир»",
+      "kind": "ЖСК",
+      "address": "Ивановская обл., г. Вичуга, ул. Гороховская, д. 1",
+      "phones": [
+        "+7 (960) 506-59-97"
+      ],
+      "dispatch": [],
+      "housesDeclared": 1
+    },
+    {
+      "id": "zhsk_noginets_5",
+      "name": "ЖСК «Ногинец-5»",
+      "short": "ЖСК «Ногинец-5»",
+      "kind": "ЖСК",
+      "address": "Ивановская обл., г. Вичуга, ул. Урицкого, д. 20",
+      "phones": [
+        "+7 (905) 107-03-55"
+      ],
+      "dispatch": [],
+      "housesDeclared": 1
+    },
+    {
+      "id": "zhsk_progress",
+      "name": "ЖСК «Прогресс»",
+      "short": "ЖСК «Прогресс»",
+      "kind": "ЖСК",
+      "address": "Ивановская обл., г. Вичуга, ул. Ленинградская, д. 40А",
+      "phones": [
+        "+7 (915) 822-93-06"
+      ],
+      "dispatch": [],
+      "housesDeclared": 1
+    },
+    {
+      "id": "tszh_zarya_1",
+      "name": "ТСЖ «Заря-1»",
+      "short": "ТСЖ «Заря-1»",
+      "kind": "ТСЖ",
+      "address": "Ивановская обл., г. Вичуга, ул. Филиппенковская, д. 12",
+      "phones": [
+        "+7 (980) 691-34-25"
+      ],
+      "dispatch": [],
+      "housesDeclared": 1
+    },
+    {
+      "id": "tszh_starateli",
+      "name": "ТСЖ «Старатели»",
+      "short": "ТСЖ «Старатели»",
+      "kind": "ТСЖ",
+      "address": "Ивановская обл., г. Вичуга, Пятницкий пер., д. 13",
+      "phones": [
+        "+7 (920) 377-87-88"
+      ],
+      "dispatch": [],
+      "housesDeclared": 1
+    },
+    {
+      "id": "tszh_upravdom",
+      "name": "ТСЖ «Управдом»",
+      "short": "ТСЖ «Управдом»",
+      "kind": "ТСЖ",
+      "address": "Ивановская обл., г. Вичуга, ул. Ленинградская, д. 52",
+      "phones": [
+        "+7 (920) 350-99-39"
+      ],
+      "dispatch": [],
+      "housesDeclared": 1
+    },
+    {
+      "id": "tsn_shagovets",
+      "name": "ТСН «Шаговец»",
+      "short": "ТСН «Шаговец»",
+      "kind": "ТСН",
+      "address": "Ивановская обл., г. Вичуга, ул. Володарского, д. 102",
+      "phones": [
+        "+7 (964) 490-53-00"
+      ],
+      "dispatch": [],
+      "housesDeclared": 1
+    },
+    {
+      "id": "tszh_moskovskiy",
+      "name": "ТСЖ «Московский»",
+      "short": "ТСЖ «Московский»",
+      "kind": "ТСЖ",
+      "address": "Ивановская обл., г. Вичуга, ул. Московская, д. 13",
+      "phones": [
+        "+7 (920) 472-12-09"
+      ],
+      "dispatch": []
+    },
+    {
+      "id": "tszh_elit",
+      "name": "ТСЖ «Элит»",
+      "short": "ТСЖ «Элит»",
+      "kind": "ТСЖ",
+      "address": "Ивановская обл., г. Вичуга, ул. Ульяновская, д. 15",
+      "phones": [
+        "+7 (903) 879-16-03"
+      ],
+      "dispatch": []
+    }
+  ],
+  "houses": [
+    {
+      "id": "vch_40_let_oktyabrya_1a",
+      "street": "ул. 40 лет Октября",
+      "streetName": "40 лет Октября",
+      "streetType": "ул.",
+      "number": "1А",
+      "settlement": "Вичуга",
+      "address": "г. Вичуга, ул. 40 лет Октября, д. 1А",
+      "orgId": "uk_zhilishchno_remontnyy_uchastok_1"
+    },
+    {
+      "id": "vch_50_let_oktyabrya_4",
+      "street": "ул. 50 лет Октября",
+      "streetName": "50 лет Октября",
+      "streetType": "ул.",
+      "number": "4",
+      "settlement": "Вичуга",
+      "address": "г. Вичуга, ул. 50 лет Октября, д. 4",
+      "orgId": "uk_zhilishchno_remontnyy_uchastok_1"
+    },
+    {
+      "id": "vch_50_let_oktyabrya_8",
+      "street": "ул. 50 лет Октября",
+      "streetName": "50 лет Октября",
+      "streetType": "ул.",
+      "number": "8",
+      "settlement": "Вичуга",
+      "address": "г. Вичуга, ул. 50 лет Октября, д. 8",
+      "orgId": "uk_zhilishchno_remontnyy_uchastok_1"
+    },
+    {
+      "id": "vch_50_let_oktyabrya_10",
+      "street": "ул. 50 лет Октября",
+      "streetName": "50 лет Октября",
+      "streetType": "ул.",
+      "number": "10",
+      "settlement": "Вичуга",
+      "address": "г. Вичуга, ул. 50 лет Октября, д. 10",
+      "orgId": "uk_zhilishchno_remontnyy_uchastok_1"
+    },
+    {
+      "id": "vch_50_let_oktyabrya_12",
+      "street": "ул. 50 лет Октября",
+      "streetName": "50 лет Октября",
+      "streetType": "ул.",
+      "number": "12",
+      "settlement": "Вичуга",
+      "address": "г. Вичуга, ул. 50 лет Октября, д. 12",
+      "orgId": "uk_zhilishchno_remontnyy_uchastok_1"
+    },
+    {
+      "id": "vch_50_let_oktyabrya_14",
+      "street": "ул. 50 лет Октября",
+      "streetName": "50 лет Октября",
+      "streetType": "ул.",
+      "number": "14",
+      "settlement": "Вичуга",
+      "address": "г. Вичуга, ул. 50 лет Октября, д. 14",
+      "orgId": "uk_zhilishchno_remontnyy_uchastok_1"
+    },
+    {
+      "id": "vch_50_let_oktyabrya_15a",
+      "street": "ул. 50 лет Октября",
+      "streetName": "50 лет Октября",
+      "streetType": "ул.",
+      "number": "15А",
+      "settlement": "Вичуга",
+      "address": "г. Вичуга, ул. 50 лет Октября, д. 15А",
+      "orgId": "uk_zhilishchno_remontnyy_uchastok_1"
+    },
+    {
+      "id": "vch_50_let_oktyabrya_21",
+      "street": "ул. 50 лет Октября",
+      "streetName": "50 лет Октября",
+      "streetType": "ул.",
+      "number": "21",
+      "settlement": "Вичуга",
+      "address": "г. Вичуга, ул. 50 лет Октября, д. 21",
+      "orgId": "uk_zhilishchno_remontnyy_uchastok_1"
+    },
+    {
+      "id": "vch_50_let_oktyabrya_25",
+      "street": "ул. 50 лет Октября",
+      "streetName": "50 лет Октября",
+      "streetType": "ул.",
+      "number": "25",
+      "settlement": "Вичуга",
+      "address": "г. Вичуга, ул. 50 лет Октября, д. 25",
+      "orgId": "uk_zhilishchno_remontnyy_uchastok_1"
+    },
+    {
+      "id": "vch_50_let_oktyabrya_31",
+      "street": "ул. 50 лет Октября",
+      "streetName": "50 лет Октября",
+      "streetType": "ул.",
+      "number": "31",
+      "settlement": "Вичуга",
+      "address": "г. Вичуга, ул. 50 лет Октября, д. 31",
+      "orgId": "uk_zhilishchno_remontnyy_uchastok_1"
+    },
+    {
+      "id": "vch_50_let_oktyabrya_33",
+      "street": "ул. 50 лет Октября",
+      "streetName": "50 лет Октября",
+      "streetType": "ул.",
+      "number": "33",
+      "settlement": "Вичуга",
+      "address": "г. Вичуга, ул. 50 лет Октября, д. 33",
+      "orgId": "uk_zhilishchno_remontnyy_uchastok_1"
+    },
+    {
+      "id": "vch_7_noyabrya_73",
+      "street": "ул. 7 Ноября",
+      "streetName": "7 Ноября",
+      "streetType": "ул.",
+      "number": "73",
+      "settlement": "Вичуга",
+      "address": "г. Вичуга, ул. 7 Ноября, д. 73",
+      "orgId": "uk_vichugskaya_upravlyayushchaya_kompaniya"
+    },
+    {
+      "id": "vch_abramovoy_18",
+      "street": "ул. Абрамовой",
+      "streetName": "Абрамовой",
+      "streetType": "ул.",
+      "number": "18",
+      "settlement": "Вичуга",
+      "address": "г. Вичуга, ул. Абрамовой, д. 18",
+      "orgId": "uk_vichugskaya_upravlyayushchaya_kompaniya"
+    },
+    {
+      "id": "vch_baumana_12",
+      "street": "ул. Баумана",
+      "streetName": "Баумана",
+      "streetType": "ул.",
+      "number": "12",
+      "settlement": "Вичуга",
+      "address": "г. Вичуга, ул. Баумана, д. 12",
+      "orgId": "uk_vichugskaya_upravlyayushchaya_kompaniya"
+    },
+    {
+      "id": "vch_baumana_13",
+      "street": "ул. Баумана",
+      "streetName": "Баумана",
+      "streetType": "ул.",
+      "number": "13",
+      "settlement": "Вичуга",
+      "address": "г. Вичуга, ул. Баумана, д. 13",
+      "orgId": "uk_vichugskaya_upravlyayushchaya_kompaniya"
+    },
+    {
+      "id": "vch_bibliotechnaya_2_ya_2",
+      "street": "ул. Библиотечная 2-я",
+      "streetName": "Библиотечная 2-я",
+      "streetType": "ул.",
+      "number": "2",
+      "settlement": "Вичуга",
+      "address": "г. Вичуга, ул. Библиотечная 2-я, д. 2",
+      "orgId": "uk_vichugskaya_upravlyayushchaya_kompaniya"
+    },
+    {
+      "id": "vch_bibliotechnaya_2_ya_4",
+      "street": "ул. Библиотечная 2-я",
+      "streetName": "Библиотечная 2-я",
+      "streetType": "ул.",
+      "number": "4",
+      "settlement": "Вичуга",
+      "address": "г. Вичуга, ул. Библиотечная 2-я, д. 4",
+      "orgId": "uk_vichugskaya_upravlyayushchaya_kompaniya"
+    },
+    {
+      "id": "vch_bogdana_khmelnitskogo_1",
+      "street": "ул. Богдана Хмельницкого",
+      "streetName": "Богдана Хмельницкого",
+      "streetType": "ул.",
+      "number": "1",
+      "settlement": "Вичуга",
+      "address": "г. Вичуга, ул. Богдана Хмельницкого, д. 1",
+      "orgId": "uk_zhilishchno_remontnyy_uchastok_1"
+    },
+    {
+      "id": "vch_bogdana_khmelnitskogo_3",
+      "street": "ул. Богдана Хмельницкого",
+      "streetName": "Богдана Хмельницкого",
+      "streetType": "ул.",
+      "number": "3",
+      "settlement": "Вичуга",
+      "address": "г. Вичуга, ул. Богдана Хмельницкого, д. 3",
+      "orgId": "uk_zhilishchno_remontnyy_uchastok_1"
+    },
+    {
+      "id": "vch_bogdana_khmelnitskogo_3a",
+      "street": "ул. Богдана Хмельницкого",
+      "streetName": "Богдана Хмельницкого",
+      "streetType": "ул.",
+      "number": "3А",
+      "settlement": "Вичуга",
+      "address": "г. Вичуга, ул. Богдана Хмельницкого, д. 3А",
+      "orgId": "zhsk_mayak_2"
+    },
+    {
+      "id": "vch_bogdana_khmelnitskogo_4",
+      "street": "ул. Богдана Хмельницкого",
+      "streetName": "Богдана Хмельницкого",
+      "streetType": "ул.",
+      "number": "4",
+      "settlement": "Вичуга",
+      "address": "г. Вичуга, ул. Богдана Хмельницкого, д. 4",
+      "orgId": "uk_zhilishchno_remontnyy_uchastok_1"
+    },
+    {
+      "id": "vch_bogdana_khmelnitskogo_6",
+      "street": "ул. Богдана Хмельницкого",
+      "streetName": "Богдана Хмельницкого",
+      "streetType": "ул.",
+      "number": "6",
+      "settlement": "Вичуга",
+      "address": "г. Вичуга, ул. Богдана Хмельницкого, д. 6",
+      "orgId": "uk_zhilishchno_remontnyy_uchastok_1"
+    },
+    {
+      "id": "vch_bogdana_khmelnitskogo_10",
+      "street": "ул. Богдана Хмельницкого",
+      "streetName": "Богдана Хмельницкого",
+      "streetType": "ул.",
+      "number": "10",
+      "settlement": "Вичуга",
+      "address": "г. Вичуга, ул. Богдана Хмельницкого, д. 10",
+      "orgId": "uk_zhilishchno_remontnyy_uchastok_1"
+    },
+    {
+      "id": "vch_bogdana_khmelnitskogo_27",
+      "street": "ул. Богдана Хмельницкого",
+      "streetName": "Богдана Хмельницкого",
+      "streetType": "ул.",
+      "number": "27",
+      "settlement": "Вичуга",
+      "address": "г. Вичуга, ул. Богдана Хмельницкого, д. 27",
+      "orgId": "uk_vichugskaya_upravlyayushchaya_kompaniya"
+    },
+    {
+      "id": "vch_bogdana_khmelnitskogo_36",
+      "street": "ул. Богдана Хмельницкого",
+      "streetName": "Богдана Хмельницкого",
+      "streetType": "ул.",
+      "number": "36",
+      "settlement": "Вичуга",
+      "address": "г. Вичуга, ул. Богдана Хмельницкого, д. 36",
+      "orgId": "uk_vichugskaya_upravlyayushchaya_kompaniya"
+    },
+    {
+      "id": "vch_bogdana_khmelnitskogo_37_13",
+      "street": "ул. Богдана Хмельницкого",
+      "streetName": "Богдана Хмельницкого",
+      "streetType": "ул.",
+      "number": "37/13",
+      "settlement": "Вичуга",
+      "address": "г. Вичуга, ул. Богдана Хмельницкого, д. 37/13",
+      "orgId": "uk_vichugskaya_upravlyayushchaya_kompaniya"
+    },
+    {
+      "id": "vch_bogdana_khmelnitskogo_41a",
+      "street": "ул. Богдана Хмельницкого",
+      "streetName": "Богдана Хмельницкого",
+      "streetType": "ул.",
+      "number": "41А",
+      "settlement": "Вичуга",
+      "address": "г. Вичуга, ул. Богдана Хмельницкого, д. 41А",
+      "orgId": "uk_vichugskaya_upravlyayushchaya_kompaniya"
+    },
+    {
+      "id": "vch_bogdana_khmelnitskogo_41g",
+      "street": "ул. Богдана Хмельницкого",
+      "streetName": "Богдана Хмельницкого",
+      "streetType": "ул.",
+      "number": "41Г",
+      "settlement": "Вичуга",
+      "address": "г. Вичуга, ул. Богдана Хмельницкого, д. 41Г",
+      "orgId": "uk_vichugskaya_upravlyayushchaya_kompaniya"
+    },
+    {
+      "id": "vch_bogdana_khmelnitskogo_43b",
+      "street": "ул. Богдана Хмельницкого",
+      "streetName": "Богдана Хмельницкого",
+      "streetType": "ул.",
+      "number": "43Б",
+      "settlement": "Вичуга",
+      "address": "г. Вичуга, ул. Богдана Хмельницкого, д. 43Б",
+      "orgId": "uk_vichugskaya_upravlyayushchaya_kompaniya"
+    },
+    {
+      "id": "vch_bogdana_khmelnitskogo_62",
+      "street": "ул. Богдана Хмельницкого",
+      "streetName": "Богдана Хмельницкого",
+      "streetType": "ул.",
+      "number": "62",
+      "settlement": "Вичуга",
+      "address": "г. Вичуга, ул. Богдана Хмельницкого, д. 62",
+      "orgId": "uk_vichugskaya_upravlyayushchaya_kompaniya"
+    },
+    {
+      "id": "vch_bolnichnaya_3",
+      "street": "ул. Больничная",
+      "streetName": "Больничная",
+      "streetType": "ул.",
+      "number": "3",
+      "settlement": "Вичуга",
+      "address": "г. Вичуга, ул. Больничная, д. 3",
+      "orgId": "uk_vichugskaya_upravlyayushchaya_kompaniya"
+    },
+    {
+      "id": "vch_bolshaya_proletarskaya_9_1",
+      "street": "ул. Большая Пролетарская",
+      "streetName": "Большая Пролетарская",
+      "streetType": "ул.",
+      "number": "9/1",
+      "settlement": "Вичуга",
+      "address": "г. Вичуга, ул. Большая Пролетарская, д. 9/1",
+      "orgId": "uk_vichugskaya_upravlyayushchaya_kompaniya"
+    },
+    {
+      "id": "vch_bolshaya_proletarskaya_12_14",
+      "street": "ул. Большая Пролетарская",
+      "streetName": "Большая Пролетарская",
+      "streetType": "ул.",
+      "number": "12/14",
+      "settlement": "Вичуга",
+      "address": "г. Вичуга, ул. Большая Пролетарская, д. 12/14",
+      "orgId": "uk_vichugskaya_upravlyayushchaya_kompaniya"
+    },
+    {
+      "id": "vch_bolshaya_proletarskaya_16",
+      "street": "ул. Большая Пролетарская",
+      "streetName": "Большая Пролетарская",
+      "streetType": "ул.",
+      "number": "16",
+      "settlement": "Вичуга",
+      "address": "г. Вичуга, ул. Большая Пролетарская, д. 16",
+      "orgId": "uk_vichugskaya_upravlyayushchaya_kompaniya"
+    },
+    {
+      "id": "vch_vasilevskogo_a_m_13",
+      "street": "ул. Василевского А.М.",
+      "streetName": "Василевского А.М.",
+      "streetType": "ул.",
+      "number": "13",
+      "settlement": "Вичуга",
+      "address": "г. Вичуга, ул. Василевского А.М., д. 13",
+      "orgId": "uk_zhru_2"
+    },
+    {
+      "id": "vch_vinogradovykh_1a",
+      "street": "ул. Виноградовых",
+      "streetName": "Виноградовых",
+      "streetType": "ул.",
+      "number": "1А",
+      "settlement": "Вичуга",
+      "address": "г. Вичуга, ул. Виноградовых, д. 1А",
+      "orgId": "uk_vichugskaya_upravlyayushchaya_kompaniya"
+    },
+    {
+      "id": "vch_vinogradovykh_2a",
+      "street": "ул. Виноградовых",
+      "streetName": "Виноградовых",
+      "streetType": "ул.",
+      "number": "2А",
+      "settlement": "Вичуга",
+      "address": "г. Вичуга, ул. Виноградовых, д. 2А",
+      "orgId": "uk_vichugskaya_upravlyayushchaya_kompaniya"
+    },
+    {
+      "id": "vch_vokzalnaya_1",
+      "street": "ул. Вокзальная",
+      "streetName": "Вокзальная",
+      "streetType": "ул.",
+      "number": "1",
+      "settlement": "Вичуга",
+      "address": "г. Вичуга, ул. Вокзальная, д. 1",
+      "orgId": "uk_zhilishchno_remontnyy_uchastok_1"
+    },
+    {
+      "id": "vch_vokzalnaya_3",
+      "street": "ул. Вокзальная",
+      "streetName": "Вокзальная",
+      "streetType": "ул.",
+      "number": "3",
+      "settlement": "Вичуга",
+      "address": "г. Вичуга, ул. Вокзальная, д. 3",
+      "orgId": "uk_zhilishchno_remontnyy_uchastok_1"
+    },
+    {
+      "id": "vch_vokzalnaya_7",
+      "street": "ул. Вокзальная",
+      "streetName": "Вокзальная",
+      "streetType": "ул.",
+      "number": "7",
+      "settlement": "Вичуга",
+      "address": "г. Вичуга, ул. Вокзальная, д. 7",
+      "orgId": "uk_zhilishchno_remontnyy_uchastok_1"
+    },
+    {
+      "id": "vch_vokzalnaya_18_67",
+      "street": "ул. Вокзальная",
+      "streetName": "Вокзальная",
+      "streetType": "ул.",
+      "number": "18/67",
+      "settlement": "Вичуга",
+      "address": "г. Вичуга, ул. Вокзальная, д. 18/67",
+      "orgId": "uk_zhilishchno_remontnyy_uchastok_1"
+    },
+    {
+      "id": "vch_volodarskogo_4",
+      "street": "ул. Володарского",
+      "streetName": "Володарского",
+      "streetType": "ул.",
+      "number": "4",
+      "settlement": "Вичуга",
+      "address": "г. Вичуга, ул. Володарского, д. 4",
+      "orgId": "uk_zhilishchno_remontnyy_uchastok_1"
+    },
+    {
+      "id": "vch_volodarskogo_6",
+      "street": "ул. Володарского",
+      "streetName": "Володарского",
+      "streetType": "ул.",
+      "number": "6",
+      "settlement": "Вичуга",
+      "address": "г. Вичуга, ул. Володарского, д. 6",
+      "orgId": "uk_zhilishchno_remontnyy_uchastok_1"
+    },
+    {
+      "id": "vch_volodarskogo_12",
+      "street": "ул. Володарского",
+      "streetName": "Володарского",
+      "streetType": "ул.",
+      "number": "12",
+      "settlement": "Вичуга",
+      "address": "г. Вичуга, ул. Володарского, д. 12",
+      "orgId": "uk_zhilishchno_remontnyy_uchastok_1"
+    },
+    {
+      "id": "vch_volodarskogo_16",
+      "street": "ул. Володарского",
+      "streetName": "Володарского",
+      "streetType": "ул.",
+      "number": "16",
+      "settlement": "Вичуга",
+      "address": "г. Вичуга, ул. Володарского, д. 16",
+      "orgId": "uk_zhilishchno_remontnyy_uchastok_1"
+    },
+    {
+      "id": "vch_volodarskogo_18",
+      "street": "ул. Володарского",
+      "streetName": "Володарского",
+      "streetType": "ул.",
+      "number": "18",
+      "settlement": "Вичуга",
+      "address": "г. Вичуга, ул. Володарского, д. 18",
+      "orgId": "uk_zhilishchno_remontnyy_uchastok_1"
+    },
+    {
+      "id": "vch_volodarskogo_20",
+      "street": "ул. Володарского",
+      "streetName": "Володарского",
+      "streetType": "ул.",
+      "number": "20",
+      "settlement": "Вичуга",
+      "address": "г. Вичуга, ул. Володарского, д. 20",
+      "orgId": "uk_zhilishchno_remontnyy_uchastok_1"
+    },
+    {
+      "id": "vch_volodarskogo_20a",
+      "street": "ул. Володарского",
+      "streetName": "Володарского",
+      "streetType": "ул.",
+      "number": "20А",
+      "settlement": "Вичуга",
+      "address": "г. Вичуга, ул. Володарского, д. 20А",
+      "orgId": "uk_zhilishchno_remontnyy_uchastok_1"
+    },
+    {
+      "id": "vch_volodarskogo_28",
+      "street": "ул. Володарского",
+      "streetName": "Володарского",
+      "streetType": "ул.",
+      "number": "28",
+      "settlement": "Вичуга",
+      "address": "г. Вичуга, ул. Володарского, д. 28",
+      "orgId": "uk_zhru_2"
+    },
+    {
+      "id": "vch_volodarskogo_34",
+      "street": "ул. Володарского",
+      "streetName": "Володарского",
+      "streetType": "ул.",
+      "number": "34",
+      "settlement": "Вичуга",
+      "address": "г. Вичуга, ул. Володарского, д. 34",
+      "orgId": "uk_zhru_2"
+    },
+    {
+      "id": "vch_volodarskogo_36",
+      "street": "ул. Володарского",
+      "streetName": "Володарского",
+      "streetType": "ул.",
+      "number": "36",
+      "settlement": "Вичуга",
+      "address": "г. Вичуга, ул. Володарского, д. 36",
+      "orgId": "uk_zhru_2"
+    },
+    {
+      "id": "vch_volodarskogo_38",
+      "street": "ул. Володарского",
+      "streetName": "Володарского",
+      "streetType": "ул.",
+      "number": "38",
+      "settlement": "Вичуга",
+      "address": "г. Вичуга, ул. Володарского, д. 38",
+      "orgId": "uk_zhru_2"
+    },
+    {
+      "id": "vch_volodarskogo_42",
+      "street": "ул. Володарского",
+      "streetName": "Володарского",
+      "streetType": "ул.",
+      "number": "42",
+      "settlement": "Вичуга",
+      "address": "г. Вичуга, ул. Володарского, д. 42",
+      "orgId": "uk_zhru_2"
+    },
+    {
+      "id": "vch_volodarskogo_46",
+      "street": "ул. Володарского",
+      "streetName": "Володарского",
+      "streetType": "ул.",
+      "number": "46",
+      "settlement": "Вичуга",
+      "address": "г. Вичуга, ул. Володарского, д. 46",
+      "orgId": "uk_zhru_2"
+    },
+    {
+      "id": "vch_volodarskogo_100",
+      "street": "ул. Володарского",
+      "streetName": "Володарского",
+      "streetType": "ул.",
+      "number": "100",
+      "settlement": "Вичуга",
+      "address": "г. Вичуга, ул. Володарского, д. 100",
+      "orgId": "uk_zhru_2"
+    },
+    {
+      "id": "vch_volodarskogo_102",
+      "street": "ул. Володарского",
+      "streetName": "Володарского",
+      "streetType": "ул.",
+      "number": "102",
+      "settlement": "Вичуга",
+      "address": "г. Вичуга, ул. Володарского, д. 102",
+      "orgId": "tsn_shagovets"
+    },
+    {
+      "id": "vch_volodarskogo_104",
+      "street": "ул. Володарского",
+      "streetName": "Володарского",
+      "streetType": "ул.",
+      "number": "104",
+      "settlement": "Вичуга",
+      "address": "г. Вичуга, ул. Володарского, д. 104",
+      "orgId": "uk_zhru_2"
+    },
+    {
+      "id": "vch_volodarskogo_106",
+      "street": "ул. Володарского",
+      "streetName": "Володарского",
+      "streetType": "ул.",
+      "number": "106",
+      "settlement": "Вичуга",
+      "address": "г. Вичуга, ул. Володарского, д. 106",
+      "orgId": "uk_zhru_2"
+    },
+    {
+      "id": "vch_glukhovskaya_9_47",
+      "street": "ул. Глуховская",
+      "streetName": "Глуховская",
+      "streetType": "ул.",
+      "number": "9/47",
+      "settlement": "Вичуга",
+      "address": "г. Вичуга, ул. Глуховская, д. 9/47",
+      "orgId": "uk_vichugskaya_upravlyayushchaya_kompaniya"
+    },
+    {
+      "id": "vch_glukhovskaya_22",
+      "street": "ул. Глуховская",
+      "streetName": "Глуховская",
+      "streetType": "ул.",
+      "number": "22",
+      "settlement": "Вичуга",
+      "address": "г. Вичуга, ул. Глуховская, д. 22",
+      "orgId": "uk_vichugskaya_upravlyayushchaya_kompaniya"
+    },
+    {
+      "id": "vch_glukhovskaya_24",
+      "street": "ул. Глуховская",
+      "streetName": "Глуховская",
+      "streetType": "ул.",
+      "number": "24",
+      "settlement": "Вичуга",
+      "address": "г. Вичуга, ул. Глуховская, д. 24",
+      "orgId": "uk_vichugskaya_upravlyayushchaya_kompaniya"
+    },
+    {
+      "id": "vch_glukhovskaya_25",
+      "street": "ул. Глуховская",
+      "streetName": "Глуховская",
+      "streetType": "ул.",
+      "number": "25",
+      "settlement": "Вичуга",
+      "address": "г. Вичуга, ул. Глуховская, д. 25",
+      "orgId": "uk_vichugskaya_upravlyayushchaya_kompaniya"
+    },
+    {
+      "id": "vch_glukhovskaya_27",
+      "street": "ул. Глуховская",
+      "streetName": "Глуховская",
+      "streetType": "ул.",
+      "number": "27",
+      "settlement": "Вичуга",
+      "address": "г. Вичуга, ул. Глуховская, д. 27",
+      "orgId": "uk_vichugskaya_upravlyayushchaya_kompaniya"
+    },
+    {
+      "id": "vch_gorokhovskaya_1",
+      "street": "ул. Гороховская",
+      "streetName": "Гороховская",
+      "streetType": "ул.",
+      "number": "1",
+      "settlement": "Вичуга",
+      "address": "г. Вичуга, ул. Гороховская, д. 1",
+      "orgId": "zhsk_mir"
+    },
+    {
+      "id": "vch_gorokhovskaya_3",
+      "street": "ул. Гороховская",
+      "streetName": "Гороховская",
+      "streetType": "ул.",
+      "number": "3",
+      "settlement": "Вичуга",
+      "address": "г. Вичуга, ул. Гороховская, д. 3",
+      "orgId": "uk_vichugskaya_upravlyayushchaya_kompaniya"
+    },
+    {
+      "id": "vch_dachnaya_3",
+      "street": "ул. Дачная",
+      "streetName": "Дачная",
+      "streetType": "ул.",
+      "number": "3",
+      "settlement": "Вичуга",
+      "address": "г. Вичуга, ул. Дачная, д. 3",
+      "orgId": "uk_vichugskaya_upravlyayushchaya_kompaniya"
+    },
+    {
+      "id": "vch_zhelyabova_5",
+      "street": "ул. Желябова",
+      "streetName": "Желябова",
+      "streetType": "ул.",
+      "number": "5",
+      "settlement": "Вичуга",
+      "address": "г. Вичуга, ул. Желябова, д. 5",
+      "orgId": "uk_zhru_2"
+    },
+    {
+      "id": "vch_kineshemskaya_40",
+      "street": "ул. Кинешемская",
+      "streetName": "Кинешемская",
+      "streetType": "ул.",
+      "number": "40",
+      "settlement": "Вичуга",
+      "address": "г. Вичуга, ул. Кинешемская, д. 40",
+      "orgId": "uk_zhilishchno_remontnyy_uchastok_1"
+    },
+    {
+      "id": "vch_kineshemskaya_43",
+      "street": "ул. Кинешемская",
+      "streetName": "Кинешемская",
+      "streetType": "ул.",
+      "number": "43",
+      "settlement": "Вичуга",
+      "address": "г. Вичуга, ул. Кинешемская, д. 43",
+      "orgId": "uk_zhilishchno_remontnyy_uchastok_1"
+    },
+    {
+      "id": "vch_kineshemskaya_66",
+      "street": "ул. Кинешемская",
+      "streetName": "Кинешемская",
+      "streetType": "ул.",
+      "number": "66",
+      "settlement": "Вичуга",
+      "address": "г. Вичуга, ул. Кинешемская, д. 66",
+      "orgId": "uk_zhilishchno_remontnyy_uchastok_1"
+    },
+    {
+      "id": "vch_kineshemskaya_68",
+      "street": "ул. Кинешемская",
+      "streetName": "Кинешемская",
+      "streetType": "ул.",
+      "number": "68",
+      "settlement": "Вичуга",
+      "address": "г. Вичуга, ул. Кинешемская, д. 68",
+      "orgId": "uk_zhilishchno_remontnyy_uchastok_1"
+    },
+    {
+      "id": "vch_kirpichnyy_zavod_2",
+      "street": "ул. Кирпичный завод",
+      "streetName": "Кирпичный завод",
+      "streetType": "ул.",
+      "number": "2",
+      "settlement": "Вичуга",
+      "address": "г. Вичуга, ул. Кирпичный завод, д. 2",
+      "orgId": "uk_vichugskaya_upravlyayushchaya_kompaniya"
+    },
+    {
+      "id": "vch_kirpichnyy_zavod_3",
+      "street": "ул. Кирпичный завод",
+      "streetName": "Кирпичный завод",
+      "streetType": "ул.",
+      "number": "3",
+      "settlement": "Вичуга",
+      "address": "г. Вичуга, ул. Кирпичный завод, д. 3",
+      "orgId": "uk_vichugskaya_upravlyayushchaya_kompaniya"
+    },
+    {
+      "id": "vch_korovina_3",
+      "street": "ул. Коровина",
+      "streetName": "Коровина",
+      "streetType": "ул.",
+      "number": "3",
+      "settlement": "Вичуга",
+      "address": "г. Вичуга, ул. Коровина, д. 3",
+      "orgId": "uk_zhilishchno_remontnyy_uchastok_1"
+    },
+    {
+      "id": "vch_korovina_3_liter_a",
+      "street": "ул. Коровина",
+      "streetName": "Коровина",
+      "streetType": "ул.",
+      "number": "3 Литер А",
+      "settlement": "Вичуга",
+      "address": "г. Вичуга, ул. Коровина, д. 3 Литер А",
+      "orgId": "uk_zhilishchno_remontnyy_uchastok_1"
+    },
+    {
+      "id": "vch_korovina_5",
+      "street": "ул. Коровина",
+      "streetName": "Коровина",
+      "streetType": "ул.",
+      "number": "5",
+      "settlement": "Вичуга",
+      "address": "г. Вичуга, ул. Коровина, д. 5",
+      "orgId": "uk_zhilishchno_remontnyy_uchastok_1"
+    },
+    {
+      "id": "vch_korovina_7",
+      "street": "ул. Коровина",
+      "streetName": "Коровина",
+      "streetType": "ул.",
+      "number": "7",
+      "settlement": "Вичуга",
+      "address": "г. Вичуга, ул. Коровина, д. 7",
+      "orgId": "uk_zhilishchno_remontnyy_uchastok_1"
+    },
+    {
+      "id": "vch_korovina_7a",
+      "street": "ул. Коровина",
+      "streetName": "Коровина",
+      "streetType": "ул.",
+      "number": "7А",
+      "settlement": "Вичуга",
+      "address": "г. Вичуга, ул. Коровина, д. 7А",
+      "orgId": "uk_zhilishchno_remontnyy_uchastok_1"
+    },
+    {
+      "id": "vch_korovina_9",
+      "street": "ул. Коровина",
+      "streetName": "Коровина",
+      "streetType": "ул.",
+      "number": "9",
+      "settlement": "Вичуга",
+      "address": "г. Вичуга, ул. Коровина, д. 9",
+      "orgId": "uk_zhilishchno_remontnyy_uchastok_1"
+    },
+    {
+      "id": "vch_korovina_11",
+      "street": "ул. Коровина",
+      "streetName": "Коровина",
+      "streetType": "ул.",
+      "number": "11",
+      "settlement": "Вичуга",
+      "address": "г. Вичуга, ул. Коровина, д. 11",
+      "orgId": "uk_zhilishchno_remontnyy_uchastok_1"
+    },
+    {
+      "id": "vch_korovina_13",
+      "street": "ул. Коровина",
+      "streetName": "Коровина",
+      "streetType": "ул.",
+      "number": "13",
+      "settlement": "Вичуга",
+      "address": "г. Вичуга, ул. Коровина, д. 13",
+      "orgId": "uk_zhilishchno_remontnyy_uchastok_1"
+    },
+    {
+      "id": "vch_korovina_17",
+      "street": "ул. Коровина",
+      "streetName": "Коровина",
+      "streetType": "ул.",
+      "number": "17",
+      "settlement": "Вичуга",
+      "address": "г. Вичуга, ул. Коровина, д. 17",
+      "orgId": "uk_zhilishchno_remontnyy_uchastok_1"
+    },
+    {
+      "id": "vch_korovina_19",
+      "street": "ул. Коровина",
+      "streetName": "Коровина",
+      "streetType": "ул.",
+      "number": "19",
+      "settlement": "Вичуга",
+      "address": "г. Вичуга, ул. Коровина, д. 19",
+      "orgId": "uk_zhilishchno_remontnyy_uchastok_1"
+    },
+    {
+      "id": "vch_korovina_21",
+      "street": "ул. Коровина",
+      "streetName": "Коровина",
+      "streetType": "ул.",
+      "number": "21",
+      "settlement": "Вичуга",
+      "address": "г. Вичуга, ул. Коровина, д. 21",
+      "orgId": "uk_zhilishchno_remontnyy_uchastok_1"
+    },
+    {
+      "id": "vch_korovina_23",
+      "street": "ул. Коровина",
+      "streetName": "Коровина",
+      "streetType": "ул.",
+      "number": "23",
+      "settlement": "Вичуга",
+      "address": "г. Вичуга, ул. Коровина, д. 23",
+      "orgId": "uk_zhilishchno_remontnyy_uchastok_1"
+    },
+    {
+      "id": "vch_korovina_25",
+      "street": "ул. Коровина",
+      "streetName": "Коровина",
+      "streetType": "ул.",
+      "number": "25",
+      "settlement": "Вичуга",
+      "address": "г. Вичуга, ул. Коровина, д. 25",
+      "orgId": "uk_zhilishchno_remontnyy_uchastok_1"
+    },
+    {
+      "id": "vch_korovina_26",
+      "street": "ул. Коровина",
+      "streetName": "Коровина",
+      "streetType": "ул.",
+      "number": "26",
+      "settlement": "Вичуга",
+      "address": "г. Вичуга, ул. Коровина, д. 26",
+      "orgId": "uk_zhilishchno_remontnyy_uchastok_1"
+    },
+    {
+      "id": "vch_krasinskaya_2_ya_6",
+      "street": "ул. Красинская 2-я",
+      "streetName": "Красинская 2-я",
+      "streetType": "ул.",
+      "number": "6",
+      "settlement": "Вичуга",
+      "address": "г. Вичуга, ул. Красинская 2-я, д. 6",
+      "orgId": "uk_zhru_2"
+    },
+    {
+      "id": "vch_krasinskaya_3_ya_2",
+      "street": "ул. Красинская 3-я",
+      "streetName": "Красинская 3-я",
+      "streetType": "ул.",
+      "number": "2",
+      "settlement": "Вичуга",
+      "address": "г. Вичуга, ул. Красинская 3-я, д. 2",
+      "orgId": "uk_zhru_2"
+    },
+    {
+      "id": "vch_leningradskaya_6",
+      "street": "ул. Ленинградская",
+      "streetName": "Ленинградская",
+      "streetType": "ул.",
+      "number": "6",
+      "settlement": "Вичуга",
+      "address": "г. Вичуга, ул. Ленинградская, д. 6",
+      "orgId": "uk_zhilishchno_remontnyy_uchastok_1"
+    },
+    {
+      "id": "vch_leningradskaya_14",
+      "street": "ул. Ленинградская",
+      "streetName": "Ленинградская",
+      "streetType": "ул.",
+      "number": "14",
+      "settlement": "Вичуга",
+      "address": "г. Вичуга, ул. Ленинградская, д. 14",
+      "orgId": "uk_zhilishchno_remontnyy_uchastok_1"
+    },
+    {
+      "id": "vch_leningradskaya_16",
+      "street": "ул. Ленинградская",
+      "streetName": "Ленинградская",
+      "streetType": "ул.",
+      "number": "16",
+      "settlement": "Вичуга",
+      "address": "г. Вичуга, ул. Ленинградская, д. 16",
+      "orgId": "uk_zhilishchno_remontnyy_uchastok_1"
+    },
+    {
+      "id": "vch_leningradskaya_18",
+      "street": "ул. Ленинградская",
+      "streetName": "Ленинградская",
+      "streetType": "ул.",
+      "number": "18",
+      "settlement": "Вичуга",
+      "address": "г. Вичуга, ул. Ленинградская, д. 18",
+      "orgId": "uk_zhilishchno_remontnyy_uchastok_1"
+    },
+    {
+      "id": "vch_leningradskaya_19b",
+      "street": "ул. Ленинградская",
+      "streetName": "Ленинградская",
+      "streetType": "ул.",
+      "number": "19Б",
+      "settlement": "Вичуга",
+      "address": "г. Вичуга, ул. Ленинградская, д. 19Б",
+      "orgId": "uk_zhilishchno_remontnyy_uchastok_1"
+    },
+    {
+      "id": "vch_leningradskaya_19v",
+      "street": "ул. Ленинградская",
+      "streetName": "Ленинградская",
+      "streetType": "ул.",
+      "number": "19В",
+      "settlement": "Вичуга",
+      "address": "г. Вичуга, ул. Ленинградская, д. 19В",
+      "orgId": "uk_zhilishchno_remontnyy_uchastok_1"
+    },
+    {
+      "id": "vch_leningradskaya_20",
+      "street": "ул. Ленинградская",
+      "streetName": "Ленинградская",
+      "streetType": "ул.",
+      "number": "20",
+      "settlement": "Вичуга",
+      "address": "г. Вичуга, ул. Ленинградская, д. 20",
+      "orgId": "uk_zhilishchno_remontnyy_uchastok_1"
+    },
+    {
+      "id": "vch_leningradskaya_22",
+      "street": "ул. Ленинградская",
+      "streetName": "Ленинградская",
+      "streetType": "ул.",
+      "number": "22",
+      "settlement": "Вичуга",
+      "address": "г. Вичуга, ул. Ленинградская, д. 22",
+      "orgId": "uk_zhilishchno_remontnyy_uchastok_1"
+    },
+    {
+      "id": "vch_leningradskaya_24",
+      "street": "ул. Ленинградская",
+      "streetName": "Ленинградская",
+      "streetType": "ул.",
+      "number": "24",
+      "settlement": "Вичуга",
+      "address": "г. Вичуга, ул. Ленинградская, д. 24",
+      "orgId": "uk_zhilishchno_remontnyy_uchastok_1"
+    },
+    {
+      "id": "vch_leningradskaya_27",
+      "street": "ул. Ленинградская",
+      "streetName": "Ленинградская",
+      "streetType": "ул.",
+      "number": "27",
+      "settlement": "Вичуга",
+      "address": "г. Вичуга, ул. Ленинградская, д. 27",
+      "orgId": "uk_vichugskaya_upravlyayushchaya_kompaniya"
+    },
+    {
+      "id": "vch_leningradskaya_29",
+      "street": "ул. Ленинградская",
+      "streetName": "Ленинградская",
+      "streetType": "ул.",
+      "number": "29",
+      "settlement": "Вичуга",
+      "address": "г. Вичуга, ул. Ленинградская, д. 29",
+      "orgId": "uk_vichugskaya_upravlyayushchaya_kompaniya"
+    },
+    {
+      "id": "vch_leningradskaya_33_12",
+      "street": "ул. Ленинградская",
+      "streetName": "Ленинградская",
+      "streetType": "ул.",
+      "number": "33/12",
+      "settlement": "Вичуга",
+      "address": "г. Вичуга, ул. Ленинградская, д. 33/12",
+      "orgId": "uk_vichugskaya_upravlyayushchaya_kompaniya"
+    },
+    {
+      "id": "vch_leningradskaya_36",
+      "street": "ул. Ленинградская",
+      "streetName": "Ленинградская",
+      "streetType": "ул.",
+      "number": "36",
+      "settlement": "Вичуга",
+      "address": "г. Вичуга, ул. Ленинградская, д. 36",
+      "orgId": "uk_zhilishchno_remontnyy_uchastok_1"
+    },
+    {
+      "id": "vch_leningradskaya_40a",
+      "street": "ул. Ленинградская",
+      "streetName": "Ленинградская",
+      "streetType": "ул.",
+      "number": "40А",
+      "settlement": "Вичуга",
+      "address": "г. Вичуга, ул. Ленинградская, д. 40А",
+      "orgId": "zhsk_progress"
+    },
+    {
+      "id": "vch_leningradskaya_50",
+      "street": "ул. Ленинградская",
+      "streetName": "Ленинградская",
+      "streetType": "ул.",
+      "number": "50",
+      "settlement": "Вичуга",
+      "address": "г. Вичуга, ул. Ленинградская, д. 50",
+      "orgId": "zhsk_mir_2"
+    },
+    {
+      "id": "vch_leningradskaya_50a",
+      "street": "ул. Ленинградская",
+      "streetName": "Ленинградская",
+      "streetType": "ул.",
+      "number": "50А",
+      "settlement": "Вичуга",
+      "address": "г. Вичуга, ул. Ленинградская, д. 50А",
+      "orgId": "uk_vichugskaya_upravlyayushchaya_kompaniya"
+    },
+    {
+      "id": "vch_leningradskaya_52",
+      "street": "ул. Ленинградская",
+      "streetName": "Ленинградская",
+      "streetType": "ул.",
+      "number": "52",
+      "settlement": "Вичуга",
+      "address": "г. Вичуга, ул. Ленинградская, д. 52",
+      "orgId": "tszh_upravdom"
+    },
+    {
+      "id": "vch_leningradskaya_54",
+      "street": "ул. Ленинградская",
+      "streetName": "Ленинградская",
+      "streetType": "ул.",
+      "number": "54",
+      "settlement": "Вичуга",
+      "address": "г. Вичуга, ул. Ленинградская, д. 54",
+      "orgId": "uk_vichugskaya_upravlyayushchaya_kompaniya"
+    },
+    {
+      "id": "vch_leningradskaya_56",
+      "street": "ул. Ленинградская",
+      "streetName": "Ленинградская",
+      "streetType": "ул.",
+      "number": "56",
+      "settlement": "Вичуга",
+      "address": "г. Вичуга, ул. Ленинградская, д. 56",
+      "orgId": "uk_vichugskaya_upravlyayushchaya_kompaniya"
+    },
+    {
+      "id": "vch_leningradskaya_58",
+      "street": "ул. Ленинградская",
+      "streetName": "Ленинградская",
+      "streetType": "ул.",
+      "number": "58",
+      "settlement": "Вичуга",
+      "address": "г. Вичуга, ул. Ленинградская, д. 58",
+      "orgId": "uk_vichugskaya_upravlyayushchaya_kompaniya"
+    },
+    {
+      "id": "vch_leningradskaya_60",
+      "street": "ул. Ленинградская",
+      "streetName": "Ленинградская",
+      "streetType": "ул.",
+      "number": "60",
+      "settlement": "Вичуга",
+      "address": "г. Вичуга, ул. Ленинградская, д. 60",
+      "orgId": "uk_vichugskaya_upravlyayushchaya_kompaniya"
+    },
+    {
+      "id": "vch_leningradskaya_62",
+      "street": "ул. Ленинградская",
+      "streetName": "Ленинградская",
+      "streetType": "ул.",
+      "number": "62",
+      "settlement": "Вичуга",
+      "address": "г. Вичуга, ул. Ленинградская, д. 62",
+      "orgId": "uk_vichugskaya_upravlyayushchaya_kompaniya"
+    },
+    {
+      "id": "vch_leningradskaya_64",
+      "street": "ул. Ленинградская",
+      "streetName": "Ленинградская",
+      "streetType": "ул.",
+      "number": "64",
+      "settlement": "Вичуга",
+      "address": "г. Вичуга, ул. Ленинградская, д. 64",
+      "orgId": "uk_vichugskaya_upravlyayushchaya_kompaniya"
+    },
+    {
+      "id": "vch_leningradskaya_66",
+      "street": "ул. Ленинградская",
+      "streetName": "Ленинградская",
+      "streetType": "ул.",
+      "number": "66",
+      "settlement": "Вичуга",
+      "address": "г. Вичуга, ул. Ленинградская, д. 66",
+      "orgId": "uk_vichugskaya_upravlyayushchaya_kompaniya"
+    },
+    {
+      "id": "vch_leningradskaya_68",
+      "street": "ул. Ленинградская",
+      "streetName": "Ленинградская",
+      "streetType": "ул.",
+      "number": "68",
+      "settlement": "Вичуга",
+      "address": "г. Вичуга, ул. Ленинградская, д. 68",
+      "orgId": "uk_vichugskaya_upravlyayushchaya_kompaniya"
+    },
+    {
+      "id": "vch_leningradskaya_77",
+      "street": "ул. Ленинградская",
+      "streetName": "Ленинградская",
+      "streetType": "ул.",
+      "number": "77",
+      "settlement": "Вичуга",
+      "address": "г. Вичуга, ул. Ленинградская, д. 77",
+      "orgId": "uk_vichugskaya_upravlyayushchaya_kompaniya"
+    },
+    {
+      "id": "vch_leningradskaya_79",
+      "street": "ул. Ленинградская",
+      "streetName": "Ленинградская",
+      "streetType": "ул.",
+      "number": "79",
+      "settlement": "Вичуга",
+      "address": "г. Вичуга, ул. Ленинградская, д. 79",
+      "orgId": "uk_vichugskaya_upravlyayushchaya_kompaniya"
+    },
+    {
+      "id": "vch_leningradskaya_82",
+      "street": "ул. Ленинградская",
+      "streetName": "Ленинградская",
+      "streetType": "ул.",
+      "number": "82",
+      "settlement": "Вичуга",
+      "address": "г. Вичуга, ул. Ленинградская, д. 82",
+      "orgId": "uk_vichugskaya_upravlyayushchaya_kompaniya"
+    },
+    {
+      "id": "vch_leninskaya_4",
+      "street": "ул. Ленинская",
+      "streetName": "Ленинская",
+      "streetType": "ул.",
+      "number": "4",
+      "settlement": "Вичуга",
+      "address": "г. Вичуга, ул. Ленинская, д. 4",
+      "orgId": "uk_zhru_2"
+    },
+    {
+      "id": "vch_leninskaya_8_2",
+      "street": "ул. Ленинская",
+      "streetName": "Ленинская",
+      "streetType": "ул.",
+      "number": "8/2",
+      "settlement": "Вичуга",
+      "address": "г. Вичуга, ул. Ленинская, д. 8/2",
+      "orgId": "uk_zhru_2"
+    },
+    {
+      "id": "vch_leninskaya_10",
+      "street": "ул. Ленинская",
+      "streetName": "Ленинская",
+      "streetType": "ул.",
+      "number": "10",
+      "settlement": "Вичуга",
+      "address": "г. Вичуга, ул. Ленинская, д. 10",
+      "orgId": "uk_zhru_2"
+    },
+    {
+      "id": "vch_leninskaya_16",
+      "street": "ул. Ленинская",
+      "streetName": "Ленинская",
+      "streetType": "ул.",
+      "number": "16",
+      "settlement": "Вичуга",
+      "address": "г. Вичуга, ул. Ленинская, д. 16",
+      "orgId": "uk_zhru_2"
+    },
+    {
+      "id": "vch_leninskaya_23",
+      "street": "ул. Ленинская",
+      "streetName": "Ленинская",
+      "streetType": "ул.",
+      "number": "23",
+      "settlement": "Вичуга",
+      "address": "г. Вичуга, ул. Ленинская, д. 23",
+      "orgId": "uk_zhru_2"
+    },
+    {
+      "id": "vch_leninskaya_25",
+      "street": "ул. Ленинская",
+      "streetName": "Ленинская",
+      "streetType": "ул.",
+      "number": "25",
+      "settlement": "Вичуга",
+      "address": "г. Вичуга, ул. Ленинская, д. 25",
+      "orgId": "uk_zhru_2"
+    },
+    {
+      "id": "vch_leninskaya_27",
+      "street": "ул. Ленинская",
+      "streetName": "Ленинская",
+      "streetType": "ул.",
+      "number": "27",
+      "settlement": "Вичуга",
+      "address": "г. Вичуга, ул. Ленинская, д. 27",
+      "orgId": "uk_zhru_2"
+    },
+    {
+      "id": "vch_leninskaya_28",
+      "street": "ул. Ленинская",
+      "streetName": "Ленинская",
+      "streetType": "ул.",
+      "number": "28",
+      "settlement": "Вичуга",
+      "address": "г. Вичуга, ул. Ленинская, д. 28",
+      "orgId": "uk_zhru_2"
+    },
+    {
+      "id": "vch_leninskaya_30",
+      "street": "ул. Ленинская",
+      "streetName": "Ленинская",
+      "streetType": "ул.",
+      "number": "30",
+      "settlement": "Вичуга",
+      "address": "г. Вичуга, ул. Ленинская, д. 30",
+      "orgId": "uk_zhru_2"
+    },
+    {
+      "id": "vch_liteynaya_10_13",
+      "street": "ул. Литейная",
+      "streetName": "Литейная",
+      "streetType": "ул.",
+      "number": "10/13",
+      "settlement": "Вичуга",
+      "address": "г. Вичуга, ул. Литейная, д. 10/13",
+      "orgId": "uk_zhilishchno_remontnyy_uchastok_1"
+    },
+    {
+      "id": "vch_liteynaya_11",
+      "street": "ул. Литейная",
+      "streetName": "Литейная",
+      "streetType": "ул.",
+      "number": "11",
+      "settlement": "Вичуга",
+      "address": "г. Вичуга, ул. Литейная, д. 11",
+      "orgId": "uk_zhilishchno_remontnyy_uchastok_1"
+    },
+    {
+      "id": "vch_lomonosova_1_ya_33",
+      "street": "ул. Ломоносова 1-я",
+      "streetName": "Ломоносова 1-я",
+      "streetType": "ул.",
+      "number": "33",
+      "settlement": "Вичуга",
+      "address": "г. Вичуга, ул. Ломоносова 1-я, д. 33",
+      "orgId": "uk_zhru_2"
+    },
+    {
+      "id": "vch_lomonosova_1_ya_50",
+      "street": "ул. Ломоносова 1-я",
+      "streetName": "Ломоносова 1-я",
+      "streetType": "ул.",
+      "number": "50",
+      "settlement": "Вичуга",
+      "address": "г. Вичуга, ул. Ломоносова 1-я, д. 50",
+      "orgId": "uk_zhru_2"
+    },
+    {
+      "id": "vch_lomonosova_1_ya_51",
+      "street": "ул. Ломоносова 1-я",
+      "streetName": "Ломоносова 1-я",
+      "streetType": "ул.",
+      "number": "51",
+      "settlement": "Вичуга",
+      "address": "г. Вичуга, ул. Ломоносова 1-я, д. 51",
+      "orgId": "uk_zhru_2"
+    },
+    {
+      "id": "vch_lomonosova_1_ya_52",
+      "street": "ул. Ломоносова 1-я",
+      "streetName": "Ломоносова 1-я",
+      "streetType": "ул.",
+      "number": "52",
+      "settlement": "Вичуга",
+      "address": "г. Вичуга, ул. Ломоносова 1-я, д. 52",
+      "orgId": "uk_zhru_2"
+    },
+    {
+      "id": "vch_maevka_4",
+      "street": "ул. Маевка",
+      "streetName": "Маевка",
+      "streetType": "ул.",
+      "number": "4",
+      "settlement": "Вичуга",
+      "address": "г. Вичуга, ул. Маевка, д. 4",
+      "orgId": "uk_zhilishchno_remontnyy_uchastok_1"
+    },
+    {
+      "id": "vch_maevka_10",
+      "street": "ул. Маевка",
+      "streetName": "Маевка",
+      "streetType": "ул.",
+      "number": "10",
+      "settlement": "Вичуга",
+      "address": "г. Вичуга, ул. Маевка, д. 10",
+      "orgId": "uk_zhilishchno_remontnyy_uchastok_1"
+    },
+    {
+      "id": "vch_maevka_12",
+      "street": "ул. Маевка",
+      "streetName": "Маевка",
+      "streetType": "ул.",
+      "number": "12",
+      "settlement": "Вичуга",
+      "address": "г. Вичуга, ул. Маевка, д. 12",
+      "orgId": "uk_zhilishchno_remontnyy_uchastok_1"
+    },
+    {
+      "id": "vch_metallistov_7",
+      "street": "ул. Металлистов",
+      "streetName": "Металлистов",
+      "streetType": "ул.",
+      "number": "7",
+      "settlement": "Вичуга",
+      "address": "г. Вичуга, ул. Металлистов, д. 7",
+      "orgId": "uk_zhilishchno_remontnyy_uchastok_1"
+    },
+    {
+      "id": "vch_mira_26",
+      "street": "ул. Мира",
+      "streetName": "Мира",
+      "streetType": "ул.",
+      "number": "26",
+      "settlement": "Вичуга",
+      "address": "г. Вичуга, ул. Мира, д. 26",
+      "orgId": "uk_vichugskaya_upravlyayushchaya_kompaniya"
+    },
+    {
+      "id": "vch_moskovskaya_1",
+      "street": "ул. Московская",
+      "streetName": "Московская",
+      "streetType": "ул.",
+      "number": "1",
+      "settlement": "Вичуга",
+      "address": "г. Вичуга, ул. Московская, д. 1",
+      "orgId": "uk_stoun"
+    },
+    {
+      "id": "vch_moskovskaya_2",
+      "street": "ул. Московская",
+      "streetName": "Московская",
+      "streetType": "ул.",
+      "number": "2",
+      "settlement": "Вичуга",
+      "address": "г. Вичуга, ул. Московская, д. 2",
+      "orgId": "uk_stoun"
+    },
+    {
+      "id": "vch_moskovskaya_3",
+      "street": "ул. Московская",
+      "streetName": "Московская",
+      "streetType": "ул.",
+      "number": "3",
+      "settlement": "Вичуга",
+      "address": "г. Вичуга, ул. Московская, д. 3",
+      "orgId": "uk_stoun"
+    },
+    {
+      "id": "vch_moskovskaya_4",
+      "street": "ул. Московская",
+      "streetName": "Московская",
+      "streetType": "ул.",
+      "number": "4",
+      "settlement": "Вичуга",
+      "address": "г. Вичуга, ул. Московская, д. 4",
+      "orgId": "uk_stoun"
+    },
+    {
+      "id": "vch_moskovskaya_5",
+      "street": "ул. Московская",
+      "streetName": "Московская",
+      "streetType": "ул.",
+      "number": "5",
+      "settlement": "Вичуга",
+      "address": "г. Вичуга, ул. Московская, д. 5",
+      "orgId": "uk_stoun"
+    },
+    {
+      "id": "vch_moskovskaya_6",
+      "street": "ул. Московская",
+      "streetName": "Московская",
+      "streetType": "ул.",
+      "number": "6",
+      "settlement": "Вичуга",
+      "address": "г. Вичуга, ул. Московская, д. 6",
+      "orgId": "uk_stoun"
+    },
+    {
+      "id": "vch_moskovskaya_7",
+      "street": "ул. Московская",
+      "streetName": "Московская",
+      "streetType": "ул.",
+      "number": "7",
+      "settlement": "Вичуга",
+      "address": "г. Вичуга, ул. Московская, д. 7",
+      "orgId": "uk_stoun"
+    },
+    {
+      "id": "vch_moskovskaya_8",
+      "street": "ул. Московская",
+      "streetName": "Московская",
+      "streetType": "ул.",
+      "number": "8",
+      "settlement": "Вичуга",
+      "address": "г. Вичуга, ул. Московская, д. 8",
+      "orgId": "uk_stoun"
+    },
+    {
+      "id": "vch_moskovskaya_9",
+      "street": "ул. Московская",
+      "streetName": "Московская",
+      "streetType": "ул.",
+      "number": "9",
+      "settlement": "Вичуга",
+      "address": "г. Вичуга, ул. Московская, д. 9",
+      "orgId": "uk_stoun"
+    },
+    {
+      "id": "vch_moskovskaya_10",
+      "street": "ул. Московская",
+      "streetName": "Московская",
+      "streetType": "ул.",
+      "number": "10",
+      "settlement": "Вичуга",
+      "address": "г. Вичуга, ул. Московская, д. 10",
+      "orgId": "uk_stoun"
+    },
+    {
+      "id": "vch_moskovskaya_11",
+      "street": "ул. Московская",
+      "streetName": "Московская",
+      "streetType": "ул.",
+      "number": "11",
+      "settlement": "Вичуга",
+      "address": "г. Вичуга, ул. Московская, д. 11",
+      "orgId": "uk_stoun"
+    },
+    {
+      "id": "vch_moskovskaya_12",
+      "street": "ул. Московская",
+      "streetName": "Московская",
+      "streetType": "ул.",
+      "number": "12",
+      "settlement": "Вичуга",
+      "address": "г. Вичуга, ул. Московская, д. 12",
+      "orgId": "uk_stoun"
+    },
+    {
+      "id": "vch_moskovskaya_13",
+      "street": "ул. Московская",
+      "streetName": "Московская",
+      "streetType": "ул.",
+      "number": "13",
+      "settlement": "Вичуга",
+      "address": "г. Вичуга, ул. Московская, д. 13",
+      "orgId": "tszh_moskovskiy",
+      "alsoOrgIds": [
+        "uk_stoun"
+      ]
+    },
+    {
+      "id": "vch_moskovskaya_14",
+      "street": "ул. Московская",
+      "streetName": "Московская",
+      "streetType": "ул.",
+      "number": "14",
+      "settlement": "Вичуга",
+      "address": "г. Вичуга, ул. Московская, д. 14",
+      "orgId": "uk_stoun"
+    },
+    {
+      "id": "vch_moskovskaya_15",
+      "street": "ул. Московская",
+      "streetName": "Московская",
+      "streetType": "ул.",
+      "number": "15",
+      "settlement": "Вичуга",
+      "address": "г. Вичуга, ул. Московская, д. 15",
+      "orgId": "uk_stoun"
+    },
+    {
+      "id": "vch_n_p_kulikovoy_2g",
+      "street": "ул. Н.П.Куликовой",
+      "streetName": "Н.П.Куликовой",
+      "streetType": "ул.",
+      "number": "2Г",
+      "settlement": "Вичуга",
+      "address": "г. Вичуга, ул. Н.П.Куликовой, д. 2Г",
+      "orgId": "uk_vichugskaya_upravlyayushchaya_kompaniya"
+    },
+    {
+      "id": "vch_pokrovskogo_3b",
+      "street": "ул. Покровского",
+      "streetName": "Покровского",
+      "streetType": "ул.",
+      "number": "3Б",
+      "settlement": "Вичуга",
+      "address": "г. Вичуга, ул. Покровского, д. 3Б",
+      "orgId": "tszh_noginets_3"
+    },
+    {
+      "id": "vch_pokrovskogo_4",
+      "street": "ул. Покровского",
+      "streetName": "Покровского",
+      "streetType": "ул.",
+      "number": "4",
+      "settlement": "Вичуга",
+      "address": "г. Вичуга, ул. Покровского, д. 4",
+      "orgId": "uk_vichugskaya_upravlyayushchaya_kompaniya"
+    },
+    {
+      "id": "vch_pokrovskogo_10",
+      "street": "ул. Покровского",
+      "streetName": "Покровского",
+      "streetType": "ул.",
+      "number": "10",
+      "settlement": "Вичуга",
+      "address": "г. Вичуга, ул. Покровского, д. 10",
+      "orgId": "uk_zhilishchno_remontnyy_uchastok_1"
+    },
+    {
+      "id": "vch_pokrovskogo_12",
+      "street": "ул. Покровского",
+      "streetName": "Покровского",
+      "streetType": "ул.",
+      "number": "12",
+      "settlement": "Вичуга",
+      "address": "г. Вичуга, ул. Покровского, д. 12",
+      "orgId": "uk_zhilishchno_remontnyy_uchastok_1"
+    },
+    {
+      "id": "vch_pokrovskogo_14",
+      "street": "ул. Покровского",
+      "streetName": "Покровского",
+      "streetType": "ул.",
+      "number": "14",
+      "settlement": "Вичуга",
+      "address": "г. Вичуга, ул. Покровского, д. 14",
+      "orgId": "uk_zhilishchno_remontnyy_uchastok_1"
+    },
+    {
+      "id": "vch_pokrovskogo_16",
+      "street": "ул. Покровского",
+      "streetName": "Покровского",
+      "streetType": "ул.",
+      "number": "16",
+      "settlement": "Вичуга",
+      "address": "г. Вичуга, ул. Покровского, д. 16",
+      "orgId": "uk_zhilishchno_remontnyy_uchastok_1"
+    },
+    {
+      "id": "vch_pokrovskogo_17",
+      "street": "ул. Покровского",
+      "streetName": "Покровского",
+      "streetType": "ул.",
+      "number": "17",
+      "settlement": "Вичуга",
+      "address": "г. Вичуга, ул. Покровского, д. 17",
+      "orgId": "uk_vichugskaya_upravlyayushchaya_kompaniya"
+    },
+    {
+      "id": "vch_pokrovskogo_18",
+      "street": "ул. Покровского",
+      "streetName": "Покровского",
+      "streetType": "ул.",
+      "number": "18",
+      "settlement": "Вичуга",
+      "address": "г. Вичуга, ул. Покровского, д. 18",
+      "orgId": "uk_zhilishchno_remontnyy_uchastok_1"
+    },
+    {
+      "id": "vch_pokrovskogo_19",
+      "street": "ул. Покровского",
+      "streetName": "Покровского",
+      "streetType": "ул.",
+      "number": "19",
+      "settlement": "Вичуга",
+      "address": "г. Вичуга, ул. Покровского, д. 19",
+      "orgId": "uk_zhilishchno_remontnyy_uchastok_1"
+    },
+    {
+      "id": "vch_pokrovskogo_20",
+      "street": "ул. Покровского",
+      "streetName": "Покровского",
+      "streetType": "ул.",
+      "number": "20",
+      "settlement": "Вичуга",
+      "address": "г. Вичуга, ул. Покровского, д. 20",
+      "orgId": "uk_zhilishchno_remontnyy_uchastok_1"
+    },
+    {
+      "id": "vch_pokrovskogo_21",
+      "street": "ул. Покровского",
+      "streetName": "Покровского",
+      "streetType": "ул.",
+      "number": "21",
+      "settlement": "Вичуга",
+      "address": "г. Вичуга, ул. Покровского, д. 21",
+      "orgId": "uk_zhilishchno_remontnyy_uchastok_1"
+    },
+    {
+      "id": "vch_pokrovskogo_21a",
+      "street": "ул. Покровского",
+      "streetName": "Покровского",
+      "streetType": "ул.",
+      "number": "21А",
+      "settlement": "Вичуга",
+      "address": "г. Вичуга, ул. Покровского, д. 21А",
+      "orgId": "uk_vichugskaya_upravlyayushchaya_kompaniya"
+    },
+    {
+      "id": "vch_pokrovskogo_22",
+      "street": "ул. Покровского",
+      "streetName": "Покровского",
+      "streetType": "ул.",
+      "number": "22",
+      "settlement": "Вичуга",
+      "address": "г. Вичуга, ул. Покровского, д. 22",
+      "orgId": "uk_zhilishchno_remontnyy_uchastok_1"
+    },
+    {
+      "id": "vch_pokrovskogo_22a",
+      "street": "ул. Покровского",
+      "streetName": "Покровского",
+      "streetType": "ул.",
+      "number": "22А",
+      "settlement": "Вичуга",
+      "address": "г. Вичуга, ул. Покровского, д. 22А",
+      "orgId": "uk_zhilishchno_remontnyy_uchastok_1"
+    },
+    {
+      "id": "vch_pokrovskogo_26",
+      "street": "ул. Покровского",
+      "streetName": "Покровского",
+      "streetType": "ул.",
+      "number": "26",
+      "settlement": "Вичуга",
+      "address": "г. Вичуга, ул. Покровского, д. 26",
+      "orgId": "uk_zhilishchno_remontnyy_uchastok_1"
+    },
+    {
+      "id": "vch_pokrovskogo_26a",
+      "street": "ул. Покровского",
+      "streetName": "Покровского",
+      "streetType": "ул.",
+      "number": "26А",
+      "settlement": "Вичуга",
+      "address": "г. Вичуга, ул. Покровского, д. 26А",
+      "orgId": "uk_zhilishchno_remontnyy_uchastok_1"
+    },
+    {
+      "id": "vch_pokrovskogo_27",
+      "street": "ул. Покровского",
+      "streetName": "Покровского",
+      "streetType": "ул.",
+      "number": "27",
+      "settlement": "Вичуга",
+      "address": "г. Вичуга, ул. Покровского, д. 27",
+      "orgId": "uk_zhilishchno_remontnyy_uchastok_1"
+    },
+    {
+      "id": "vch_pugachevskaya_24",
+      "street": "ул. Пугачевская",
+      "streetName": "Пугачевская",
+      "streetType": "ул.",
+      "number": "24",
+      "settlement": "Вичуга",
+      "address": "г. Вичуга, ул. Пугачевская, д. 24",
+      "orgId": "uk_zhilishchno_remontnyy_uchastok_1"
+    },
+    {
+      "id": "vch_pyatnitskiy_4",
+      "street": "Пятницкий пер.",
+      "streetName": "Пятницкий",
+      "streetType": "пер.",
+      "number": "4",
+      "settlement": "Вичуга",
+      "address": "г. Вичуга, Пятницкий пер., д. 4",
+      "orgId": "uk_vichugskaya_upravlyayushchaya_kompaniya"
+    },
+    {
+      "id": "vch_pyatnitskiy_13",
+      "street": "Пятницкий пер.",
+      "streetName": "Пятницкий",
+      "streetType": "пер.",
+      "number": "13",
+      "settlement": "Вичуга",
+      "address": "г. Вичуга, Пятницкий пер., д. 13",
+      "orgId": "tszh_starateli"
+    },
+    {
+      "id": "vch_pyatnitskiy_14",
+      "street": "Пятницкий пер.",
+      "streetName": "Пятницкий",
+      "streetType": "пер.",
+      "number": "14",
+      "settlement": "Вичуга",
+      "address": "г. Вичуга, Пятницкий пер., д. 14",
+      "orgId": "uk_vichugskaya_upravlyayushchaya_kompaniya"
+    },
+    {
+      "id": "vch_sverdlovskaya_1_ya_1",
+      "street": "ул. Свердловская 1-я",
+      "streetName": "Свердловская 1-я",
+      "streetType": "ул.",
+      "number": "1",
+      "settlement": "Вичуга",
+      "address": "г. Вичуга, ул. Свердловская 1-я, д. 1",
+      "orgId": "uk_zhru_2"
+    },
+    {
+      "id": "vch_sverdlovskaya_1_ya_2",
+      "street": "ул. Свердловская 1-я",
+      "streetName": "Свердловская 1-я",
+      "streetType": "ул.",
+      "number": "2",
+      "settlement": "Вичуга",
+      "address": "г. Вичуга, ул. Свердловская 1-я, д. 2",
+      "orgId": "uk_zhru_2"
+    },
+    {
+      "id": "vch_sverdlovskaya_1_ya_3",
+      "street": "ул. Свердловская 1-я",
+      "streetName": "Свердловская 1-я",
+      "streetType": "ул.",
+      "number": "3",
+      "settlement": "Вичуга",
+      "address": "г. Вичуга, ул. Свердловская 1-я, д. 3",
+      "orgId": "uk_zhru_2"
+    },
+    {
+      "id": "vch_sverdlovskaya_2_ya_4",
+      "street": "ул. Свердловская 2-я",
+      "streetName": "Свердловская 2-я",
+      "streetType": "ул.",
+      "number": "4",
+      "settlement": "Вичуга",
+      "address": "г. Вичуга, ул. Свердловская 2-я, д. 4",
+      "orgId": "uk_zhru_2"
+    },
+    {
+      "id": "vch_sverdlovskaya_2_ya_6",
+      "street": "ул. Свердловская 2-я",
+      "streetName": "Свердловская 2-я",
+      "streetType": "ул.",
+      "number": "6",
+      "settlement": "Вичуга",
+      "address": "г. Вичуга, ул. Свердловская 2-я, д. 6",
+      "orgId": "uk_zhru_2"
+    },
+    {
+      "id": "vch_sverdlovskaya_2_ya_8",
+      "street": "ул. Свердловская 2-я",
+      "streetName": "Свердловская 2-я",
+      "streetType": "ул.",
+      "number": "8",
+      "settlement": "Вичуга",
+      "address": "г. Вичуга, ул. Свердловская 2-я, д. 8",
+      "orgId": "uk_zhru_2"
+    },
+    {
+      "id": "vch_sibirskaya_38",
+      "street": "ул. Сибирская",
+      "streetName": "Сибирская",
+      "streetType": "ул.",
+      "number": "38",
+      "settlement": "Вичуга",
+      "address": "г. Вичуга, ул. Сибирская, д. 38",
+      "orgId": "uk_zhru_2"
+    },
+    {
+      "id": "vch_sibirskaya_44",
+      "street": "ул. Сибирская",
+      "streetName": "Сибирская",
+      "streetType": "ул.",
+      "number": "44",
+      "settlement": "Вичуга",
+      "address": "г. Вичуга, ул. Сибирская, д. 44",
+      "orgId": "uk_zhru_2"
+    },
+    {
+      "id": "vch_sibirskaya_46",
+      "street": "ул. Сибирская",
+      "streetName": "Сибирская",
+      "streetType": "ул.",
+      "number": "46",
+      "settlement": "Вичуга",
+      "address": "г. Вичуга, ул. Сибирская, д. 46",
+      "orgId": "uk_zhru_2"
+    },
+    {
+      "id": "vch_sibirskaya_46a",
+      "street": "ул. Сибирская",
+      "streetName": "Сибирская",
+      "streetType": "ул.",
+      "number": "46А",
+      "settlement": "Вичуга",
+      "address": "г. Вичуга, ул. Сибирская, д. 46А",
+      "orgId": "uk_zhru_2"
+    },
+    {
+      "id": "vch_sovetskaya_4",
+      "street": "ул. Советская",
+      "streetName": "Советская",
+      "streetType": "ул.",
+      "number": "4",
+      "settlement": "Вичуга",
+      "address": "г. Вичуга, ул. Советская, д. 4",
+      "orgId": "uk_zhru_2"
+    },
+    {
+      "id": "vch_sovetskaya_8",
+      "street": "ул. Советская",
+      "streetName": "Советская",
+      "streetType": "ул.",
+      "number": "8",
+      "settlement": "Вичуга",
+      "address": "г. Вичуга, ул. Советская, д. 8",
+      "orgId": "uk_zhru_2"
+    },
+    {
+      "id": "vch_sovetskaya_10",
+      "street": "ул. Советская",
+      "streetName": "Советская",
+      "streetType": "ул.",
+      "number": "10",
+      "settlement": "Вичуга",
+      "address": "г. Вичуга, ул. Советская, д. 10",
+      "orgId": "uk_zhru_2"
+    },
+    {
+      "id": "vch_sovetskaya_30",
+      "street": "ул. Советская",
+      "streetName": "Советская",
+      "streetType": "ул.",
+      "number": "30",
+      "settlement": "Вичуга",
+      "address": "г. Вичуга, ул. Советская, д. 30",
+      "orgId": "uk_zhru_2"
+    },
+    {
+      "id": "vch_sovetskaya_37",
+      "street": "ул. Советская",
+      "streetName": "Советская",
+      "streetType": "ул.",
+      "number": "37",
+      "settlement": "Вичуга",
+      "address": "г. Вичуга, ул. Советская, д. 37",
+      "orgId": "uk_zhru_2"
+    },
+    {
+      "id": "vch_sovetskaya_39",
+      "street": "ул. Советская",
+      "streetName": "Советская",
+      "streetType": "ул.",
+      "number": "39",
+      "settlement": "Вичуга",
+      "address": "г. Вичуга, ул. Советская, д. 39",
+      "orgId": "uk_zhru_2"
+    },
+    {
+      "id": "vch_sovetskaya_41",
+      "street": "ул. Советская",
+      "streetName": "Советская",
+      "streetType": "ул.",
+      "number": "41",
+      "settlement": "Вичуга",
+      "address": "г. Вичуга, ул. Советская, д. 41",
+      "orgId": "uk_zhru_2"
+    },
+    {
+      "id": "vch_sovetskaya_41a",
+      "street": "ул. Советская",
+      "streetName": "Советская",
+      "streetType": "ул.",
+      "number": "41А",
+      "settlement": "Вичуга",
+      "address": "г. Вичуга, ул. Советская, д. 41А",
+      "orgId": "uk_zhru_2"
+    },
+    {
+      "id": "vch_sovetskaya_43",
+      "street": "ул. Советская",
+      "streetName": "Советская",
+      "streetType": "ул.",
+      "number": "43",
+      "settlement": "Вичуга",
+      "address": "г. Вичуга, ул. Советская, д. 43",
+      "orgId": "uk_vichugskaya_upravlyayushchaya_kompaniya"
+    },
+    {
+      "id": "vch_tezinskaya_1_ya_1",
+      "street": "ул. Тезинская 1-я",
+      "streetName": "Тезинская 1-я",
+      "streetType": "ул.",
+      "number": "1",
+      "settlement": "Вичуга",
+      "address": "г. Вичуга, ул. Тезинская 1-я, д. 1",
+      "orgId": "uk_vichugskaya_upravlyayushchaya_kompaniya"
+    },
+    {
+      "id": "vch_tezinskaya_1_ya_3",
+      "street": "ул. Тезинская 1-я",
+      "streetName": "Тезинская 1-я",
+      "streetType": "ул.",
+      "number": "3",
+      "settlement": "Вичуга",
+      "address": "г. Вичуга, ул. Тезинская 1-я, д. 3",
+      "orgId": "uk_vichugskaya_upravlyayushchaya_kompaniya"
+    },
+    {
+      "id": "vch_ulyanovskaya_12",
+      "street": "ул. Ульяновская",
+      "streetName": "Ульяновская",
+      "streetType": "ул.",
+      "number": "12",
+      "settlement": "Вичуга",
+      "address": "г. Вичуга, ул. Ульяновская, д. 12",
+      "orgId": "uk_vichugskaya_upravlyayushchaya_kompaniya"
+    },
+    {
+      "id": "vch_ulyanovskaya_15",
+      "street": "ул. Ульяновская",
+      "streetName": "Ульяновская",
+      "streetType": "ул.",
+      "number": "15",
+      "settlement": "Вичуга",
+      "address": "г. Вичуга, ул. Ульяновская, д. 15",
+      "orgId": "tszh_elit"
+    },
+    {
+      "id": "vch_ulyanovskaya_18",
+      "street": "ул. Ульяновская",
+      "streetName": "Ульяновская",
+      "streetType": "ул.",
+      "number": "18",
+      "settlement": "Вичуга",
+      "address": "г. Вичуга, ул. Ульяновская, д. 18",
+      "orgId": "uk_vichugskaya_upravlyayushchaya_kompaniya"
+    },
+    {
+      "id": "vch_ulyanovskaya_22_2",
+      "street": "ул. Ульяновская",
+      "streetName": "Ульяновская",
+      "streetType": "ул.",
+      "number": "22/2",
+      "settlement": "Вичуга",
+      "address": "г. Вичуга, ул. Ульяновская, д. 22/2",
+      "orgId": "uk_zhilishchno_remontnyy_uchastok_1"
+    },
+    {
+      "id": "vch_ulyanovskaya_24_1",
+      "street": "ул. Ульяновская",
+      "streetName": "Ульяновская",
+      "streetType": "ул.",
+      "number": "24/1",
+      "settlement": "Вичуга",
+      "address": "г. Вичуга, ул. Ульяновская, д. 24/1",
+      "orgId": "uk_zhilishchno_remontnyy_uchastok_1"
+    },
+    {
+      "id": "vch_ulyanovskaya_26_5",
+      "street": "ул. Ульяновская",
+      "streetName": "Ульяновская",
+      "streetType": "ул.",
+      "number": "26/5",
+      "settlement": "Вичуга",
+      "address": "г. Вичуга, ул. Ульяновская, д. 26/5",
+      "orgId": "uk_zhilishchno_remontnyy_uchastok_1"
+    },
+    {
+      "id": "vch_ulyanovskaya_30",
+      "street": "ул. Ульяновская",
+      "streetName": "Ульяновская",
+      "streetType": "ул.",
+      "number": "30",
+      "settlement": "Вичуга",
+      "address": "г. Вичуга, ул. Ульяновская, д. 30",
+      "orgId": "zhsk_mayak"
+    },
+    {
+      "id": "vch_ulyanovskaya_32",
+      "street": "ул. Ульяновская",
+      "streetName": "Ульяновская",
+      "streetType": "ул.",
+      "number": "32",
+      "settlement": "Вичуга",
+      "address": "г. Вичуга, ул. Ульяновская, д. 32",
+      "orgId": "uk_zhilishchno_remontnyy_uchastok_1"
+    },
+    {
+      "id": "vch_ulyanovskaya_34",
+      "street": "ул. Ульяновская",
+      "streetName": "Ульяновская",
+      "streetType": "ул.",
+      "number": "34",
+      "settlement": "Вичуга",
+      "address": "г. Вичуга, ул. Ульяновская, д. 34",
+      "orgId": "uk_zhilishchno_remontnyy_uchastok_1"
+    },
+    {
+      "id": "vch_ulyanovskaya_36",
+      "street": "ул. Ульяновская",
+      "streetName": "Ульяновская",
+      "streetType": "ул.",
+      "number": "36",
+      "settlement": "Вичуга",
+      "address": "г. Вичуга, ул. Ульяновская, д. 36",
+      "orgId": "zhsk_zarya_2"
+    },
+    {
+      "id": "vch_ulyanovskaya_38",
+      "street": "ул. Ульяновская",
+      "streetName": "Ульяновская",
+      "streetType": "ул.",
+      "number": "38",
+      "settlement": "Вичуга",
+      "address": "г. Вичуга, ул. Ульяновская, д. 38",
+      "orgId": "uk_zhilishchno_remontnyy_uchastok_1"
+    },
+    {
+      "id": "vch_ulyanovskaya_40",
+      "street": "ул. Ульяновская",
+      "streetName": "Ульяновская",
+      "streetType": "ул.",
+      "number": "40",
+      "settlement": "Вичуга",
+      "address": "г. Вичуга, ул. Ульяновская, д. 40",
+      "orgId": "uk_zhilishchno_remontnyy_uchastok_1"
+    },
+    {
+      "id": "vch_uritskogo_16",
+      "street": "ул. Урицкого",
+      "streetName": "Урицкого",
+      "streetType": "ул.",
+      "number": "16",
+      "settlement": "Вичуга",
+      "address": "г. Вичуга, ул. Урицкого, д. 16",
+      "orgId": "uk_vichugskaya_upravlyayushchaya_kompaniya"
+    },
+    {
+      "id": "vch_uritskogo_20",
+      "street": "ул. Урицкого",
+      "streetName": "Урицкого",
+      "streetType": "ул.",
+      "number": "20",
+      "settlement": "Вичуга",
+      "address": "г. Вичуга, ул. Урицкого, д. 20",
+      "orgId": "zhsk_noginets_5"
+    },
+    {
+      "id": "vch_uritskogo_20a",
+      "street": "ул. Урицкого",
+      "streetName": "Урицкого",
+      "streetType": "ул.",
+      "number": "20А",
+      "settlement": "Вичуга",
+      "address": "г. Вичуга, ул. Урицкого, д. 20А",
+      "orgId": "uk_vichugskaya_upravlyayushchaya_kompaniya"
+    },
+    {
+      "id": "vch_filippenkovskaya_4",
+      "street": "ул. Филиппенковская",
+      "streetName": "Филиппенковская",
+      "streetType": "ул.",
+      "number": "4",
+      "settlement": "Вичуга",
+      "address": "г. Вичуга, ул. Филиппенковская, д. 4",
+      "orgId": "uk_zhilishchno_remontnyy_uchastok_1"
+    },
+    {
+      "id": "vch_filippenkovskaya_6",
+      "street": "ул. Филиппенковская",
+      "streetName": "Филиппенковская",
+      "streetType": "ул.",
+      "number": "6",
+      "settlement": "Вичуга",
+      "address": "г. Вичуга, ул. Филиппенковская, д. 6",
+      "orgId": "uk_zhilishchno_remontnyy_uchastok_1"
+    },
+    {
+      "id": "vch_filippenkovskaya_8",
+      "street": "ул. Филиппенковская",
+      "streetName": "Филиппенковская",
+      "streetType": "ул.",
+      "number": "8",
+      "settlement": "Вичуга",
+      "address": "г. Вичуга, ул. Филиппенковская, д. 8",
+      "orgId": "uk_zhilishchno_remontnyy_uchastok_1"
+    },
+    {
+      "id": "vch_filippenkovskaya_10",
+      "street": "ул. Филиппенковская",
+      "streetName": "Филиппенковская",
+      "streetType": "ул.",
+      "number": "10",
+      "settlement": "Вичуга",
+      "address": "г. Вичуга, ул. Филиппенковская, д. 10",
+      "orgId": "zhsk_mayak_3"
+    },
+    {
+      "id": "vch_filippenkovskaya_12",
+      "street": "ул. Филиппенковская",
+      "streetName": "Филиппенковская",
+      "streetType": "ул.",
+      "number": "12",
+      "settlement": "Вичуга",
+      "address": "г. Вичуга, ул. Филиппенковская, д. 12",
+      "orgId": "tszh_zarya_1"
+    },
+    {
+      "id": "vch_tsentralnaya_1",
+      "street": "ул. Центральная",
+      "streetName": "Центральная",
+      "streetType": "ул.",
+      "number": "1",
+      "settlement": "Вичуга",
+      "address": "г. Вичуга, ул. Центральная, д. 1",
+      "orgId": "uk_zhilishchno_remontnyy_uchastok_1"
+    },
+    {
+      "id": "vch_tsentralnaya_2",
+      "street": "ул. Центральная",
+      "streetName": "Центральная",
+      "streetType": "ул.",
+      "number": "2",
+      "settlement": "Вичуга",
+      "address": "г. Вичуга, ул. Центральная, д. 2",
+      "orgId": "uk_zhilishchno_remontnyy_uchastok_1"
+    },
+    {
+      "id": "vch_tsentralnaya_3",
+      "street": "ул. Центральная",
+      "streetName": "Центральная",
+      "streetType": "ул.",
+      "number": "3",
+      "settlement": "Вичуга",
+      "address": "г. Вичуга, ул. Центральная, д. 3",
+      "orgId": "uk_zhilishchno_remontnyy_uchastok_1"
+    },
+    {
+      "id": "vch_kamenka_50_let_sssr_1",
+      "street": "ул. 50 лет СССР",
+      "streetName": "50 лет СССР",
+      "streetType": "ул.",
+      "number": "1",
+      "settlement": "Каменка",
+      "address": "пос. Каменка (Вичугский район), ул. 50 лет СССР, д. 1",
+      "orgId": "uk_stoun"
+    },
+    {
+      "id": "vch_kamenka_50_let_sssr_4",
+      "street": "ул. 50 лет СССР",
+      "streetName": "50 лет СССР",
+      "streetType": "ул.",
+      "number": "4",
+      "settlement": "Каменка",
+      "address": "пос. Каменка (Вичугский район), ул. 50 лет СССР, д. 4",
+      "orgId": "uk_vichugskaya_upravlyayushchaya_kompaniya"
+    },
+    {
+      "id": "vch_kamenka_nikolaeva_4",
+      "street": "ул. Николаева",
+      "streetName": "Николаева",
+      "streetType": "ул.",
+      "number": "4",
+      "settlement": "Каменка",
+      "address": "пос. Каменка (Вичугский район), ул. Николаева, д. 4",
+      "orgId": "uk_vichugskaya_upravlyayushchaya_kompaniya"
+    },
+    {
+      "id": "vch_kamenka_nikolaeva_5",
+      "street": "ул. Николаева",
+      "streetName": "Николаева",
+      "streetType": "ул.",
+      "number": "5",
+      "settlement": "Каменка",
+      "address": "пос. Каменка (Вичугский район), ул. Николаева, д. 5",
+      "orgId": "uk_vichugskaya_upravlyayushchaya_kompaniya"
+    },
+    {
+      "id": "vch_kamenka_polevaya_1_ya_35",
+      "street": "ул. Полевая 1-я",
+      "streetName": "Полевая 1-я",
+      "streetType": "ул.",
+      "number": "35",
+      "settlement": "Каменка",
+      "address": "пос. Каменка (Вичугский район), ул. Полевая 1-я, д. 35",
+      "orgId": "uk_vichugskaya_upravlyayushchaya_kompaniya"
+    }
+  ],
+  "warnings": [
+    "Дом «ул. Московская, 13, Вичуга» указан за несколькими организациями: ТСЖ «Московский», УК «Стоун». Основной выбрана «ТСЖ «Московский»»",
+    "«ТСЖ «Ногинец-3»»: в карточке 2 дом(ов), в списке – 1",
+    "У организации «ЖСК «Ногинец-4»» нет ни одного дома в списке (адрес в карточке: Ивановская обл., г. Вичуга, ул. Богдана Хмельницкого)",
+    "Служба «intercom_service»: нет телефона – в ответах будет только пояснение"
+  ]
+}

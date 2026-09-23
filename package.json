@@ -1,0 +1,31 @@
+{
+  "name": "esli-chto",
+  "version": "1.0.0",
+  "private": true,
+  "description": "«Если что» – мини-приложение и чат-бот в MAX: кто отвечает за неисправность в доме и квартире, куда звонить и что делать",
+  "license": "MIT",
+  "author": "Команда проекта «Если что»",
+  "workspaces": [
+    "packages/*",
+    "apps/*"
+  ],
+  "engines": {
+    "node": ">=20.19.0"
+  },
+  "scripts": {
+    "dev:web": "npm run dev -w @esli-chto/webapp",
+    "dev:bot": "npm run dev -w @esli-chto/bot",
+    "build": "npm run build -w @esli-chto/webapp && npm run build -w @esli-chto/bot",
+    "test": "npm run test -w @esli-chto/core && npm run test -w @esli-chto/webapp && npm run test -w @esli-chto/bot",
+    "test:integration": "npm run test:integration -w @esli-chto/bot",
+    "typecheck": "tsc -p packages/core --noEmit && tsc -p apps/webapp --noEmit && tsc -p apps/bot --noEmit",
+    "start": "node apps/bot/dist/server.mjs",
+    "data:import": "node scripts/import-houses.mjs data/vichuga",
+    "docs": "node scripts/gen-docs.mjs",
+    "docs:icons": "node scripts/export-icons.mjs",
+    "scenes:detect": "node tools/detect-hotspots.mjs"
+  },
+  "overrides": {
+    "jsdom": "27.4.0"
+  }
+}

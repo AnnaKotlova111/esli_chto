@@ -1,0 +1,40 @@
+# Запуск всего решения одной командой:   docker compose up --build
+# Значения берутся из файла .env (создайте его из .env.example). Без токена поднимается только мини-приложение.
+services:
+  app:
+    build: .
+    image: esli-chto:local
+    restart: unless-stopped
+    environment:
+      BOT_TOKEN: ${BOT_TOKEN:-}
+      BOT_USERNAME: ${BOT_USERNAME:-}
+      PUBLIC_URL: ${PUBLIC_URL:-}
+      WEBHOOK_SECRET: ${WEBHOOK_SECRET:-}
+      RATE_LIMIT_PER_MINUTE: ${RATE_LIMIT_PER_MINUTE:-20}
+    ports:
+      - "${APP_PORT:-8080}:8080"
+    read_only: true
+    security_opt:
+      - no-new-privileges:true
+
+  # HTTPS с автоматическим сертификатом (нужен домен, указывающий на сервер).
+  # Включается профилем:   docker compose --profile https up -d --build
+  caddy:
+    image: caddy:2-alpine
+    profiles: ["https"]
+    restart: unless-stopped
+    depends_on:
+      - app
+    environment:
+      DOMAIN: ${DOMAIN:-localhost}
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./deploy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+
+volumes:
+  caddy_data:
+  caddy_config:
