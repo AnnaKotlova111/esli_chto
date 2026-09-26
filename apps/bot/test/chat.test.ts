@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { ALL_ELEMENTS, HOUSES, collectOutcomes, encodeDeepLink, getHouse, localizeOutcome, resolve } from '@esli-chto/core';
 import {
-  addressReply, askAddressReply, cbProblem, elementReply, emergencyReply, help, houseChosenReply, housesListReply, parseCallback,
+  addressReply, askAddressReply, cbProblem, elementReply, emergencyReply, help, houseChosenReply, houseFromStart, housesListReply, parseCallback,
   problemReply, searchReply, startReply, stepForChat, welcome, type ChatReply,
 } from '../src/chat';
 
@@ -223,6 +223,16 @@ describe('callback и диплинки', () => {
     expect(r.text).toContain('Крыша');
     expect(startReply(undefined, uk).text).toContain('Если что');
     expect(startReply('garbage;;', uk).text).toContain('Если что');
+  });
+
+  it('диплинк только с домом показывает этот дом, а не прежний', () => {
+    const r = startReply(encodeDeepLink({ houseId: 'vch_pyatnitskiy_13' }), uk);
+    assertValidReply(r);
+    expect(r.text).toContain('Ваш дом');
+    expect(r.text).toContain('ТСЖ «Старатели»');
+    expect(houseFromStart('h_vch_pyatnitskiy_13')).toBe('vch_pyatnitskiy_13');
+    expect(houseFromStart('h_hacked-p_roof__leak')).toBeUndefined();
+    expect(houseFromStart(undefined)).toBeUndefined();
   });
 });
 

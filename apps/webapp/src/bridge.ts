@@ -102,8 +102,14 @@ export const backButton = {
 export const closingConfirmation = (on: boolean) =>
   safe(() => (on ? wa()?.enableClosingConfirmation?.() : wa()?.disableClosingConfirmation?.()));
 
-/** Хранилище: DeviceStorage в MAX (мобильные), иначе localStorage; любые сбои не критичны. */
-export const storage = {
+/**
+ * Префикс ключей хранилища. Вне MAX данные лежат в localStorage, а он общий для всего домена:
+ * на GitHub Pages (<аккаунт>.github.io) его делят все сайты аккаунта. Префикс не даёт другим
+ * проектам прочитать или затереть данные жителя (ФИО, телефон) по общим именам вроде «user».
+ */
+const KEY_PREFIX = 'esli_chto:';
+
+const rawStorage = {
   async get(key: string): Promise<string | null> {
     try {
       const v = await withTimeout(deviceStorage()?.getItem(key));
@@ -144,6 +150,18 @@ export const storage = {
     } catch {
       /* ignore */
     }
+  },
+};
+
+/** Хранилище: DeviceStorage в MAX (мобильные), иначе localStorage; любые сбои не критичны. */
+export const storage = {
+  get: (key: string) => rawStorage.get(KEY_PREFIX + key),
+  set: (key: string, value: string) => rawStorage.set(KEY_PREFIX + key, value),
+  remove: (key: string) => rawStorage.remove(KEY_PREFIX + key),
+  /** Ключи без префикса, как их сохраняли версии до 26.09.2026, – только для однократного переноса. */
+  legacy: {
+    get: (key: string) => rawStorage.get(key),
+    remove: (key: string) => rawStorage.remove(key),
   },
 };
 

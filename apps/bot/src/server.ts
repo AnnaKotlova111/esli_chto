@@ -6,8 +6,8 @@ import { Bot, Keyboard, type Context } from '@maxhub/max-bot-api';
 import { ALL_ELEMENTS, APP_META, DEFAULT_HOUSE_ID, getHouse, HOUSES } from '@esli-chto/core';
 import { maxFetch } from './tls';
 import {
-  addressReply, askAddressReply, elementReply, emergencyReply, help, houseChosenReply, housesListReply, parseCallback, problemReply,
-  searchReply, startReply, welcome,
+  addressReply, askAddressReply, elementReply, emergencyReply, help, houseChosenReply, houseFromStart, housesListReply, parseCallback,
+  problemReply, searchReply, startReply, welcome,
   type ChatButton, type ChatReply,
 } from './chat';
 
@@ -36,6 +36,9 @@ const WEBAPP_DIST = resolve(env('WEBAPP_DIST') ?? join(process.cwd(), 'apps/weba
 const RATE_LIMIT_PER_MINUTE = Math.max(1, Number(env('RATE_LIMIT_PER_MINUTE') ?? 20) || 20);
 /** Только для тестов: адрес имитации MAX API. В продакшене не задавать. */
 const MAX_API_BASE_URL = env('MAX_API_BASE_URL');
+/** Пауза перед повторным подключением к MAX: 5 с, затем вдвое больше, но не больше минуты. */
+const RETRY_BASE_MS = 5_000;
+const RETRY_MAX_MS = 60_000;
 /** Ник бота для кнопок открытия мини-приложения (иначе берётся из /me). */
 let botUsername = env('BOT_USERNAME');
 
@@ -68,7 +71,6 @@ const allow = (userId: number | undefined): boolean => {
   if (hits.size > 5000) hits.delete(hits.keys().next().value as number);
   return true;
 };
-/** /forget: удалить всё, что бот хранит о пользователе (выбранный дом и счётчик запросов). */
 /** Пользователи, от которых бот ждёт адрес дома (после /house или кнопки «Сменить дом») */
 const awaitingAddress = new Set<number>();
 const expectAddress = (userId: number | undefined, on: boolean) => {
@@ -77,6 +79,7 @@ const expectAddress = (userId: number | undefined, on: boolean) => {
   else awaitingAddress.delete(userId);
   if (awaitingAddress.size > 5000) awaitingAddress.delete(awaitingAddress.values().next().value as number);
 };
+/** /forget: удалить всё, что бот хранит о пользователе (выбранный дом, счётчик запросов, ожидание адреса). */
 const forget = (userId: number | undefined) => {
   if (userId === undefined) return;
   houseByUser.delete(userId);
@@ -154,7 +157,14 @@ function createBot(token: string): Bot {
   });
 
   bot.on('bot_started', async (ctx) => {
-    await send(ctx, startReply(ctx.startPayload, houseOf(userIdOf(ctx))));
+    const uid = userIdOf(ctx);
+    // дом из диплинка становится домом пользователя – следующие ответы придут с телефонами его организации
+    const linkHouse = houseFromStart(ctx.startPayload);
+    if (linkHouse) {
+      remember(uid, linkHouse);
+      expectAddress(uid, false);
+    }
+    await send(ctx, startReply(ctx.startPayload, houseOf(uid)));
   });
 
   bot.command('start', async (ctx) => {
@@ -281,21 +291,51 @@ function serveStatic(req: IncomingMessage, res: ServerResponse): void {
 
 async function main() {
   let bot: Bot | undefined;
-  let mode: 'disabled' | 'polling' | 'webhook' = 'disabled';
+  /** error – MAX Bot API недоступен, сервер повторяет подключение; мини-приложение при этом работает. */
+  let mode: 'disabled' | 'connecting' | 'polling' | 'webhook' | 'error' = 'disabled';
   let webhookHandler: ((req: IncomingMessage, res: ServerResponse) => void) | undefined;
+  let retryTimer: NodeJS.Timeout | undefined;
+  let stopping = false;
 
   if (BOT_TOKEN) {
     bot = createBot(BOT_TOKEN);
-    try {
-      const info = await bot.api.getMyInfo();
-      botUsername = botUsername ?? (info as { username?: string | null }).username ?? undefined;
-      log('info', 'bot identity', { username: botUsername });
-    } catch (e) {
-      log('error', 'cannot reach MAX Bot API (check BOT_TOKEN and network)', String(e));
-    }
+    mode = 'connecting';
   } else {
     log('warn', 'BOT_TOKEN не задан: запущено только мини-приложение (бот отключён)');
   }
+
+  /**
+   * Подключение к MAX. Сбой API при старте (сеть, 5xx, неверный токен) не роняет процесс:
+   * мини-приложение продолжает работать, /healthz показывает bot: "error", подключение повторяется.
+   */
+  const connect = async (b: Bot, attempt = 1): Promise<void> => {
+    const retry = (e: unknown) => {
+      if (stopping) return;
+      mode = 'error';
+      const delay = Math.min(RETRY_MAX_MS, RETRY_BASE_MS * 2 ** (attempt - 1));
+      log('error', 'MAX Bot API недоступен (проверьте BOT_TOKEN и сеть), повтор подключения', { err: String(e), attempt, retryInSec: delay / 1000 });
+      retryTimer = setTimeout(() => void connect(b, attempt + 1), delay);
+    };
+    try {
+      if (!botUsername) {
+        const info = await b.api.getMyInfo();
+        botUsername = (info as { username?: string | null }).username ?? undefined;
+        log('info', 'bot identity', { username: botUsername });
+      }
+      if (PUBLIC_URL) {
+        webhookHandler = await b.createWebhook({ domain: PUBLIC_URL, path: WEBHOOK_PATH, secret: WEBHOOK_SECRET });
+        mode = 'webhook';
+        log('info', 'webhook mode', { url: `${PUBLIC_URL}${WEBHOOK_PATH}` });
+      } else {
+        mode = 'polling';
+        log('info', 'long polling mode (только для разработки)');
+        // start() отклоняется только при сбое на старте; ошибки во время опроса библиотека повторяет сама
+        void b.start().catch(retry);
+      }
+    } catch (e) {
+      retry(e);
+    }
+  };
 
   const server = createServer((req, res) => {
     const path = (req.url ?? '/').split('?')[0];
@@ -329,18 +369,14 @@ async function main() {
     if (PUBLIC_URL) {
       if (!env('WEBHOOK_SECRET')) log('info', 'WEBHOOK_SECRET не задан: секрет сгенерирован при запуске');
       if (!PUBLIC_URL.startsWith('https://')) log('warn', 'PUBLIC_URL должен быть https:// – MAX принимает вебхуки только по HTTPS');
-      webhookHandler = await bot.createWebhook({ domain: PUBLIC_URL, path: WEBHOOK_PATH, secret: WEBHOOK_SECRET });
-      mode = 'webhook';
-      log('info', 'webhook mode', { url: `${PUBLIC_URL}${WEBHOOK_PATH}` });
-    } else {
-      mode = 'polling';
-      void bot.start().catch((e) => log('error', 'polling stopped', String(e)));
-      log('info', 'long polling mode (только для разработки)');
     }
+    await connect(bot);
   }
 
   const stop = async (signal: string) => {
     log('info', 'shutting down', { signal });
+    stopping = true;
+    clearTimeout(retryTimer);
     try {
       if (bot) mode === 'webhook' ? await bot.stopWebhook() : bot.stopPolling();
     } catch {

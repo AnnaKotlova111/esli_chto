@@ -22,7 +22,6 @@
     "start": "node apps/bot/dist/server.mjs",
     "data:import": "node scripts/import-houses.mjs data/vichuga",
     "docs": "node scripts/gen-docs.mjs",
-    "docs:icons": "node scripts/export-icons.mjs",
     "scenes:detect": "node tools/detect-hotspots.mjs"
   },
   "overrides": {

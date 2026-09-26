@@ -40,6 +40,7 @@ const PARTY_MARK: Record<PartyId, string> = {
   housing_inspection: '📋', police: '👮', telecom: '📡', emergency112: '🆘',
 };
 
+// Для города, подключённого с тестовыми данными (meta.json: "demo": true), – явная пометка по п. 10 ограничений ТЗ.
 const DEMO_NOTE = 'Демо-данные: организации и телефоны вымышлены, реальны только 112, 104 и 102.';
 const dateRu = (iso: string) => iso.split('-').reverse().join('.');
 const DATA_NOTE = `Контакты – из открытых данных на ${dateRu(CITY.updatedAt)}; если номер не отвечает, сверьтесь с квитанцией.`;
@@ -359,11 +360,20 @@ export function problemReply(problemId: string, answers: number[], house: HouseP
   };
 }
 
+/** Дом из диплинка, если он есть в справочнике: сервер запоминает его как дом пользователя. */
+export function houseFromStart(payload: string | undefined | null): string | undefined {
+  const { houseId } = decodeDeepLink(payload ?? undefined);
+  return houseId && isKnownHouse(houseId) ? houseId : undefined;
+}
+
 /** Старт по диплинку: /start с параметром или событие bot_started с payload. */
 export function startReply(payload: string | undefined | null, house: HouseProfile): ChatReply {
   const link = decodeDeepLink(payload ?? undefined);
-  const target = getHouse(link.houseId ?? house.id);
+  const linkHouse = houseFromStart(payload);
+  const target = getHouse(linkHouse ?? house.id);
   if (link.problemId) return problemReply(link.problemId, [], target);
   if (link.elementId) return elementReply(link.elementId, target);
+  // в ссылке только дом – показываем его карточку, а не прежний дом пользователя
+  if (linkHouse) return houseChosenReply(target);
   return welcome(house);
 }

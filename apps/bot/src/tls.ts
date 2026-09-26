@@ -9,6 +9,12 @@ import russianRootCa from '../../../deploy/russian_trusted_root_ca.pem';
 const CA = [...rootCertificates, russianRootCa];
 
 /**
+ * Предел ожидания ответа MAX API. Больше, чем держит соединение long polling (30 с по умолчанию),
+ * но не даёт обработчику зависнуть навсегда, если API перестал отвечать.
+ */
+const TIMEOUT_MS = Math.max(1_000, Number(process.env.MAX_API_TIMEOUT_MS) || 60_000);
+
+/**
  * fetch для Bot API MAX: доверяет стандартным корневым сертификатам и корневому сертификату Минцифры.
  * Подключается только к клиенту бота (clientOptions.fetch), остальной трафик процесса не затрагивается.
  */
@@ -39,6 +45,8 @@ export const maxFetch: typeof globalThis.fetch = (input, init) =>
       },
     );
     req.on('error', reject);
+    // TypeError – как у встроенного fetch при сетевом сбое: библиотека бота повторяет такие запросы опроса
+    req.setTimeout(TIMEOUT_MS, () => req.destroy(new TypeError(`MAX API не ответил за ${TIMEOUT_MS / 1000} с`)));
     const signal = init?.signal;
     if (signal) {
       if (signal.aborted) return req.destroy(signal.reason ?? new DOMException('Aborted', 'AbortError'));

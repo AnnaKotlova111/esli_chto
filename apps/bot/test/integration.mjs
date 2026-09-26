@@ -3,7 +3,8 @@
  * Поднимаем имитацию MAX Bot API, запускаем собранный сервер и прогоняем полный цикл
  * «входящее событие → HTTP-запросы бота к API» в двух режимах: long polling и вебхук.
  * Проверяется, что реально уходит в API: тексты, клавиатуры, кнопка мини-приложения с диплинком,
- * подтверждение нажатий, молчание в группах, ограничение частоты и команда /forget.
+ * подтверждение нажатий, молчание в группах, ограничение частоты и команда /forget,
+ * а также устойчивость: недоступный при старте API и зависший запрос не роняют сервер.
  *
  * Запуск: npm run build && npm run test:integration
  */
@@ -26,8 +27,8 @@ const readBody = (req) =>
   });
 
 /** Имитация MAX Bot API: копит отправленные сообщения, отдаёт очередь событий для long polling. */
-function createMock(port) {
-  const state = { queue: [], sent: [], answered: [], subscriptions: [], commandsSet: false, marker: 0 };
+function createMock(port, { failSubscribe = 0, hangMessages = 0 } = {}) {
+  const state = { queue: [], sent: [], answered: [], subscriptions: [], commandsSet: false, marker: 0, failSubscribe, hangMessages };
   const server = createServer(async (req, res) => {
     const url = new URL(req.url, 'http://x');
     const json = (obj, code = 200) => res.writeHead(code, { 'content-type': 'application/json' }).end(JSON.stringify(obj));
@@ -39,6 +40,11 @@ function createMock(port) {
     }
     if (url.pathname === '/subscriptions' && req.method === 'GET') return json({ subscriptions: state.subscriptions });
     if (url.pathname === '/subscriptions' && req.method === 'POST') {
+      // имитация временной недоступности API при подписке на вебхук
+      if (state.failSubscribe > 0) {
+        state.failSubscribe -= 1;
+        return json({ code: 'internal', message: 'temporarily unavailable' }, 503);
+      }
       state.subscriptions.push(await readBody(req));
       return json({ success: true });
     }
@@ -52,6 +58,11 @@ function createMock(port) {
     }
     if (url.pathname === '/messages' && req.method === 'POST') {
       const body = await readBody(req);
+      // имитация зависшего API: запрос принят, ответа нет
+      if (state.hangMessages > 0) {
+        state.hangMessages -= 1;
+        return;
+      }
       state.sent.push({ query: Object.fromEntries(url.searchParams), body });
       return json({ message: { body: { mid: `m${state.sent.length}`, seq: state.sent.length, text: body.text }, timestamp: Date.now(), recipient: {} } });
     }
@@ -120,6 +131,9 @@ async function scenario(mock, deliver) {
   assert.match(first.body.text, /УК «Жилищно-ремонтный участок №1»/);
   assert.match(first.body.text, /открытых данных/);
   assert.ok(buttons(first).some((b) => b.type === 'open_app' && b.web_app === 'esli_chto_test_bot' && b.payload === 'h_vch_korovina_11-p_roof__leak'), 'кнопка «Подробнее в приложении» с диплинком');
+  // дом из диплинка запомнился: следующий ответ – с организацией этого дома
+  const remembered = await next(tap(42, 'p:lamp_entrance__burned:'), 'ответ после диплинка');
+  assert.match(remembered.body.text, /УК «Жилищно-ремонтный участок №1»/, 'дом из диплинка стал домом пользователя');
 
   // 2. Свободный текст → варианты кнопками
   const found = await next(text(42, 'течёт кран'), 'ответ на свободный текст');
@@ -250,6 +264,39 @@ async function runWebhook() {
   }
 }
 
+/** API недоступен при старте, затем зависает на отправке: сервер не падает, мини-приложение работает, бот восстанавливается. */
+async function runResilience() {
+  const mock = createMock(18086, { failSubscribe: 1, hangMessages: 1 });
+  await mock.start();
+  const SECRET = 'integration_secret_456';
+  const app = startApp(18087, { MAX_API_BASE_URL: 'http://localhost:18086', PUBLIC_URL: 'https://esli-chto.example.org', WEBHOOK_SECRET: SECRET, MAX_API_TIMEOUT_MS: '1500' });
+  const health = async () => (await (await fetch('http://localhost:18087/healthz')).json()).bot;
+  try {
+    await waitFor(() => app.out.log.includes('повтор подключения'), 'сбой подписки на вебхук записан в журнал');
+    assert.equal(await health(), 'error', 'в /healthz видно, что бот не подключён');
+    const page = await fetch('http://localhost:18087/');
+    assert.match(await page.text(), /<title>Если что<\/title>/, 'мини-приложение работает, пока API недоступен');
+    await waitFor(() => app.out.log.includes('webhook mode'), 'повторная подписка после паузы', 12000);
+    assert.equal(await health(), 'webhook');
+
+    // первый ответ бота зависает в API – по тайм-ауту обработчик завершается и пользователь получает сообщение об ошибке
+    const r = await fetch('http://localhost:18087/max/webhook', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json', 'x-max-bot-api-secret': SECRET },
+      body: JSON.stringify(text(50, 'течёт кран')),
+    });
+    assert.equal(r.status, 200);
+    await waitFor(() => mock.state.sent.some((m) => /Что-то пошло не так/.test(m.body.text)), 'ответ после тайм-аута API', 6000);
+    console.log('OK устойчивость: сбой API при старте и зависший запрос не роняют сервер');
+  } catch (e) {
+    console.error(app.out.log);
+    throw e;
+  } finally {
+    app.child.kill('SIGTERM');
+    mock.stop();
+  }
+}
+
 async function runWithoutToken() {
   const app = startApp(18085, { BOT_TOKEN: '' });
   try {
@@ -270,6 +317,7 @@ async function runWithoutToken() {
 try {
   await runPolling();
   await runWebhook();
+  await runResilience();
   await runWithoutToken();
   console.log('Интеграционная проверка пройдена.');
 } catch (e) {

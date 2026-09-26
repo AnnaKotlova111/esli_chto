@@ -10,7 +10,9 @@ services:
       BOT_USERNAME: ${BOT_USERNAME:-}
       PUBLIC_URL: ${PUBLIC_URL:-}
       WEBHOOK_SECRET: ${WEBHOOK_SECRET:-}
+      WEBHOOK_PATH: ${WEBHOOK_PATH:-}
       RATE_LIMIT_PER_MINUTE: ${RATE_LIMIT_PER_MINUTE:-20}
+      MAX_API_TIMEOUT_MS: ${MAX_API_TIMEOUT_MS:-}
     ports:
       - "${APP_PORT:-8080}:8080"
     read_only: true

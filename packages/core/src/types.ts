@@ -155,7 +155,7 @@ export interface HouseProfile {
    */
   featuresKnown: boolean;
   contacts: Partial<Record<PartyId, Contact>>;
-  /** Демонстрационные (вымышленные) данные – такие профили явно помечаются в интерфейсе */
+  /** Демонстрационные (вымышленные) данные – такие профили явно помечаются в интерфейсе. Задаётся в meta.json города. */
   isDemo: boolean;
   /** Дата актуальности данных профиля */
   updatedAt: string;

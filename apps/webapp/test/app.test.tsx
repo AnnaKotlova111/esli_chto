@@ -14,10 +14,16 @@ let host: HTMLElement | undefined;
 const text = (n: Element | null | undefined) => n?.textContent?.replace(/\u2060/g, '').replace(/\u00A0/g, ' ');
 const tick = () => act(async () => new Promise<void>((r) => setTimeout(r, 0)));
 
-/** Монтирует приложение с параметром запуска, как если бы его открыли из бота. */
-async function mount(startapp = '', saved: Record<string, unknown> = {}): Promise<HTMLElement> {
+/** Ключи хранилища приложения – с префиксом, чтобы не пересекаться с другими сайтами того же домена. */
+const KEY = (k: string) => `esli_chto:${k}`;
+
+/**
+ * Монтирует приложение с параметром запуска, как если бы его открыли из бота.
+ * saved – данные, сохранённые на устройстве; raw – записать их под ключами как есть (старый формат, чужие сайты).
+ */
+async function mount(startapp = '', saved: Record<string, unknown> = {}, { raw = false } = {}): Promise<HTMLElement> {
   window.localStorage.clear();
-  for (const [k, v] of Object.entries(saved)) window.localStorage.setItem(k, typeof v === 'string' ? v : JSON.stringify(v));
+  for (const [k, v] of Object.entries(saved)) window.localStorage.setItem(raw ? k : KEY(k), typeof v === 'string' ? v : JSON.stringify(v));
   window.history.replaceState(null, '', startapp ? `/?startapp=${startapp}` : '/');
   host = document.createElement('div');
   document.body.appendChild(host);
@@ -211,7 +217,7 @@ describe('сценарии', () => {
     const marker = [...el.querySelectorAll<HTMLButtonElement>('.scene-marker')].find((b) => b.getAttribute('aria-label')?.startsWith('Лифт'));
     expect(marker?.disabled).toBe(true);
     expect(text(el.querySelector('.house-picker__address'))).toBe('ул. Коровина, 11');
-    expect(JSON.parse(window.localStorage.getItem('features') ?? '{}')).toEqual({ vch_korovina_11: ['garbage_chute', 'gas', 'central_heating', 'intercom', 'basement'] });
+    expect(JSON.parse(window.localStorage.getItem(KEY('features')) ?? '{}')).toEqual({ vch_korovina_11: ['garbage_chute', 'gas', 'central_heating', 'intercom', 'basement'] });
   });
 
   it('до выбора дома карточка управляющей организации предлагает выбрать дом', async () => {
@@ -265,6 +271,39 @@ describe('сценарии', () => {
     expect(el.querySelector('.sheet')).toBeNull();
   });
 
+  it('обращение: пределы полей, подсказка по телефону, предупреждение о незаполненных местах', async () => {
+    const el = await mount('h_vch_korovina_11-p_roof__leak');
+    const request = [...sheetBody(el)!.querySelectorAll('button')].find((b) => b.textContent?.includes('Составить обращение'));
+    await click(request, 'кнопка «Составить обращение»');
+    const inputs = [...el.querySelectorAll<HTMLInputElement>('.sheet .field input')];
+    expect(inputs.map((i) => i.maxLength)).toEqual([120, 10, 10, 20]);
+
+    // неполный номер – подсказка, но не запрет
+    const phone = inputs[3]!;
+    await act(async () => {
+      Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')!.set!.call(phone, '12345');
+      phone.dispatchEvent(new Event('input', { bubbles: true }));
+    });
+    expect(text(el.querySelector('.field__hint'))).toMatch(/неполный/);
+    expect(phone.getAttribute('aria-invalid')).toBe('true');
+
+    // в тексте остались [места] – перед отправкой предупреждение; «Заполнить» ведёт к пустому полю ФИО
+    const send = () => [...el.querySelectorAll('.sheet button')].find((b) => b.textContent?.includes('Отправить в чат'));
+    await click(send(), 'Отправить в чат');
+    expect(text(el.querySelector('.request__blanks'))).toContain('Остались незаполненные поля');
+    expect(text(el.querySelector('.request__blanks'))).toContain('[ФИО]');
+    await click([...el.querySelectorAll('.request__blanks button')].find((b) => b.textContent === 'Заполнить'), 'Заполнить');
+    expect(el.querySelector('.request__blanks')).toBeNull();
+    expect(document.activeElement).toBe(inputs[0]);
+
+    // «Отправить всё равно» – отправка без правок, предупреждение закрывается
+    await click(send(), 'Отправить в чат');
+    await click([...el.querySelectorAll('.request__blanks button')].find((b) => b.textContent === 'Отправить всё равно'), 'Отправить всё равно');
+    await tick();
+    expect(el.querySelector('.request__blanks')).toBeNull();
+    expect(el.querySelector('.toast')).toBeTruthy();
+  });
+
   it('дом из диплинка подставляет свою организацию и телефоны', async () => {
     const tszh = await mount('h_vch_pyatnitskiy_13-p_lamp_entrance__burned');
     expect(text(tszh.querySelector('.sheet'))).toContain('ТСЖ «Старатели»');
@@ -279,5 +318,26 @@ describe('сценарии', () => {
   it('дом за двумя организациями показывает расхождение из источника', async () => {
     const el = await mount('h_vch_moskovskaya_13-p_lamp_entrance__burned');
     expect(text(el.querySelector('.sheet'))).toContain('также указан за УК «Стоун»');
+  });
+
+  it('данные хранятся под своим префиксом, старые ключи переносятся, чужие не трогаются', async () => {
+    // старый формат без префикса: дом и данные жителя переносятся, старые ключи удаляются
+    await mount('', { house: 'vch_korovina_11', user: { name: 'Иванов И. И.' } }, { raw: true });
+    await tick();
+    expect(text(host!.querySelector('.house-picker__address'))).toBe('ул. Коровина, 11');
+    expect(window.localStorage.getItem(KEY('house'))).toBe('vch_korovina_11');
+    expect(JSON.parse(window.localStorage.getItem(KEY('user')) ?? '{}')).toEqual({ name: 'Иванов И. И.' });
+    expect(window.localStorage.getItem('house')).toBeNull();
+    expect(window.localStorage.getItem('user')).toBeNull();
+    await act(async () => root?.unmount());
+    root = undefined;
+    host?.remove();
+
+    // ключи другого сайта на том же домене: не читаются и не удаляются
+    await mount('', { house: 'flat-42', user: { name: 'Чужой' } }, { raw: true });
+    await tick();
+    expect(host!.querySelector('.house-picker.is-empty')).toBeTruthy();
+    expect(window.localStorage.getItem('house')).toBe('flat-42');
+    expect(window.localStorage.getItem('user')).toBe(JSON.stringify({ name: 'Чужой' }));
   });
 });

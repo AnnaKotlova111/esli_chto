@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
-  ALL_ELEMENTS, buildRequest, collectOutcomes, decodeDeepLink, emergencyPartyOf, encodeDeepLink, getElements, getHouse,
+  ALL_ELEMENTS, blanksOf, buildRequest, cleanUserInfo, collectOutcomes, phoneHint, decodeDeepLink, emergencyPartyOf, encodeDeepLink, getElements, getHouse,
   getProblem, isElementAvailable, localizeOutcome, resolve, resolveParties, search, urgentProblems, withFeatures, type Outcome,
 } from '../src';
 
@@ -257,6 +257,8 @@ describe('шаблоны обращений', () => {
   it('до выбора дома вместо адреса и организации остаются заготовки', () => {
     const { element, problem } = getProblem('roof__leak')!;
     const r = buildRequest('repair', collectOutcomes(problem)[0]!, getHouse('none'), { element, problem });
+    expect(blanksOf(r.body)).toContain('[ФИО]');
+    expect(blanksOf('Кому: УК. Всё заполнено.')).toEqual([]);
     expect(r.body).toContain('г. Вичуга, [улица, дом]');
     expect(r.body).toContain('[название управляющей организации]');
   });
@@ -269,5 +271,20 @@ describe('шаблоны обращений', () => {
       expect(r.body, kind).toContain('ТСЖ «Старатели»');
       expect(r.body, kind).not.toMatch(/\{M|undefined/);
     }
+  });
+});
+
+describe('данные жителя для обращения', () => {
+  it('телефон: подсказка только для похожих на ошибку номеров', () => {
+    for (const ok of [undefined, '', '+7 900 000-00-00', '8 (49354) 2-34-73', '+79001234567']) expect(phoneHint(ok), String(ok)).toBeUndefined();
+    expect(phoneHint('12345')).toMatch(/неполный/);
+    expect(phoneHint('+7 900 abc')).toMatch(/только цифры/);
+    expect(phoneHint('1'.repeat(16))).toMatch(/Слишком много/);
+  });
+
+  it('из хранилища берутся только известные поля-строки в пределах длины', () => {
+    expect(cleanUserInfo(null)).toEqual({});
+    expect(cleanUserInfo('мусор')).toEqual({});
+    expect(cleanUserInfo({ name: 'А'.repeat(500), flat: 42, phone: '+7 900 000-00-00', extra: 'x' })).toEqual({ name: 'А'.repeat(120), phone: '+7 900 000-00-00' });
   });
 });

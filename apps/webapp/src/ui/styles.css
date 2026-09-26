@@ -1522,6 +1522,23 @@ figure {
   color: var(--color-text-secondary);
 }
 
+/* мягкая подсказка под полем: не блокирует ввод и отправку */
+.field__hint {
+  font: 400 14px/20px var(--font-family);
+  color: var(--color-warning-text);
+}
+
+/* предупреждение о [незаполненных местах] перед отправкой обращения */
+.request__blanks {
+  display: grid;
+  gap: var(--space-3);
+  margin-bottom: var(--space-3);
+}
+
+.request__blanks .callout {
+  margin-top: 0;
+}
+
 .request__text textarea,
 textarea.request__text {
   min-height: 300px;

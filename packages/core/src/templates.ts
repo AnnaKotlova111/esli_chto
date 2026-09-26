@@ -9,6 +9,37 @@ export interface UserInfo {
   phone?: string;
 }
 
+/** Предельная длина полей жителя: ФИО, подъезд, квартира, телефон. */
+export const USER_FIELD_MAX: Record<keyof UserInfo, number> = { name: 120, entrance: 10, flat: 10, phone: 20 };
+
+/** Данные жителя из хранилища устройства: только строки известных полей в пределах длины. */
+export function cleanUserInfo(raw: unknown): UserInfo {
+  if (!raw || typeof raw !== 'object') return {};
+  const out: UserInfo = {};
+  for (const key of Object.keys(USER_FIELD_MAX) as (keyof UserInfo)[]) {
+    const v = (raw as Record<string, unknown>)[key];
+    if (typeof v === 'string' && v) out[key] = v.slice(0, USER_FIELD_MAX[key]);
+  }
+  return out;
+}
+
+/**
+ * Мягкая проверка телефона: подсказка, если номер похож на ошибочный. Пустое поле – не ошибка
+ * (в тексте останется «[телефон]»), отправку подсказка не блокирует.
+ */
+export function phoneHint(phone: string | undefined): string | undefined {
+  const p = phone?.trim();
+  if (!p) return undefined;
+  if (/[^\d\s()+-]/.test(p)) return 'В номере могут быть только цифры, пробелы, скобки, «+» и «-».';
+  const digits = p.replace(/\D/g, '').length;
+  if (digits < 10) return 'Похоже, номер неполный: например, +7 900 000-00-00.';
+  if (digits > 15) return 'Слишком много цифр для номера телефона.';
+  return undefined;
+}
+
+/** Незаполненные места шаблона – фразы в [квадратных скобках]. */
+export const blanksOf = (text: string): string[] => text.match(/\[[^\]\n]+\]/g) ?? [];
+
 export interface RequestContext {
   element: HouseElement;
   problem: Problem;

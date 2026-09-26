@@ -1,6 +1,6 @@
 import { createContext, useContext, useEffect, useMemo, useReducer, type ReactNode } from 'react';
 import {
-  ALL_FEATURES, DEFAULT_HOUSE_ID, decodeDeepLink, getElement, getHouse, getProblem, isKnownHouse, withFeatures,
+  ALL_FEATURES, DEFAULT_HOUSE_ID, cleanUserInfo, decodeDeepLink, getElement, getHouse, getProblem, isKnownHouse, withFeatures,
   type Category, type Feature, type HouseProfile, type Scope, type UserInfo,
 } from '@esli-chto/core';
 import { backButton, closingConfirmation, haptic, startParam, storage } from './bridge';
@@ -256,8 +256,21 @@ export function AppProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     let alive = true;
     void (async () => {
-      const [h, f, u, r, q] = await Promise.all(STORAGE_KEYS.map((k) => storage.get(k)));
+      let stored = await Promise.all(STORAGE_KEYS.map((k) => storage.get(k)));
+      // Однократный перенос из ключей без префикса (версии до 26.09.2026). Чужие данные с тем же именем
+      // не трогаем: переносим, только если в «house» лежит наш идентификатор дома.
+      let migrated = false;
+      if (stored.every((v) => v === null)) {
+        const old = await Promise.all(STORAGE_KEYS.map((k) => storage.legacy.get(k)));
+        if (old[0] === DEFAULT_HOUSE_ID || isKnownHouse(old[0])) {
+          stored = old;
+          migrated = true;
+        }
+      }
       if (!alive) return;
+      // старые ключи удаляем; под новыми именами данные сохранятся сразу после загрузки
+      if (migrated) void Promise.all(STORAGE_KEYS.map((k) => storage.legacy.remove(k)));
+      const [h, f, u, r, q] = stored;
       const link = decodeDeepLink(startParam());
       const known = (id?: string | null) => (id && isKnownHouse(id) ? id : undefined);
       // отметки особенностей: только известные дома и известные особенности
@@ -271,7 +284,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
         type: 'LOADED',
         houseId: known(link.houseId) ?? known(h),
         features,
-        user: parse<UserInfo>(u ?? null, {}),
+        user: cleanUserInfo(parse<unknown>(u ?? null, {})),
         recent: parse<string[]>(r ?? null, []).filter((id) => getProblem(id)),
         searches: parse<string[]>(q ?? null, []).filter((x) => typeof x === 'string').slice(0, 6),
       });

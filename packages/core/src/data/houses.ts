@@ -41,6 +41,8 @@ interface CityData {
   settlements: Record<string, string>;
   source: string;
   updatedAt: string;
+  /** Тестовые или вымышленные данные (meta.json города: "demo": true) */
+  demo?: boolean;
   organizations: Organization[];
   houses: CityHouse[];
   warnings: string[];
@@ -55,6 +57,8 @@ export const CITY = {
   settlements: DATA.settlements,
   source: DATA.source,
   updatedAt: DATA.updatedAt,
+  /** Справочник тестовый: организации и телефоны вымышлены, это показывается на экране и в ответах бота */
+  demo: DATA.demo === true,
   /** Замечания к данным, найденные при импорте (дубли адресов, расхождения) */
   warnings: DATA.warnings,
 };
@@ -109,7 +113,7 @@ export const HOUSES: HouseProfile[] = DATA.houses.map((h) => {
     features: ALL_FEATURES,
     featuresKnown: false,
     contacts: contactsOf(org, also),
-    isDemo: false,
+    isDemo: CITY.demo,
     updatedAt: DATA.updatedAt,
     source: DATA.source,
   };
@@ -128,7 +132,7 @@ export const NO_HOUSE: HouseProfile = {
   features: ALL_FEATURES,
   featuresKnown: false,
   contacts: Object.fromEntries(Object.entries(CITY_SERVICES).filter(([id]) => id !== 'lift_service')),
-  isDemo: false,
+  isDemo: CITY.demo,
   updatedAt: DATA.updatedAt,
   source: DATA.source,
 };

@@ -221,6 +221,8 @@ const out = {
   settlements: Object.fromEntries(Object.entries(meta.settlements).map(([k, v]) => [k, v.title])),
   source: meta.source,
   updatedAt: meta.updatedAt,
+  // true – в справочнике тестовые или вымышленные данные: интерфейс и бот явно это помечают
+  demo: meta.demo === true,
   services,
   organizations: organizations.filter((o) => houses.some((h) => h.orgId === o.id || h.alsoOrgIds?.includes(o.id))),
   houses,
