@@ -108,15 +108,15 @@ function reducer(s: State, a: Action): State {
       return { ...s, scene: { ...s.scene, [a.tab]: a.scene }, highlight: null };
     case 'SET_CATEGORY':
       return { ...s, category: { ...s.category, [a.tab]: a.category } };
+    // Шторка открывается поверх поиска, а не вместо него: «Назад» из найденной ситуации возвращает к результатам
     case 'OPEN':
-      return { ...s, sheet: [...s.sheet, a.view], searchOpen: false };
+      return { ...s, sheet: [...s.sheet, a.view] };
     case 'REPLACE_TOP':
       return { ...s, sheet: [...s.sheet.slice(0, -1), a.view] };
     case 'BACK': {
       if (s.confirmLeave) return { ...s, confirmLeave: null };
-      if (s.searchOpen) return { ...s, searchOpen: false };
       const top = s.sheet[s.sheet.length - 1];
-      if (!top) return s;
+      if (!top) return s.searchOpen ? { ...s, searchOpen: false } : s;
       if (onRequest(s) && s.draftDirty) return { ...s, confirmLeave: 'back' };
       // в диалоге вопросов «назад» отменяет последний ответ, а не закрывает всю карточку
       if (top.t === 'flow' && top.answers.length > 0) {

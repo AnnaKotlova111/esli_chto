@@ -10,7 +10,7 @@ const EXAMPLES = ['течёт кран', 'не горит лампочка', 'н
 
 /** Поиск свободным текстом: тот же движок, что у бота, – одинаковый запрос даёт одинаковый ответ. */
 export function SearchOverlay() {
-  const { state, house, setSearch, goToElement, rememberSearch } = useApp();
+  const { state, house, setSearch, goToElement, open, rememberSearch } = useApp();
   const [q, setQ] = useState('');
   const inputRef = useRef<HTMLInputElement>(null);
   const rootRef = useRef<HTMLDivElement>(null);
@@ -36,9 +36,11 @@ export function SearchOverlay() {
 
   if (!state.searchOpen) return null;
 
+  // Ситуация открывается сразу, поверх поиска: «Назад» возвращает к результатам, а не в карточку объекта
   const pick = (elementId: string, problemId?: string) => {
     rememberSearch(q);
-    goToElement(elementId, problemId);
+    if (problemId) open({ t: 'flow', problemId, answers: [] });
+    else goToElement(elementId);
   };
   const problems = hits.filter((h) => h.problemId).slice(0, 8);
   const elements = hits.filter((h) => !h.problemId).slice(0, 5);
@@ -93,7 +95,7 @@ export function SearchOverlay() {
                 <h2 className="block__title">Недавно открытые</h2>
                 <div className="card-list">
                   {recent.map(({ element, problem }) => (
-                    <ListRow key={problem.id} icon={<ElementIcon id={element.id} />} title={problem.title} subtitle={element.title} onClick={() => goToElement(element.id, problem.id)} />
+                    <ListRow key={problem.id} icon={<ElementIcon id={element.id} />} title={problem.title} subtitle={element.title} onClick={() => open({ t: 'flow', problemId: problem.id, answers: [] })} />
                   ))}
                 </div>
               </section>

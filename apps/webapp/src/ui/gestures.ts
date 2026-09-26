@@ -1,4 +1,5 @@
 import { useEffect, useRef, type RefObject } from 'react';
+import { flushSync } from 'react-dom';
 import { haptic } from '../bridge';
 
 /** Анимации включены: браузер их поддерживает и человек не просил «уменьшить движение» в настройках телефона. */
@@ -127,12 +128,13 @@ export function useSwipeGestures(opts: SwipeOptions) {
       haptic.impact('light');
       setMove(el, mode === 'right' ? `${size}px 0` : `0 ${size}px`, mode === 'right' ? '0' : '', OUT_MS);
       window.setTimeout(() => {
-        action();
+        // flushSync: экран обновляется сразу, и ниже уже видно, что стало с элементом.
+        // Без этого шторку возвращали на место раньше, чем React помечал её закрывающейся, –
+        // она на миг выскакивала обратно и закрывалась второй раз.
+        flushSync(action);
         // если экран не сменился (например, спросили про несохранённый черновик) – возвращаем его на место;
-        // уезжающую шторку не трогаем, иначе она прыгнет обратно посреди анимации закрытия
-        requestAnimationFrame(() => {
-          if (el.isConnected && !el.closest('.is-leaving')) clearMove(el);
-        });
+        // уезжающую или убранную шторку не трогаем
+        if (el.isConnected && !el.closest('.is-leaving')) clearMove(el);
       }, OUT_MS);
     };
 

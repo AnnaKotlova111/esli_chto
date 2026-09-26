@@ -37,7 +37,7 @@ export function HowItWorks() {
 }
 
 export function TabContent({ tab }: { tab: Tab }) {
-  const { house, state, setScene, setCategory, goToElement } = useApp();
+  const { house, state, setScene, setCategory, goToElement, open } = useApp();
   const scenes = scenesFor(tab);
   const scene = getScene(state.scene[tab]) ?? scenes[0]!;
   const category = state.category[tab];
@@ -78,7 +78,7 @@ export function TabContent({ tab }: { tab: Tab }) {
               title={problem.title}
               subtitle={element.title}
               badge={<UrgencyBadge urgency={problem.urgency} />}
-              onClick={() => goToElement(element.id, problem.id)}
+              onClick={() => open({ t: 'flow', problemId: problem.id, answers: [] })}
             />
           ))}
         </div>

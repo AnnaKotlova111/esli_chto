@@ -74,7 +74,8 @@ export function SheetHost() {
     return null;
   }
   const leaving = !top;
-  const canBack = !leaving && (state.sheet.length > 1 || (view.t === 'flow' && view.answers.length > 0));
+  // У ситуации «Назад» есть всегда: если она открыта первой (из частых ситуаций, поиска), он возвращает к тому списку
+  const canBack = !leaving && (state.sheet.length > 1 || view.t === 'flow');
   return (
     <>
       <BottomSheet
