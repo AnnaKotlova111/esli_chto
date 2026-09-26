@@ -124,7 +124,7 @@ describe('стороны ответственности и контакты', ()
     expect(heat!.contact!.name).toContain('МУП «ОК и ТС»');
     const [manager, gzhi] = resolveParties(getHouse('none'), ['manager', 'housing_inspection']);
     expect(manager!.missingContact).toBe(true);
-    expect(gzhi!.contact!.phones[0]!.number).toBe('+7 (4932) 41-05-61');
+    expect(gzhi!.contact!.phones[0]!.number).toBe('+7 (493) 241-05-61');
   });
 
   it('у собственника, соседа и оператора связи контактов нет по смыслу – это не пустая карточка', () => {

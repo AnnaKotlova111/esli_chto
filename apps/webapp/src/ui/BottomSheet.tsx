@@ -1,6 +1,10 @@
-import { useEffect, useRef, type ReactNode } from 'react';
+import { useEffect, useLayoutEffect, useRef, type ReactNode } from 'react';
 import { IconButton } from '@maxhub/max-ui';
+import { useSwipeGestures } from './gestures';
 import { Icon } from './icons';
+
+/** Откуда въезжает новый экран: вперёд – справа, назад – слева, замена – плавное появление. */
+export type PageDirection = 'forward' | 'back' | 'none';
 
 interface Props {
   title: string;
@@ -10,41 +14,78 @@ interface Props {
   onClose: () => void;
   /** Меняется при смене содержимого – прокрутка возвращается наверх */
   contentKey: string;
+  direction: PageDirection;
+  /** Шторка уезжает вниз после закрытия; по окончании вызывается onLeft */
+  leaving?: boolean;
+  onLeft?: () => void;
   children: ReactNode;
 }
 
 /**
  * Единая шторка снизу для карточек объектов, ответа, обращения и служебных экранов (дизайн-код, раздел 26).
  * Фокус переносится в шторку при открытии; фон недоступен для клавиатуры и программ чтения с экрана.
+ * Жесты: свайп вправо – шаг назад (с первого экрана – закрыть), потянуть за шапку вниз – закрыть.
  */
-export function BottomSheet({ title, canBack, onBack, onClose, contentKey, children }: Props) {
+export function BottomSheet({ title, canBack, onBack, onClose, contentKey, direction, leaving, onLeft, children }: Props) {
   const bodyRef = useRef<HTMLDivElement>(null);
+  const sheetRef = useRef<HTMLDivElement>(null);
+  const pageRef = useRef<HTMLDivElement>(null);
+  const headRef = useRef<HTMLDivElement>(null);
 
-  useEffect(() => {
-    bodyRef.current?.scrollTo?.({ top: 0 });
-    bodyRef.current?.focus({ preventScroll: true });
+  // Где человек был на каждом экране: при возврате «назад» возвращаем на то же место, новый экран – с начала
+  const scrollOf = useRef(new Map<string, number>());
+  const keyRef = useRef(contentKey);
+  keyRef.current = contentKey;
+
+  useLayoutEffect(() => {
+    const body = bodyRef.current;
+    if (!body) return;
+    const saved = direction === 'back' ? scrollOf.current.get(contentKey) : undefined;
+    body.scrollTop = saved ?? 0;
+    body.focus({ preventScroll: true });
+    // направление берём на момент смены экрана, поэтому в зависимостях только contentKey
   }, [contentKey]);
 
+  // запасной таймер: если анимация закрытия не сработала, шторка всё равно исчезнет
+  useEffect(() => {
+    if (!leaving || !onLeft) return;
+    const t = window.setTimeout(onLeft, 300);
+    return () => window.clearTimeout(t);
+  }, [leaving, onLeft]);
+
+  useSwipeGestures({
+    root: sheetRef,
+    rightTarget: () => (canBack ? pageRef.current : sheetRef.current),
+    onRight: canBack ? onBack : onClose,
+    downHandle: headRef,
+    downTarget: () => sheetRef.current,
+    onDown: onClose,
+  });
+
   return (
-    <div className="sheet-root">
+    <div className={leaving ? 'sheet-root is-leaving' : 'sheet-root'} aria-hidden={leaving || undefined}>
       <div className="sheet-scrim" onClick={onClose} aria-hidden="true" />
-      <div className="sheet" role="dialog" aria-modal="true" aria-label={title}>
-        <div className="sheet__grab" aria-hidden="true" />
-        <header className="sheet__head">
-          {canBack ? (
-            <IconButton variant="ghost" size="medium" className="icon-btn" onClick={onBack} aria-label="Назад">
-              <Icon name="back" />
+      <div className="sheet" role="dialog" aria-modal="true" aria-label={title} ref={sheetRef}>
+        <div className="sheet__handle" ref={headRef}>
+          <div className="sheet__grab" aria-hidden="true" />
+          <header className="sheet__head">
+            {canBack ? (
+              <IconButton variant="ghost" size="medium" className="icon-btn" onClick={onBack} aria-label="Назад">
+                <Icon name="back" />
+              </IconButton>
+            ) : (
+              <span className="icon-btn-spacer" aria-hidden="true" />
+            )}
+            <h2 className="sheet__title">{title}</h2>
+            <IconButton variant="ghost" size="medium" className="icon-btn" onClick={onClose} aria-label="Закрыть">
+              <Icon name="close" />
             </IconButton>
-          ) : (
-            <span className="icon-btn-spacer" aria-hidden="true" />
-          )}
-          <h2 className="sheet__title">{title}</h2>
-          <IconButton variant="ghost" size="medium" className="icon-btn" onClick={onClose} aria-label="Закрыть">
-            <Icon name="close" />
-          </IconButton>
-        </header>
-        <div className="sheet__body" ref={bodyRef} tabIndex={-1}>
-          {children}
+          </header>
+        </div>
+        <div className="sheet__body" ref={bodyRef} tabIndex={-1} onScroll={(e) => scrollOf.current.set(keyRef.current, e.currentTarget.scrollTop)}>
+          <div key={contentKey} ref={pageRef} className={`sheet__page is-${direction}`}>
+            {children}
+          </div>
         </div>
       </div>
     </div>

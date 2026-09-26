@@ -6,6 +6,8 @@ import {
 
 const allProblems = ALL_ELEMENTS.flatMap((e) => e.problems.map((p) => ({ element: e, problem: p })));
 const allOutcomes = allProblems.flatMap(({ problem }) => collectOutcomes(problem).map((o) => ({ problem, o })));
+/** Один вид номера во всём справочнике: +7 (493) 543-58-33, бесплатные линии – 8 (800) 350-42-12; экстренные – 112, 104, 102. */
+const PHONE = /^(\+7 \(\d{3}\) \d{3}-\d{2}-\d{2}|8 \(800\) \d{3}-\d{2}-\d{2})$/;
 
 describe('целостность данных (раздел 6 ТЗ)', () => {
   it('id объектов и ситуаций уникальны во всём проекте', () => {
@@ -153,7 +155,7 @@ describe('справочник домов Вичуги', () => {
     expect(none.id).toBe('none');
     expect(none.contacts.manager).toBeUndefined();
     expect(none.contacts.dispatch).toBeUndefined();
-    expect(none.contacts.water_utility?.phones[0]?.number).toBe('+7 (49354) 2-22-79');
+    expect(none.contacts.water_utility?.phones[0]?.number).toBe('+7 (493) 542-22-79');
     expect(none.features.length).toBe(6);
   });
 
@@ -162,12 +164,22 @@ describe('справочник домов Вичуги', () => {
       const c = CITY_SERVICES[party];
       expect(c?.phones.length, party).toBeGreaterThan(0);
       for (const p of c!.phones) {
-        expect(p.number, party).toMatch(/^(\+7|8) \(\d{3,5}\) [\d-]+$/);
-        expect(p.number.replace(/\D/g, '').length, party).toBe(11);
+        expect(p.number, party).toMatch(PHONE);
       }
       for (const h of [getHouse('vch_korovina_11'), getHouse('vch_pyatnitskiy_13')]) expect(h.contacts[party]).toEqual(c);
     }
     expect(CITY_SERVICES.heat_utility?.phones[0]?.label).toBe('Диспетчерская');
+  });
+
+  it('все номера всех домов – в одном формате (кроме коротких экстренных)', () => {
+    for (const h of HOUSES) {
+      for (const [party, c] of Object.entries(getHouse(h.id).contacts)) {
+        for (const p of c?.phones ?? []) {
+          if (/^\d{3}$/.test(p.number)) continue;
+          expect(p.number, `${h.id} ${party}`).toMatch(PHONE);
+        }
+      }
+    }
   });
 
   it('лифт: отдельной лифтовой организации нет – заявку принимает диспетчерская или правление дома', () => {

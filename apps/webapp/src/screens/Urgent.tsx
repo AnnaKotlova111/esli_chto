@@ -9,7 +9,7 @@ import { ServiceCard } from '../ui/ServiceCard';
 
 /** Сводный список аварийных и срочных ситуаций с прямым звонком – без поиска объекта на схеме. */
 export function UrgentView() {
-  const { house, goToElement, toast, open } = useApp();
+  const { house, toast, open } = useApp();
   const items = useMemo(() => urgentProblems(house), [house]);
   const danger = items.filter((i) => i.problem.urgency === 'emergency');
   const urgent = items.filter((i) => i.problem.urgency === 'urgent');
@@ -26,7 +26,8 @@ export function UrgentView() {
     const phone = party?.contact?.phones[0];
     return (
       <li key={i.problem.id} className="urgent-row">
-        <button type="button" className="urgent-row__open" onClick={() => goToElement(i.element.id, i.problem.id)}>
+        {/* ситуация открывается поверх списка: «Назад» возвращает сюда, а не в карточку объекта */}
+        <button type="button" className="urgent-row__open" onClick={() => open({ t: 'flow', problemId: i.problem.id, answers: [] })}>
           <span className="urgent-row__icon">
             <ElementIcon id={i.element.id} />
           </span>

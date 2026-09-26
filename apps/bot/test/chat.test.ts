@@ -189,12 +189,12 @@ describe('экраны бота', () => {
       return out.join('\n\n');
     };
     const mine = texts(uk);
-    for (const number of ['+7 (49354) 2-22-79', '+7 (49354) 2-44-72', '+7 (49354) 3-58-33', '+7 (4932) 950-950', '+7 (4932) 41-05-61', '+7 (49354) 2-50-27'])
+    for (const number of ['+7 (493) 542-22-79', '+7 (493) 542-44-72', '+7 (493) 543-58-33', '+7 (493) 295-09-50', '+7 (493) 241-05-61', '+7 (493) 542-50-27'])
       expect(mine, number).toContain(number);
     expect(mine).toContain('на панели домофона');
     expect(mine).not.toMatch(/: $/m);
     const noHouse = texts(none);
-    expect(noHouse).toContain('+7 (49354) 2-22-79');
+    expect(noHouse).toContain('+7 (493) 542-22-79');
     expect(noHouse).not.toContain('+7 (493) 542-34-73');
     expect(noHouse).not.toContain('контакта нет в справочнике');
   });

@@ -1,11 +1,12 @@
-import { useState } from 'react';
+import { useCallback, useRef, useState } from 'react';
 import {
   APP_META, CITY, PRIVACY, TERMS, getElement, getNorm, getProblem, hasUnsureOption, localizeQuestion, resolve, typo, zoneTitle,
   type LegalDoc,
 } from '@esli-chto/core';
 import { haptic, openLink } from '../bridge';
 import { useApp, type SheetView } from '../state';
-import { BottomSheet, ConfirmDialog } from '../ui/BottomSheet';
+import { BottomSheet, ConfirmDialog, type PageDirection } from '../ui/BottomSheet';
+import { motionEnabled } from '../ui/gestures';
 import { Button } from '../ui/Button';
 import { ElementIcon, Icon } from '../ui/icons';
 import { BASIS_HINT, BASIS_LABEL, Callout, ListRow, Section, UrgencyBadge } from '../ui/parts';
@@ -39,15 +40,54 @@ function titleOf(v: SheetView): string {
   }
 }
 
+/** Глубина экрана: шаги шторки и ответы на уточняющие вопросы – по ней понятно, вперёд или назад. */
+const depthOf = (sheet: SheetView[]) => {
+  const top = sheet[sheet.length - 1];
+  return sheet.length * 100 + (top?.t === 'flow' ? top.answers.length : 0);
+};
+
 export function SheetHost() {
   const { state, back, closeAll, confirmLeave, cancelLeave } = useApp();
   const top = state.sheet[state.sheet.length - 1];
-  if (!top) return null;
-  const canBack = state.sheet.length > 1 || (top.t === 'flow' && top.answers.length > 0);
+
+  // Направление запоминаем один раз на экран, иначе анимация перезапускалась бы при каждой перерисовке
+  const depth = depthOf(state.sheet);
+  const contentKey = top ? JSON.stringify(top) : '';
+  const nav = useRef({ key: '', depth: 0, dir: 'none' as PageDirection });
+  if (top && nav.current.key !== contentKey) {
+    const dir: PageDirection = !nav.current.key ? 'none' : depth > nav.current.depth ? 'forward' : depth < nav.current.depth ? 'back' : 'none';
+    nav.current = { key: contentKey, depth, dir };
+  }
+
+  // Последний экран держим, пока шторка уезжает вниз (без анимаций – закрываем сразу)
+  const last = useRef<SheetView | null>(null);
+  const [, rerender] = useState(0);
+  const onLeft = useCallback(() => {
+    last.current = null;
+    rerender((n) => n + 1);
+  }, []);
+  if (top) last.current = top;
+  else if (last.current && !motionEnabled()) last.current = null;
+  const view = top ?? last.current;
+  if (!view) {
+    nav.current = { key: '', depth: 0, dir: 'none' };
+    return null;
+  }
+  const leaving = !top;
+  const canBack = !leaving && (state.sheet.length > 1 || (view.t === 'flow' && view.answers.length > 0));
   return (
     <>
-      <BottomSheet title={titleOf(top)} canBack={canBack} onBack={back} onClose={closeAll} contentKey={JSON.stringify(top)}>
-        <SheetContent view={top} />
+      <BottomSheet
+        title={titleOf(view)}
+        canBack={canBack}
+        onBack={back}
+        onClose={closeAll}
+        contentKey={leaving ? nav.current.key : contentKey}
+        direction={nav.current.dir}
+        leaving={leaving}
+        onLeft={onLeft}
+      >
+        <SheetContent view={view} />
       </BottomSheet>
       {state.confirmLeave && (
         <ConfirmDialog

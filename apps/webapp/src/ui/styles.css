@@ -535,6 +535,17 @@ figure {
   margin-top: var(--space-2);
 }
 
+/* В крупном режиме схема длинная: «Обычный размер» остаётся на экране над нижним меню */
+.scene__tools.is-sticky {
+  position: sticky;
+  bottom: calc(var(--nav-height) + env(safe-area-inset-bottom) + var(--space-2));
+  z-index: 5;
+}
+
+.scene__tools.is-sticky .scene__tool {
+  box-shadow: var(--shadow-card);
+}
+
 .scene__tool {
   display: inline-flex;
   align-items: center;
@@ -1073,7 +1084,7 @@ figure {
   background: var(--color-background);
   box-shadow: var(--shadow-sheet);
   transform: translateX(-50%);
-  animation: sheet-up 220ms ease-out;
+  animation: sheet-up 300ms var(--ease-out-soft);
 }
 
 .sheet__grab {
@@ -1105,22 +1116,88 @@ figure {
 .sheet__body {
   flex: 1;
   padding: var(--space-4) var(--space-4) calc(var(--space-8) + env(safe-area-inset-bottom));
+  /* въезжающий или сдвинутый пальцем экран не должен давать прокрутку вбок */
+  overflow-x: hidden;
   overflow-y: auto;
   overscroll-behavior: contain;
 }
 
-.sheet__body > * + * {
+.sheet__page > * + * {
   margin-top: var(--space-4);
+}
+
+/* Шапка шторки – «ручка»: за неё шторку можно потянуть вниз, чтобы закрыть */
+.sheet__handle {
+  touch-action: none;
+}
+
+/* Переходы между экранами шторки: вперёд – справа, назад – слева, замена – плавное появление */
+.sheet__page.is-forward {
+  animation: page-in-right 260ms var(--ease-out-soft);
+}
+
+.sheet__page.is-back {
+  animation: page-in-left 260ms var(--ease-out-soft);
+}
+
+.sheet__page.is-none {
+  animation: fade-in 200ms ease-out;
+}
+
+/* Закрытие: шторка уезжает вниз, затемнение гаснет */
+.sheet-root.is-leaving {
+  pointer-events: none;
+}
+
+.sheet-root.is-leaving .sheet {
+  animation: sheet-down 240ms ease-in forwards;
+}
+
+.sheet-root.is-leaving .sheet-scrim {
+  animation: fade-out 240ms ease-in forwards;
 }
 
 @keyframes sheet-up {
   from {
-    transform: translate(-50%, 24px);
-    opacity: 0.6;
+    transform: translate(-50%, 48px);
+    opacity: 0;
   }
   to {
     transform: translate(-50%, 0);
     opacity: 1;
+  }
+}
+
+@keyframes sheet-down {
+  to {
+    transform: translate(-50%, 100%);
+  }
+}
+
+@keyframes page-in-right {
+  from {
+    transform: translateX(40px);
+    opacity: 0;
+  }
+}
+
+@keyframes page-in-left {
+  from {
+    transform: translateX(-40px);
+    opacity: 0;
+  }
+}
+
+@keyframes fade-out {
+  to {
+    opacity: 0;
+  }
+}
+
+@keyframes rise-in {
+  from {
+    transform: translateY(8px);
+    opacity: 0;
   }
 }
 
@@ -1824,4 +1901,13 @@ textarea.request__text {
 .urgent strong {
   font-weight: 700;
   color: inherit;
+}
+
+/* Смена вкладки «Наш дом» / «Моя квартира» и схемы – мягкое появление вместо резкой подмены */
+.page-main > * {
+  animation: rise-in 240ms var(--ease-out-soft);
+}
+
+.scene__canvas {
+  animation: fade-in 220ms ease-out;
 }

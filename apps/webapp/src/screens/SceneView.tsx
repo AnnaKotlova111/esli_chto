@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { getElement, isElementAvailable } from '@esli-chto/core';
 import { haptic } from '../bridge';
 import { getScene, type SceneDef } from '../scenes/scenes';
@@ -18,6 +18,27 @@ export function SceneView({ scene }: { scene: SceneDef }) {
   // Крупный режим: схема шире экрана и прокручивается – подписи читаются и нажимаются легче
   const [zoomed, setZoomed] = useState(false);
   const { w, h } = scene.image;
+  const figureRef = useRef<HTMLElement>(null);
+  const scrollToScene = useRef(false);
+
+  // После смены масштаба высота схемы меняется почти вдвое, а прокрутка страницы остаётся прежней:
+  // без этого «Обычный размер» уводил схему за верх экрана. Возвращаем начало схемы под верхнюю плашку.
+  useEffect(() => {
+    if (!scrollToScene.current) return;
+    scrollToScene.current = false;
+    const fig = figureRef.current;
+    if (!fig) return;
+    const banner = document.querySelector('.demo-banner')?.getBoundingClientRect().height ?? 0;
+    const top = fig.getBoundingClientRect().top + window.scrollY - banner - 8;
+    const smooth = !window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+    window.scrollTo({ top: Math.max(0, top), behavior: smooth ? 'smooth' : 'auto' });
+  }, [zoomed]);
+
+  const toggleZoom = () => {
+    haptic.selection();
+    scrollToScene.current = true;
+    setZoomed((z) => !z);
+  };
 
   const activate = (target: string) => {
     if (target.startsWith('portal:')) {
@@ -34,7 +55,7 @@ export function SceneView({ scene }: { scene: SceneDef }) {
   const corner = scene.corner && getElement(scene.corner.target);
 
   return (
-    <figure className="scene" aria-label={`Схема «${scene.title}»`}>
+    <figure ref={figureRef} className="scene" aria-label={`Схема «${scene.title}»`}>
       {/* над схемой, а не на ней: в углу картинки кнопка перекрывала бы подписи объектов */}
       {corner && scene.corner && (
         <div className="scene__top">
@@ -45,7 +66,7 @@ export function SceneView({ scene }: { scene: SceneDef }) {
         </div>
       )}
       <div className={zoomed ? 'scene__viewport is-zoomed' : 'scene__viewport'}>
-        <div className="scene__canvas" style={{ aspectRatio: `${w} / ${h}` }}>
+        <div key={scene.id} className="scene__canvas" style={{ aspectRatio: `${w} / ${h}` }}>
           <img
             className="scene__img"
             src={scene.image.src}
@@ -92,8 +113,8 @@ export function SceneView({ scene }: { scene: SceneDef }) {
             })}
         </div>
       </div>
-      <div className="scene__tools">
-        <button type="button" className="scene__tool" aria-pressed={zoomed} onClick={() => setZoomed((z) => !z)}>
+      <div className={zoomed ? 'scene__tools is-sticky' : 'scene__tools'}>
+        <button type="button" className="scene__tool" aria-pressed={zoomed} onClick={toggleZoom}>
           <Icon name={zoomed ? 'zoomOut' : 'zoomIn'} size={18} /> {zoomed ? 'Обычный размер' : 'Крупнее'}
         </button>
       </div>

@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { getProblem, search } from '@esli-chto/core';
 import { IconButton, Input } from '@maxhub/max-ui';
 import { useApp } from '../state';
+import { useSwipeGestures } from '../ui/gestures';
 import { ElementIcon, Icon } from '../ui/icons';
 import { Chip, ListRow, UrgencyBadge } from '../ui/parts';
 
@@ -12,6 +13,9 @@ export function SearchOverlay() {
   const { state, house, setSearch, goToElement, rememberSearch } = useApp();
   const [q, setQ] = useState('');
   const inputRef = useRef<HTMLInputElement>(null);
+  const rootRef = useRef<HTMLDivElement>(null);
+  // свайп вправо закрывает поиск – как «назад» в iOS
+  useSwipeGestures({ root: rootRef, rightTarget: () => rootRef.current, onRight: () => setSearch(false), active: state.searchOpen });
 
   useEffect(() => {
     if (state.searchOpen) {
@@ -41,7 +45,7 @@ export function SearchOverlay() {
   const recent = state.recent.map((id) => getProblem(id)).filter((x): x is NonNullable<typeof x> => Boolean(x)).slice(0, 4);
 
   return (
-    <div className="search" role="dialog" aria-modal="true" aria-label="Поиск: что случилось">
+    <div className="search" ref={rootRef} role="dialog" aria-modal="true" aria-label="Поиск: что случилось">
       <div className="search__bar">
         <IconButton variant="ghost" size="medium" className="icon-btn" onClick={() => setSearch(false)} aria-label="Закрыть поиск">
           <Icon name="back" />

@@ -75,6 +75,8 @@
 
   --app-max-width: 560px;
   --nav-height: 68px;
+  /* плавное замедление в конце движения – как у системных переходов iOS */
+  --ease-out-soft: cubic-bezier(0.22, 0.8, 0.24, 1);
 
   color-scheme: light;
 }

@@ -72,11 +72,24 @@ function splitStreet(street) {
   return m[1].endsWith('.') || m[1].length < 8 ? { type: m[1], name: m[2] } : { type: m[2], name: m[1] };
 }
 
+/**
+ * Один вид для всех номеров: «+7 (493) 543-58-33», бесплатные линии – «8 (800) 350-42-12».
+ * В источниках встречается и «+7 (49354) 3-58-33» – это тот же номер, записанный с кодом города.
+ */
+const formatPhone = (s) => {
+  const d = s.replace(/\D/g, '');
+  if (d.length !== 11 || !/^[78]/.test(d)) throw new Error(`Телефон «${s}»: нужно 11 цифр, начиная с +7 или 8`);
+  const r = d.slice(1);
+  const lead = d[0] === '8' && r.startsWith('800') ? '8' : '+7';
+  return `${lead} (${r.slice(0, 3)}) ${r.slice(3, 6)}-${r.slice(6, 8)}-${r.slice(8)}`;
+};
+
 const phonesOf = (v) =>
   (clean(v) ?? '')
     .split(/[;,]\s*(?=\+?\d)/)
     .map((p) => p.trim())
-    .filter(Boolean);
+    .filter(Boolean)
+    .map(formatPhone);
 
 const warnings = [];
 const orgRows = parseCsv(readFileSync(resolve(dir, 'organizations.csv'), 'utf8'));
@@ -176,8 +189,6 @@ for (const o of organizations) {
 const SERVICE_PARTIES = new Set([
   'water_utility', 'heat_utility', 'energy_utility', 'gas_service', 'tko_operator', 'municipality', 'housing_inspection', 'lift_service', 'intercom_service',
 ]);
-/** «+7 (код) номер» или «8 (800) …»: ровно 11 цифр */
-const isPhone = (s) => /^(\+7|8) \(\d{3,5}\) [\d-]+$/.test(s) && s.replace(/\D/g, '').length === 11;
 const services = {};
 const servicesFile = resolve(dir, 'services.csv');
 if (existsSync(servicesFile)) {
@@ -190,8 +201,7 @@ if (existsSync(servicesFile)) {
       .filter(Boolean)
       .map((p) => {
         const i = p.lastIndexOf(':');
-        const number = p.slice(i + 1).trim();
-        if (!isPhone(number)) throw new Error(`services.csv: номер «${number}» у «${r.party}» не в формате +7 (код) ххх-хх-хх`);
+        const number = formatPhone(p.slice(i + 1).trim());
         return { label: p.slice(0, i).trim() || 'Телефон', number };
       });
     // у лифта без телефона подставляется диспетчерская дома (packages/core/src/data/houses.ts) – это не расхождение
