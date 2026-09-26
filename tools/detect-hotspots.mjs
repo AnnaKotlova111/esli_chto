@@ -88,7 +88,35 @@ async function detect(sceneId, def) {
     const [r, g, b] = px(i);
     white[i] = isPlateWhite(r, g, b) ? 1 : 0;
   }
-  const isWhiteAt = (x, y) => white[y * w + x] === 1;
+  const isWhiteAt = (x, y) => x >= 0 && y >= 0 && x < w && y < h && white[y * w + x] === 1;
+
+  /**
+   * Рамка ровно по белой плашке. Найденная область может захватывать белый хвостик-выноску под плашкой,
+   * а после эрозии – пустые полосы по краям; тогда синяя обводка выбранного объекта отстоит от подписи.
+   * Срезаем только от краёв внутрь, поэтому строки с текстом и значком не трогаются.
+   */
+  const tighten = (p) => {
+    const rowWhite = (y) => {
+      let c = 0;
+      for (let x = p.x; x < p.x + p.w; x++) if (isWhiteAt(x, y)) c++;
+      return c / p.w;
+    };
+    let top = p.y;
+    let bottom = p.y + p.h - 1;
+    while (bottom - top > p.h * 0.5 && rowWhite(top) < 0.3) top++;
+    while (bottom - top > p.h * 0.5 && rowWhite(bottom) < 0.3) bottom--;
+    const colWhite = (x) => {
+      let c = 0;
+      for (let y = top; y <= bottom; y++) if (isWhiteAt(x, y)) c++;
+      return c / (bottom - top + 1);
+    };
+    // у скруглённых концов плашки белого в столбце мало, поэтому порог по столбцам ниже, чем по строкам
+    let left = p.x;
+    let right = p.x + p.w - 1;
+    while (right - left > p.w * 0.5 && colWhite(left) < 0.15) left++;
+    while (right - left > p.w * 0.5 && colWhite(right) < 0.15) right--;
+    return { ...p, x: left, y: top, w: right - left + 1, h: bottom - top + 1 };
+  };
 
   // Плашки: вытянутые по горизонтали области белого, плотно заполняющие свою рамку.
   // Сначала без эрозии, затем с нарастающей – пока плашка не отделится от белых предметов рядом.
@@ -187,7 +215,7 @@ async function detect(sceneId, def) {
     }
     if (used.has(best.p.id)) problems.push(`${sceneId}: плашка у «${target}» уже занята другим объектом`);
     used.add(best.p.id);
-    const p = best.p;
+    const p = tighten(best.p);
     const icon = iconOf(p);
     if (!icon) problems.push(`${sceneId}: на плашке «${target}» не найден значок`);
     spots[target] = { box: [p.x, p.y, p.w, p.h], icon };
