@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react';
-import type { Basis, Certainty, Urgency } from '@esli-chto/core';
+import { typo, type Basis, type Certainty, type Urgency } from '@esli-chto/core';
 import { Icon, type UiIconName } from './icons';
 
 export type Tone = 'info' | 'warning' | 'critical' | 'success' | 'neutral';
@@ -20,7 +20,7 @@ export function Callout({ tone = 'info', title, icon, children, role }: { tone?:
         <Icon name={icon ?? TONE_ICON[tone]} size={20} />
       </span>
       <div className="callout__body">
-        {title && <p className="callout__title">{title}</p>}
+        {title && <p className="callout__title">{typo(title)}</p>}
         {children && <div className="callout__text">{children}</div>}
       </div>
     </div>
@@ -74,7 +74,7 @@ export function Section({ title, hint, id, children }: { title: string; hint?: s
       <h3 className="section__title" id={id ? `${id}-title` : undefined}>
         {title}
       </h3>
-      {hint && <p className="section__hint">{hint}</p>}
+      {hint && <p className="section__hint">{typo(hint)}</p>}
       {children}
     </section>
   );
@@ -114,8 +114,8 @@ export function ListRow({ icon, title, subtitle, badge, onClick, disabled, trail
     <button type="button" className="list-row" onClick={onClick} disabled={disabled}>
       {icon && <span className="list-row__icon">{icon}</span>}
       <span className="list-row__main">
-        <span className="list-row__title">{title}</span>
-        {subtitle && <span className="list-row__subtitle">{subtitle}</span>}
+        <span className="list-row__title">{typeof title === 'string' ? typo(title) : title}</span>
+        {subtitle && <span className="list-row__subtitle">{typeof subtitle === 'string' ? typo(subtitle) : subtitle}</span>}
       </span>
       {badge}
       {trailing ?? <Icon name="forward" size={20} className="list-row__chev" />}
@@ -134,6 +134,22 @@ export function Chip({ active, onClick, children, icon }: { active?: boolean; on
 
 /** Ссылка tel: – только цифры и плюс. */
 export const telHref = (num: string) => `tel:${num.replace(/[^\d+]/g, '')}`;
+
+/** Телефоны по одному на строку: подпись слева, номер справа и никогда не разрывается. */
+export function PhoneLines({ phones }: { phones: { number: string; label?: string }[] }) {
+  return (
+    <ul className="phone-lines">
+      {phones.map((p) => (
+        <li key={`${p.label}-${p.number}`} className="phone-line">
+          {p.label && <span className="phone-line__label">{p.label}</span>}
+          <a className="phone-line__num" href={telHref(p.number)}>
+            {p.number}
+          </a>
+        </li>
+      ))}
+    </ul>
+  );
+}
 
 export function plural(n: number, one: string, few: string, many: string): string {
   const m10 = n % 10;

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { emphasize } from '../src';
+import { emphasize, typo } from '../src';
 
 const strong = (s: string) => emphasize(s).filter((p) => p.strong).map((p) => p.text);
 
@@ -24,5 +24,24 @@ describe('выделение главного в тексте', () => {
   it('текст собирается обратно без потерь', () => {
     const s = 'Не трогайте провода, звоните 112 или +7 (49354) 2-44-72.';
     expect(emphasize(s).map((p) => p.text).join('')).toBe(s);
+  });
+});
+
+describe('неразрывные места в тексте на экране', () => {
+  const plain = (s: string) => s.replace(/\u2060/g, '').replace(/\u00A0/g, ' ');
+  const breaks = (s: string) => s.match(/[ ]|-(?!\u2060)|–(?!\u2060)/g) ?? [];
+
+  it('телефон не разрывается ни на пробеле, ни на дефисе', () => {
+    const t = typo('+7 (493) 542-42-06');
+    expect(breaks(t)).toEqual([]);
+    expect(plain(t)).toBe('+7 (493) 542-42-06');
+  });
+
+  it('диапазоны, сокращения, № и градусы держатся вместе; тире не начинает строку', () => {
+    const t = typo('Часы: вт–пт 8:00–17:00, ул. Ульяновская, д. 15 (п. 8 Правил № 491) – не ниже +18 °C');
+    for (const glued of ['вт–\u2060пт', '8:00–\u206017:00', 'ул.\u00A0Ульяновская', 'д.\u00A015', 'п.\u00A08', '№\u00A0491', '18\u00A0°C', '\u00A0– не']) {
+      expect(t, glued).toContain(glued);
+    }
+    expect(plain(t)).toBe('Часы: вт–пт 8:00–17:00, ул. Ульяновская, д. 15 (п. 8 Правил № 491) – не ниже +18 °C');
   });
 });

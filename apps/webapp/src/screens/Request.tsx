@@ -81,7 +81,7 @@ export function RequestView({ problemId, answers }: { problemId: string; answers
       </Callout>
 
       <Section title="Вид обращения">
-        <div className="chips" role="radiogroup" aria-label="Вид обращения">
+        <div className="chips chips--wrap" role="radiogroup" aria-label="Вид обращения">
           {KINDS.map((k) => (
             <Chip
               key={k}

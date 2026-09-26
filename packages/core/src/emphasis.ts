@@ -37,3 +37,22 @@ export function emphasize(text: string): TextPart[] {
   if (pos < text.length) parts.push({ text: text.slice(pos) });
   return parts;
 }
+
+const NBSP = '\u00A0';
+/** Невидимый «склеивающий» символ: запрещает перенос строки рядом с собой. */
+const WJ = '\u2060';
+
+/**
+ * Неразрывные места для экрана: телефон, диапазон «8:00–17:00», «ул. Ульяновская», «п. 8», «№ 491»,
+ * «+18 °C» не разрываются переносом, а тире не начинает строку.
+ * Только для показа: в тексты обращений и сообщений бота не подставляется.
+ */
+export function typo(text: string): string {
+  return text
+    .replace(/(?:\+7|8) ?\(\d{3,5}\) ?\d[\d-]*\d/g, (m) => m.replace(/ /g, NBSP).replace(/-/g, `-${WJ}`))
+    .replace(/([\dA-Za-zА-Яа-яЁё])–(?=[\dA-Za-zА-Яа-яЁё])/g, `$1–${WJ}`)
+    .replace(/ – /g, `${NBSP}– `)
+    .replace(/(^|[\s(«"])(ул|д|пос|г|пер|кв|корп|стр|ст|ч|п|пп|им)\. /g, `$1$2.${NBSP}`)
+    .replace(/№ /g, `№${NBSP}`)
+    .replace(/(\d) (%|°C|°)/g, `$1${NBSP}$2`);
+}

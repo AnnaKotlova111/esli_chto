@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { CATEGORIES, categoryOf, resolveParties, urgentProblems, type UrgentItem } from '@esli-chto/core';
+import { CATEGORIES, categoryOf, resolveParties, typo, urgentProblems, type UrgentItem } from '@esli-chto/core';
 import { haptic } from '../bridge';
 import { useApp } from '../state';
 import { Button } from '../ui/Button';
@@ -31,7 +31,7 @@ export function UrgentView() {
             <ElementIcon id={i.element.id} />
           </span>
           <span className="urgent-row__main">
-            <span className="urgent-row__title">{i.problem.title}</span>
+            <span className="urgent-row__title">{typo(i.problem.title)}</span>
             <span className="urgent-row__sub">{i.element.title}</span>
           </span>
         </button>
@@ -43,7 +43,8 @@ export function UrgentView() {
             aria-label={`Позвонить ${phone.number} (${party?.contact?.name ?? party?.title}): ${i.problem.title}`}
           >
             <Icon name="call" size={20} />
-            <span>{phone.number.replace(/^\+7 \(000\) /, '')}</span>
+            {/* в узкую кнопку помещается только короткий номер; полный – в карточке аварийной службы выше */}
+            <span>{phone.number.replace(/\D/g, '').length <= 3 ? phone.number : i.call === 'dispatch' ? 'АДС' : 'Позвонить'}</span>
           </a>
         )}
       </li>

@@ -35,6 +35,15 @@ export function SceneView({ scene }: { scene: SceneDef }) {
 
   return (
     <figure className="scene" aria-label={`Схема «${scene.title}»`}>
+      {/* над схемой, а не на ней: в углу картинки кнопка перекрывала бы подписи объектов */}
+      {corner && scene.corner && (
+        <div className="scene__top">
+          <button type="button" className="scene__corner" onClick={() => activate(corner.id)} aria-label={`${scene.corner.label}: шум, запахи, залив, перепланировка`}>
+            <ElementIcon id={corner.id} size={20} />
+            <span>{scene.corner.label}</span>
+          </button>
+        </div>
+      )}
       <div className={zoomed ? 'scene__viewport is-zoomed' : 'scene__viewport'}>
         <div className="scene__canvas" style={{ aspectRatio: `${w} / ${h}` }}>
           <img
@@ -81,20 +90,9 @@ export function SceneView({ scene }: { scene: SceneDef }) {
                 />
               );
             })}
-          {corner && scene.corner && !zoomed && (
-            <button type="button" className="scene__corner" onClick={() => activate(corner.id)} aria-label={`${scene.corner.label}: шум, запахи, залив, перепланировка`}>
-              <ElementIcon id={corner.id} size={20} />
-              <span>{scene.corner.label}</span>
-            </button>
-          )}
         </div>
       </div>
       <div className="scene__tools">
-        {corner && scene.corner && zoomed && (
-          <button type="button" className="scene__tool" onClick={() => activate(corner.id)}>
-            <ElementIcon id={corner.id} size={18} /> {scene.corner.label}
-          </button>
-        )}
         <button type="button" className="scene__tool" aria-pressed={zoomed} onClick={() => setZoomed((z) => !z)}>
           <Icon name={zoomed ? 'zoomOut' : 'zoomIn'} size={18} /> {zoomed ? 'Обычный размер' : 'Крупнее'}
         </button>

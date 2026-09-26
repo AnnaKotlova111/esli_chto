@@ -58,7 +58,7 @@ for (const tab of ['house', 'flat']) {
       if (!e) throw new Error(`нет объекта ${target}`);
       onScenes += 1;
       const req = (e.requires ?? []).map((r) => REQUIRES[r]).find(Boolean);
-      const corner = s.corner?.target === target ? ' Кнопка в углу схемы.' : '';
+      const corner = s.corner?.target === target ? ' Кнопка над схемой.' : '';
       schemes.push(`- **${e.title}** – ${e.about}${req ? ` _(${req})_` : ''}${corner}`);
       for (const p of e.problems) schemes.push(`  - ${p.title}${mark(p)}`);
     }

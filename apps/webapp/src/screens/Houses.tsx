@@ -1,11 +1,11 @@
 import { useMemo, useState } from 'react';
-import { ALL_FEATURES, CITY, HOUSES, organizationOf, searchHouses, type Feature, type HouseProfile } from '@esli-chto/core';
+import { ALL_FEATURES, CITY, HOUSES, organizationOf, searchHouses, typo, type Feature, type HouseProfile } from '@esli-chto/core';
 import { Input } from '@maxhub/max-ui';
 import { haptic } from '../bridge';
 import { useApp } from '../state';
 import { Button } from '../ui/Button';
 import { Icon } from '../ui/icons';
-import { Callout, Chip, ListRow, Section, plural } from '../ui/parts';
+import { Callout, Chip, ListRow, PhoneLines, Section, plural } from '../ui/parts';
 
 export const FEATURE_LABEL: Record<Feature, string> = {
   elevator: 'Лифт',
@@ -102,16 +102,11 @@ export function HouseCard({ house }: { house: HouseProfile }) {
   return (
     <div className="house-card">
       <p className="house-card__label">Ваш дом</p>
-      <p className="house-card__address">{house.address}</p>
+      <p className="house-card__address">{typo(house.address)}</p>
       <p className="house-card__org">
-        {org?.kind === 'УК' ? 'Управляющая организация' : `Форма управления: ${house.managerKind}`} – {m?.name}
+        {typo(`${org?.kind === 'УК' ? 'Управляющая организация' : `Форма управления: ${house.managerKind}`} – ${m?.name ?? ''}`)}
       </p>
-      {m?.phones[0] && (
-        <p className="text-secondary">
-          {m.phones.map((p) => p.number).join(', ')}
-          {house.contacts.dispatch ? ` · диспетчерская ${house.contacts.dispatch.phones[0]?.number}` : ''}
-        </p>
-      )}
+      {m?.phones[0] && <PhoneLines phones={[...m.phones, ...(house.contacts.dispatch?.phones ?? [])]} />}
       {m?.note && <Callout tone="warning">{m.note}</Callout>}
     </div>
   );
@@ -131,7 +126,7 @@ export function FeaturesEditor() {
       hint={
         house.featuresKnown
           ? 'Объекты, которых нет, приглушены на схемах с пометкой «нет в доме». Отметки хранятся только на этом устройстве.'
-          : 'В справочнике этого нет. Снимите отметки с того, чего в доме нет, – лишнее приглушим на схемах.'
+          : 'В справочнике нет данных об оборудовании дома. Снимите отметки с того, чего в вашем доме нет: такие объекты приглушим на схемах.'
       }
     >
       <div className="chips chips--wrap" role="group" aria-label="Что есть в доме">

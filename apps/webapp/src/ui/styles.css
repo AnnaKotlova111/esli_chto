@@ -109,6 +109,20 @@ figure {
   width: 100%;
 }
 
+/* На узком экране подпись кнопки переносится на вторую строку, а не обрезается многоточием
+   (в UI-ките MAX подпись однострочная). */
+.btn {
+  height: auto;
+  padding-block: 10px;
+}
+
+.btn [class*='Button__content'] {
+  overflow: visible;
+  white-space: normal;
+  text-overflow: clip;
+  text-align: center;
+}
+
 .btn--primary {
   --MaxUi-Button_background: var(--color-primary);
   --MaxUi-Button_background-active: var(--color-primary-pressed);
@@ -309,6 +323,41 @@ figure {
 
 .house-card__org {
   font: var(--text-body);
+}
+
+.house-card .phone-lines {
+  margin-top: var(--space-1);
+}
+
+/* Телефоны: каждый на своей строке, номер не переносится и прижат вправо,
+   даже если длинная подпись заняла всю строку. */
+.phone-lines {
+  display: grid;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.phone-line {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  column-gap: var(--space-3);
+  font: var(--text-secondary);
+}
+
+.phone-line__label {
+  color: var(--color-text-secondary);
+}
+
+.phone-line__num {
+  margin-left: auto;
+  color: var(--color-heading);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  text-decoration: none;
 }
 
 .houses__search {
@@ -535,10 +584,13 @@ figure {
   color: var(--color-text-secondary);
 }
 
+.scene__top {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: var(--space-2);
+}
+
 .scene__corner {
-  position: absolute;
-  top: var(--space-3);
-  right: var(--space-3);
   display: inline-flex;
   align-items: center;
   gap: var(--space-2);
@@ -771,6 +823,15 @@ figure {
 .chips--wrap {
   flex-wrap: wrap;
   overflow: visible;
+}
+
+/* в переносимом ряду длинная подпись уходит на вторую строку, а не за край экрана */
+.chips--wrap .chip {
+  flex-shrink: 1;
+  min-width: 0;
+  padding-block: 8px;
+  white-space: normal;
+  text-align: left;
 }
 
 .chips::-webkit-scrollbar {
@@ -1352,20 +1413,31 @@ figure {
 }
 
 /* обращение */
+/* minmax(0, …) и min-width: 0 – чтобы поля ввода не растягивали форму шире экрана
+   (у <input> есть собственная минимальная ширина, и сетка по умолчанию под неё подстраивается) */
 .form {
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
   gap: var(--space-3);
 }
 
 .form__row {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
   gap: var(--space-3);
 }
 
 .field {
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
   gap: 6px;
+  min-width: 0;
+}
+
+.field input,
+.request textarea {
+  width: 100%;
+  min-width: 0;
 }
 
 .field__label {

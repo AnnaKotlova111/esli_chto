@@ -1,9 +1,9 @@
-import type { HouseProfile, PartyId, ResolvedParty } from '@esli-chto/core';
+import { typo, type HouseProfile, type PartyId, type ResolvedParty } from '@esli-chto/core';
 import { Fragment } from 'react';
 import { Button } from './Button';
 import { Rich } from './Rich';
 import { Icon, PartyIcon } from './icons';
-import { telHref } from './parts';
+import { PhoneLines, telHref } from './parts';
 
 const TYPE: Record<PartyId, string> = {
   manager: 'Управляющая организация',
@@ -52,7 +52,11 @@ export function ServiceCard({ party, house, primary, onWhy, onCall, onChooseHous
   const [main, ...more] = c?.phones ?? [];
   const critical = EMERGENCY.has(party.id);
   const name = party.id === 'owner' || party.id === 'neighbor' ? party.title : (c?.name ?? party.title);
-  const shortNumber = main && main.number.replace(/\D/g, '').length <= 3;
+  const isShort = (n: string) => n.replace(/\D/g, '').length <= 3;
+  const shortNumber = main && isShort(main.number);
+  // короткие экстренные номера – отдельными кнопками, обычные – строками под «Позвонить»
+  const moreShort = more.filter((p) => isShort(p.number));
+  const moreLong = more.filter((p) => !isShort(p.number));
 
   return (
     <article className={['service-card', primary ? 'is-primary' : '', critical ? 'is-critical' : ''].join(' ').trim()}>
@@ -61,23 +65,23 @@ export function ServiceCard({ party, house, primary, onWhy, onCall, onChooseHous
           <PartyIcon icon={party.icon} />
         </span>
         <div className="service-card__names">
-          <h4 className="service-card__name">{name}</h4>
+          <h4 className="service-card__name">{typo(name)}</h4>
           <p className="service-card__type">{partyType(party.id, house)}</p>
         </div>
       </header>
 
-      <p className="service-card__role">{party.role}</p>
+      <p className="service-card__role">{typo(party.role)}</p>
 
       {(c?.hours || c?.address || c?.site || c?.email) && (
         <ul className="service-card__meta">
           {c?.hours && (
             <li>
-              <Icon name="hours" size={16} /> {c.hours}
+              <Icon name="hours" size={16} /> {typo(c.hours)}
             </li>
           )}
           {c?.address && (
             <li>
-              <Icon name="location" size={16} /> {c.address}
+              <Icon name="location" size={16} /> {typo(c.address)}
             </li>
           )}
           {c?.email && (
@@ -128,17 +132,13 @@ export function ServiceCard({ party, house, primary, onWhy, onCall, onChooseHous
               >
                 {shortNumber ? `Позвонить ${main.number}` : 'Позвонить'}
               </Button>
-              {!shortNumber && (
-                <p className="service-card__phone">
-                  <strong>{main.number}</strong> · {main.label}
-                </p>
-              )}
+              {(!shortNumber || moreLong.length > 0) && <PhoneLines phones={shortNumber ? moreLong : [main, ...moreLong]} />}
             </>
           )}
-          {more.map((p) => (
+          {moreShort.map((p) => (
             <Fragment key={p.number}>
               <Button kind="secondary" block href={telHref(p.number)} icon={<Icon name="call" />} onClick={() => onCall?.(p.number)}>
-                {p.number}
+                {`Позвонить ${p.number}`}
               </Button>
               <p className="service-card__phone">{p.label}</p>
             </Fragment>

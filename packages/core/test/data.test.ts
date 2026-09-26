@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
-  ALL_ELEMENTS, CITY, CITY_SERVICES, NORMS, ORGANIZATIONS, PARTIES, HOUSES, collectOutcomes, getHouse, isQuestion, localize, searchHouses,
+  ALL_ELEMENTS, CITY, CITY_SERVICES, NORMS, ORGANIZATIONS, PARTIES, HOUSES, collectOutcomes, getHouse, hasUnsureOption, isQuestion, localize, searchHouses,
   type Outcome, type Question,
 } from '../src';
 
@@ -63,6 +63,17 @@ describe('целостность данных (раздел 6 ТЗ)', () => {
       }
     };
     for (const { problem } of allProblems) walk(problem.rule, 0, problem.id);
+  });
+
+  it('в каждом вопросе есть вариант «Не знаю», кроме вопросов о том, что житель видит сам', () => {
+    // Где окно, когда шумят, нужен ли проезд скорой прямо сейчас – ответ известен, «не знаю» тут лишнее.
+    const obvious = new Set(['facade_windows__broken', 'neighbors__noise', 'parking__blocked']);
+    const walk = (n: Outcome | Question, id: string) => {
+      if (!isQuestion(n)) return;
+      expect(hasUnsureOption(n), `${id}: «${n.ask}»`).toBe(!obvious.has(id));
+      n.options.forEach((o) => walk(o.next, id));
+    };
+    for (const { problem } of allProblems) walk(problem.rule, problem.id);
   });
 
   it('синонимы для поиска заполнены у каждого объекта и каждой ситуации', () => {

@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import {
-  APP_META, CITY, PRIVACY, TERMS, getElement, getNorm, getProblem, localizeQuestion, resolve, zoneTitle,
+  APP_META, CITY, PRIVACY, TERMS, getElement, getNorm, getProblem, hasUnsureOption, localizeQuestion, resolve, typo, zoneTitle,
   type LegalDoc,
 } from '@esli-chto/core';
 import { haptic, openLink } from '../bridge';
@@ -133,7 +133,7 @@ function FlowView({ problemId, answers }: { problemId: string; answers: number[]
   const q = localizeQuestion(r.question, house);
   return (
     <div className="flow">
-      <p className="flow__problem">{problem.title}</p>
+      <p className="flow__problem">{typo(problem.title)}</p>
       {problem.urgency === 'emergency' && (
         <Callout tone="critical" title="Опасная ситуация" role="alert">
           Если есть угроза жизни, пожар или запах газа – не отвечайте на вопросы, сразу звоните{' '}
@@ -144,8 +144,8 @@ function FlowView({ problemId, answers }: { problemId: string; answers: number[]
         </Callout>
       )}
       <p className="flow__step">Уточнение {answers.length + 1}</p>
-      <h3 className="flow__ask">{q.ask}</h3>
-      {q.hint && <p className="flow__hint">{q.hint}</p>}
+      <h3 className="flow__ask">{typo(q.ask)}</h3>
+      {q.hint && <p className="flow__hint">{typo(q.hint)}</p>}
       <div className="card-list">
         {q.options.map((o, i) => (
           <ListRow
@@ -159,7 +159,8 @@ function FlowView({ problemId, answers }: { problemId: string; answers: number[]
         ))}
       </div>
       <p className="fineprint">
-        От ответа зависит, где проходит граница ответственности. Не уверены – выберите вариант «не знаю»: подскажем безопасный порядок действий.
+        От ответа зависит, где проходит граница ответственности.
+        {hasUnsureOption(q) && ' Не уверены – выберите вариант «Не знаю»: подскажем безопасный порядок действий.'}
       </p>
       <p className="sr-only">{element.title}</p>
     </div>
@@ -175,7 +176,7 @@ function NormView({ id }: { id: string }) {
       <h3 className="norm__short">{n.short}</h3>
       <p className="norm__doc">{n.doc}</p>
       <Section title="О чём норма">
-        <p className="text">{n.gist}</p>
+        <p className="text">{typo(n.gist)}</p>
         <p className="fineprint">Пересказ своими словами, а не цитата. Точная формулировка – в первоисточнике.</p>
       </Section>
       {n.url && (

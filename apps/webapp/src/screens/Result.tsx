@@ -1,13 +1,13 @@
 import { useEffect, useMemo } from 'react';
 import {
-  emergencyPartyOf, getNorm, localizeOutcome, resolveParties,
+  emergencyPartyOf, getNorm, localizeOutcome, resolveParties, typo,
   type HouseElement, type Outcome, type Problem,
 } from '@esli-chto/core';
 import { haptic, shareText } from '../bridge';
 import { useApp } from '../state';
 import { Button } from '../ui/Button';
 import { Icon } from '../ui/icons';
-import { BASIS_HINT, BasisBadge, Callout, CertaintyBadge, Section, telHref } from '../ui/parts';
+import { BASIS_HINT, BasisBadge, Callout, CertaintyBadge, PhoneLines, Section, telHref } from '../ui/parts';
 import { Rich } from '../ui/Rich';
 import { ServiceCard } from '../ui/ServiceCard';
 
@@ -111,13 +111,12 @@ export function ResultView({ element, problem, outcome: raw, answers }: Props) {
           <p className="alert-panel__label">
             <Icon name="warning" size={20} /> Срочно
           </p>
-          <p className="alert-panel__title">Позвоните сейчас: {callParty.contact?.name ?? callParty.title}</p>
+          <p className="alert-panel__title">Позвоните сейчас: {typo(callParty.contact?.name ?? callParty.title)}</p>
           <Button kind="primary" block href={telHref(callPhone.number)} icon={<Icon name="call" />} onClick={() => onCall(callPhone.number)}>
             Позвонить
           </Button>
-          <p className="alert-panel__note">
-            <strong>{callPhone.number}</strong> · {callParty.contact?.hours ?? callPhone.label}
-          </p>
+          <PhoneLines phones={[callPhone]} />
+          {callParty.contact?.hours && <p className="alert-panel__note">{typo(callParty.contact.hours)}</p>}
         </div>
       )}
 
@@ -129,9 +128,9 @@ export function ResultView({ element, problem, outcome: raw, answers }: Props) {
           <CertaintyBadge certainty={outcome.certainty} />
           <BasisBadge basis={outcome.basis} />
         </div>
-        <h2 className="verdict__title">{outcome.headline}</h2>
+        <h2 className="verdict__title">{typo(outcome.headline)}</h2>
         <p className="verdict__problem">
-          {element.title} · {problem.title}
+          {typo(`${element.title} · ${problem.title}`)}
         </p>
       </div>
 
@@ -146,8 +145,8 @@ export function ResultView({ element, problem, outcome: raw, answers }: Props) {
       </Section>
 
       <Section title="Почему сюда" id="why">
-        <p className="text">{outcome.why}</p>
-        {outcome.note && <Callout tone="info">{outcome.note}</Callout>}
+        <p className="text">{typo(outcome.why)}</p>
+        {outcome.note && <Callout tone="info">{typo(outcome.note)}</Callout>}
       </Section>
 
       {outcome.certainty === 'disputed' ? (
@@ -179,7 +178,7 @@ export function ResultView({ element, problem, outcome: raw, answers }: Props) {
                 </span>
                 <span className="norm-row__main">
                   <span className="norm-row__short">{n.short}</span>
-                  <span className="norm-row__gist">{n.gist}</span>
+                  <span className="norm-row__gist">{typo(n.gist)}</span>
                 </span>
                 <Icon name="forward" size={20} className="list-row__chev" />
               </button>

@@ -100,6 +100,10 @@ export function localizeQuestion(q: Question, house: HouseProfile): Question {
 
 export const isQuestion = (x: Outcome | Question): x is Question => 'options' in x;
 
+/** Вариант для тех, кто не может ответить на вопрос: «Не знаю…», «Не уверен(а)». */
+export const isUnsureOption = (label: string): boolean => /^(не знаю|не уверен)/i.test(label.trim());
+export const hasUnsureOption = (q: Question): boolean => q.options.some((o) => isUnsureOption(o.label));
+
 /**
  * Проходит цепочку уточняющих вопросов по индексам выбранных ответов.
  * Принимает проблему или её id. Пустой массив – начало; недействительный индекс
