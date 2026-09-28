@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { ALL_ELEMENTS, HOUSES, collectOutcomes, encodeDeepLink, getHouse, localizeOutcome, resolve } from '@esli-chto/core';
 import {
   addressReply, askAddressReply, cbProblem, elementReply, emergencyReply, help, houseChosenReply, houseFromStart, housesListReply, menuReply,
-  nonTextReply, parseCallback, problemReply, searchReply, startReply, stepForChat, welcome, type ChatReply,
+  nonTextReply, parseCallback, problemReply, searchReply, startReply, stepForChat, textReply, thanksReply, welcome, type ChatReply,
 } from '../src/chat';
 
 const uk = getHouse('vch_korovina_11');
@@ -10,6 +10,12 @@ const tszh = getHouse('vch_pyatnitskiy_13');
 const none = getHouse('none');
 /** Текст сообщения без HTML-разметки – как его видит пользователь. */
 const plain = (html: string) => html.replace(/<[^>]+>/g, '').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&amp;/g, '&');
+
+/** Кнопки вариантов ответа на текущий вопрос (без «Назад» и «Другая ситуация»). */
+const optionCount = (r: ChatReply, problemId: string, answers: number[]) => {
+  const here = cbProblem(problemId, answers);
+  return r.buttons.flat().filter((b) => b.kind === 'cb' && b.payload.startsWith(here) && b.payload !== here).length;
+};
 
 /** Ограничения MAX Bot API на клавиатуру: до 30 рядов, до 7 кнопок в ряду (для open_app – до 3), payload не пустой. */
 function assertValidReply(r: ChatReply) {
@@ -110,6 +116,35 @@ describe('экраны бота', () => {
     assertValidReply(menuReply());
   });
 
+  it('«Назад» ведёт на шаг назад: к прошлому вопросу, а с первого шага – к ситуациям объекта', () => {
+    const back = (r: ChatReply) => r.buttons.flat().find((b) => b.text === '‹ Назад');
+    const payloadOf = (r: ChatReply) => {
+      const btn = back(r);
+      return btn && btn.kind === 'cb' ? btn.payload : undefined;
+    };
+    expect(payloadOf(problemReply('vru__flicker', [], uk))).toBe('e:vru');
+    expect(payloadOf(problemReply('vru__flicker', [1], uk))).toBe(cbProblem('vru__flicker'));
+    expect(payloadOf(problemReply('roof__leak', [], uk))).toBe('e:roof');
+    // недействительный ответ не уводит «Назад» дальше, чем пользователь прошёл
+    expect(payloadOf(problemReply('vru__flicker', [9], uk))).toBe('e:vru');
+    expect(elementReply('vru', uk).buttons.flat().some((b) => b.kind === 'cb' && b.payload === 'menu')).toBe(true);
+  });
+
+  it('приветствие, «начать», «что ты умеешь» и «спасибо» – рассказ о боте, а не «не нашёл»', () => {
+    for (const q of ['Привет', 'здравствуйте!', 'Добрый день', 'доброе утро)', 'Начать', 'старт', 'Здравствуйте, подскажите пожалуйста']) {
+      const r = textReply(q, uk);
+      assertValidReply(r);
+      expect(r.text, q).toContain('помощник для жителей');
+    }
+    for (const q of ['что ты умеешь?', 'Помощь', 'как пользоваться']) expect(textReply(q, uk).text, q).toContain('Как пользоваться');
+    expect(textReply('Спасибо!', uk).text).toBe(thanksReply(uk).text);
+    // приветствие перед описанием не мешает найти ситуацию
+    const found = textReply('Здравствуйте, во всём доме мигает свет', uk);
+    expect(found.buttons.flat().some((b) => b.kind === 'cb' && b.payload === cbProblem('vru__flicker'))).toBe(true);
+    // слова, похожие на приветствие только началом, приветствием не считаются
+    expect(textReply('кухня течёт', uk).text).not.toContain('помощник для жителей');
+  });
+
   it('поиск по свободному тексту предлагает ситуации, а не тупик', () => {
     const r = searchReply('течёт кран', uk);
     assertValidReply(r);
@@ -152,7 +187,7 @@ describe('экраны бота', () => {
             const r = problemReply(p.id, answers, house);
             assertValidReply(r);
             if (r.text.includes('❓')) {
-              const opts = r.buttons.flat().filter((b) => b.kind === 'cb' && b.payload.startsWith('p:')).length;
+              const opts = optionCount(r, p.id, answers);
               for (let i = 0; i < opts; i += 1) walk([...answers, i]);
             }
           };
@@ -190,7 +225,7 @@ describe('экраны бота', () => {
             const r = problemReply(p.id, answers, house);
             out.push(r.text);
             if (r.text.includes('❓')) {
-              const opts = r.buttons.flat().filter((b) => b.kind === 'cb' && b.payload.startsWith('p:')).length;
+              const opts = optionCount(r, p.id, answers);
               for (let i = 0; i < opts; i += 1) walk([...answers, i]);
             }
           };
@@ -259,7 +294,7 @@ describe('ответ бота совпадает с мини-приложени�
         const walk = (answers: number[]) => {
           const r = problemReply(p.id, answers, uk);
           expect(r.text, p.id).toMatch(/112|104/);
-          if (r.text.includes('❓')) r.buttons.flat().filter((b) => b.kind === 'cb' && b.payload.startsWith('p:')).forEach((_, i) => walk([...answers, i]));
+          if (r.text.includes('❓')) for (let i = 0; i < optionCount(r, p.id, answers); i += 1) walk([...answers, i]);
         };
         walk([]);
       }

@@ -148,6 +148,8 @@ describe('поиск свободным текстом', () => {
     ['нет горячей воды', { elementId: 'risers', problemId: 'risers__no_hot' }],
     ['мусор переполнен', { elementId: 'trash_area' }],
     ['шлагбаум не пропускает скорую', { elementId: 'yard_gate', problemId: 'yard_gate__emergency' }],
+    ['во всём доме мигает свет, куда обращаться?', { elementId: 'vru', problemId: 'vru__flicker' }],
+    ['скачет напряжение', { elementId: 'vru', problemId: 'vru__flicker' }],
     ['перегородили выезд', { elementId: 'parking', problemId: 'parking__blocked' }],
     ['водосточная труба', { elementId: 'roof', problemId: 'roof__drain' }],
     ['холодная батарея', { elementId: 'radiator' }],

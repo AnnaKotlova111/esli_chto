@@ -7,7 +7,7 @@ import { ALL_ELEMENTS, APP_META, DEFAULT_HOUSE_ID, getHouse, HOUSES } from '@esl
 import { maxFetch } from './tls';
 import {
   addressReply, askAddressReply, elementReply, emergencyReply, help, houseChosenReply, houseFromStart, housesListReply, menuReply,
-  nonTextReply, parseCallback, problemReply, searchReply, startReply, welcome,
+  nonTextReply, parseCallback, problemReply, startReply, textReply, welcome,
   type ChatButton, type ChatReply,
 } from './chat';
 
@@ -220,7 +220,7 @@ function createBot(token: string): Bot {
     }
   });
 
-  // Свободный текст – поиск ситуации (команды обрабатываются выше)
+  // Свободный текст: приветствие – рассказ о боте, описание поломки – поиск ситуации (команды обрабатываются выше)
   bot.on('message_created', async (ctx) => {
     if (ctx.message?.sender?.is_bot) return;
     const uid = userIdOf(ctx);
@@ -228,7 +228,7 @@ function createBot(token: string): Bot {
     if (!text) return send(ctx, nonTextReply(houseOf(uid)));
     if (text.startsWith('/')) return;
     if (uid !== undefined && awaitingAddress.has(uid)) return chooseHouse(ctx, uid, text.slice(0, 120));
-    await send(ctx, searchReply(text.slice(0, 200), houseOf(uid)));
+    await send(ctx, textReply(text.slice(0, 200), houseOf(uid)));
   });
 
   return bot;

@@ -101,6 +101,13 @@ const appBtn = (house: HouseProfile, text: string, target?: { problemId?: string
 
 const menuRow = (): ChatButton[] => [{ kind: 'cb', text: '🔎 Другая ситуация', payload: 'menu' }];
 
+/** «Назад» в диалоге ситуации: к предыдущему вопросу, а с первого шага – к списку ситуаций объекта. */
+const backButton = (elementId: string, problemId: string, answers: number[]): ChatButton => ({
+  kind: 'cb',
+  text: '‹ Назад',
+  payload: answers.length ? cbProblem(problemId, answers.slice(0, -1)) : `e:${elementId}`,
+});
+
 /** Ответ на кнопку «Другая ситуация». */
 export function menuReply(): ChatReply {
   return {
@@ -115,9 +122,11 @@ export function welcome(house: HouseProfile): ChatReply {
   return {
     text: clip(
       lines([
-        `${b('Если что')} – подскажу, кто отвечает, куда звонить и что делать.`,
+        `👋 Здравствуйте! Это ${b('«Если что»')} – помощник для жителей многоквартирных домов.`,
         '',
-        'Напишите, что случилось, своими словами: «течёт кран», «не горит свет в подъезде», «нет горячей воды». Или откройте карту дома и нажмите на нужный предмет.',
+        'Что-то сломалось в квартире, подъезде или во дворе? Подскажу, кто за это отвечает, дам телефон нужной организации, шаги и норму закона, на которую можно сослаться.',
+        '',
+        `${b('Как начать:')} напишите своими словами, что случилось, – например, «течёт кран», «не горит свет в подъезде», «нет горячей воды». Или откройте карту дома и нажмите на нужный предмет.`,
         '',
         isHouseChosen(house)
           ? `🏠 Ваш дом: ${b(house.address)}\nУправляет: ${esc(house.contacts.manager?.name ?? house.managerKind)}`
@@ -125,6 +134,8 @@ export function welcome(house: HouseProfile): ChatReply {
         '',
         `🆘 Угроза жизни, пожар – ${b('112')}`,
         `🔥 Запах газа – ${b('104')}`,
+        '',
+        em('/help – все команды. Это справочная информация, а не юридическая консультация.'),
       ]),
     ),
     buttons: [
@@ -291,6 +302,50 @@ export function searchReply(query: string, house: HouseProfile): ChatReply {
   };
 }
 
+// ─────────────── Приветствия и разговорные фразы ───────────────
+
+/** Приветствия и слова «начать»: в ответ – рассказ о боте, а не поиск поломки. */
+const GREETINGS = [
+  'привет', 'приветик', 'приветствую', 'здравствуй', 'здравствуйте', 'здрасте', 'здрасьте', 'добрый день', 'добрый вечер',
+  'доброе утро', 'доброй ночи', 'доброго времени суток', 'хай', 'салют', 'hi', 'hello', 'старт', 'start', 'начать', 'меню',
+];
+const HELP_PHRASES = ['помощь', 'помогите', 'справка', 'help', 'что ты умеешь', 'что умеешь', 'как пользоваться', 'кто ты', 'что это', 'что это за бот', 'зачем ты нужен'];
+const THANKS = ['спасибо', 'спасибо большое', 'большое спасибо', 'благодарю', 'спс'];
+
+const normalizePhrase = (s: string) => s.toLowerCase().replace(/ё/g, 'е').replace(/[^a-zа-я0-9\s]/g, ' ').replace(/\s+/g, ' ').trim();
+/** Длинные фразы проверяем первыми, чтобы «добрый день» не распознавался частями. */
+const byLength = (list: string[]) => list.map(normalizePhrase).sort((x, y) => y.length - x.length);
+const GREETING_LIST = byLength(GREETINGS);
+const HELP_LIST = byLength(HELP_PHRASES);
+const THANKS_LIST = byLength(THANKS);
+const leadingPhrase = (text: string, list: string[]) => list.find((p) => text === p || text.startsWith(`${p} `));
+
+export function thanksReply(house: HouseProfile): ChatReply {
+  return {
+    text: 'Пожалуйста! Если что-то ещё случится – просто напишите, что произошло.',
+    buttons: [[appBtn(house, '🏢 Открыть карту дома')], [{ kind: 'cb', text: '🚨 Срочно', payload: 'urgent' }]],
+  };
+}
+
+/**
+ * Ответ на свободный текст. «Привет», «начать», «что ты умеешь», «спасибо» – разговорные фразы, на них бот
+ * рассказывает о себе. Приветствие перед описанием («Здравствуйте, течёт кран») отбрасывается, остальное ищется.
+ */
+export function textReply(query: string, house: HouseProfile): ChatReply {
+  let rest = normalizePhrase(query);
+  let greeted = false;
+  for (let p = leadingPhrase(rest, GREETING_LIST); p; p = leadingPhrase(rest, GREETING_LIST)) {
+    rest = rest.slice(p.length).trim();
+    greeted = true;
+  }
+  if (!rest) return welcome(house);
+  if (leadingPhrase(rest, HELP_LIST) === rest) return help(house);
+  if (leadingPhrase(rest, THANKS_LIST) === rest) return thanksReply(house);
+  // «Здравствуйте, подскажите пожалуйста» – поломки в тексте нет, поэтому рассказываем, как пользоваться
+  if (greeted && search(rest, house, 1).length === 0 && !/\d/.test(rest)) return welcome(house);
+  return searchReply(greeted ? rest : query, house);
+}
+
 /** Фото, стикер, файл или геометка вместо текста: бот понимает только слова – подсказываем, а не молчим. */
 export function nonTextReply(house: HouseProfile): ChatReply {
   return {
@@ -304,7 +359,11 @@ export function elementReply(elementId: string, house: HouseProfile): ChatReply 
   if (!el) return welcome(house);
   return {
     text: `${b(el.title)}\n${esc(el.about)}\n\nЧто случилось?`,
-    buttons: [...el.problems.map((p): ChatButton[] => [{ kind: 'cb', text: p.title, payload: cbProblem(p.id) }]), [appBtn(house, '🏢 Показать на схеме', { elementId })]],
+    buttons: [
+      ...el.problems.map((p): ChatButton[] => [{ kind: 'cb', text: p.title, payload: cbProblem(p.id) }]),
+      [appBtn(house, '🏢 Показать на схеме', { elementId })],
+      menuRow(),
+    ],
   };
 }
 
@@ -351,6 +410,8 @@ export function problemReply(problemId: string, answers: number[], house: HouseP
   if (!found) return welcome(house);
   const { element, problem } = found;
   const r = resolve(problem, answers);
+  // недействительные ответы разбор отбрасывает – «Назад» считается от того шага, где пользователь на самом деле находится
+  const navRow = [backButton(element.id, problemId, answers.slice(0, r.depth)), ...menuRow()];
 
   if (r.status === 'question') {
     const q = localizeQuestion(r.question, house);
@@ -364,13 +425,13 @@ export function problemReply(problemId: string, answers: number[], house: HouseP
           q.hint ? em(q.hint) : '',
         ]),
       ),
-      buttons: [...q.options.map((o, i): ChatButton[] => [{ kind: 'cb', text: o.label, payload: cbProblem(problemId, [...answers, i]) }]), menuRow()],
+      buttons: [...q.options.map((o, i): ChatButton[] => [{ kind: 'cb', text: o.label, payload: cbProblem(problemId, [...answers.slice(0, r.depth), i]) }]), navRow],
     };
   }
   const outcome = localizeOutcome(r.outcome, house);
   return {
     text: renderOutcome(element.title, problem.title, outcome, house, problem.urgency === 'emergency'),
-    buttons: [[appBtn(house, outcome.request ? '📝 Подробнее и шаблон обращения' : '🏢 Подробнее в приложении', { problemId })], menuRow()],
+    buttons: [[appBtn(house, outcome.request ? '📝 Подробнее и шаблон обращения' : '🏢 Подробнее в приложении', { problemId })], navRow],
   };
 }
 
