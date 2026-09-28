@@ -1,6 +1,7 @@
 import { useCallback, useRef, useState } from 'react';
 import {
-  APP_META, CITY, PRIVACY, TERMS, getElement, getNorm, getProblem, hasUnsureOption, localizeQuestion, resolve, typo, zoneTitle,
+  APP_META, CITY, PRIVACY, TERMS, formatDateRu, getElement, getNorm, getProblem, hasUnsureOption, isHouseChosen, localizeQuestion,
+  normsCheckSummary, resolve, typo, zoneTitle,
   type LegalDoc,
 } from '@esli-chto/core';
 import { haptic, openLink } from '../bridge';
@@ -9,7 +10,7 @@ import { BottomSheet, ConfirmDialog, type PageDirection } from '../ui/BottomShee
 import { motionEnabled } from '../ui/gestures';
 import { Button } from '../ui/Button';
 import { ElementIcon, Icon } from '../ui/icons';
-import { BASIS_HINT, BASIS_LABEL, Callout, ListRow, Section, UrgencyBadge } from '../ui/parts';
+import { BASIS_HINT, BASIS_LABEL, Callout, ListRow, Section, UrgencyBadge, plural } from '../ui/parts';
 import { FeaturesEditor, HousesView } from './Houses';
 import { RequestView } from './Request';
 import { ResultView } from './Result';
@@ -248,6 +249,7 @@ function FeaturesView() {
 function AboutView() {
   const { house, open, eraseLocalData, toast } = useApp();
   const [confirmErase, setConfirmErase] = useState(false);
+  const norms = normsCheckSummary();
   return (
     <div className="about">
       <div className="about__brand">
@@ -261,7 +263,7 @@ function AboutView() {
       </div>
 
       <Callout tone="info" title={`Данные по г. ${CITY.name}`}>
-        Дома и управляющие организации – из открытых источников: {CITY.source.replace(/^Открытые данные: /, '')}. Сведения на {CITY.updatedAt.split('-').reverse().join('.')}. Контакты городских служб – с сайтов организаций и администрации города. Номера 112, 104 и 102 – общероссийские.
+        Дома и управляющие организации – из открытых источников: {CITY.source.replace(/^Открытые данные: /, '')}. Сведения на {formatDateRu(CITY.updatedAt)}. Контакты городских служб – с сайтов организаций и администрации города. Номера 112, 104 и 102 – общероссийские.
       </Callout>
 
       <Section title="Как принимается решение">
@@ -276,7 +278,10 @@ function AboutView() {
             </div>
           ))}
         </dl>
-        <p className="text-secondary">Нормы сверены с полными текстами документов в действующей редакции на {APP_META.normsCheckedAt}.</p>
+        <p className="text-secondary">
+          Сверено с полными текстами документов в действующей редакции: {norms.verified} {plural(norms.verified, 'норма', 'нормы', 'норм')} из {norms.total}, последняя сверка – {norms.lastChecked}. Остальные
+          – ссылки на документ целиком; выводы по ним помечены как спорные.
+        </p>
       </Section>
 
       <Section title="Документы">
@@ -313,7 +318,7 @@ function AboutView() {
           <dt>Поддержка</dt>
           <dd>Чат с ботом {APP_META.supportBot}</dd>
           <dt>Текущий дом</dt>
-          <dd>{house.id === 'none' ? 'не выбран' : `${house.address}. Данные на ${house.updatedAt.split('-').reverse().join('.')}.`}</dd>
+          <dd>{isHouseChosen(house) ? `${house.address}. Данные на ${formatDateRu(house.updatedAt)}.` : 'не выбран'}</dd>
         </dl>
       </Section>
 

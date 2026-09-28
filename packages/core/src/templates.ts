@@ -1,3 +1,4 @@
+import { isHouseChosen } from './data/houses';
 import { getNorm } from './data/norms';
 import { localize } from './engine';
 import type { HouseElement, HouseProfile, Outcome, Problem, RequestKind } from './types';
@@ -80,7 +81,7 @@ export function buildRequest(kind: RequestKind, outcome: Outcome, house: HousePr
     ? `${manager.name}${manager.inn ? ` (ИНН ${manager.inn})` : ''}${manager.address ? `, ${manager.address}` : ''}`
     : localize('[название {M_gen}]', house);
   // до выбора дома адрес известен только до города
-  const address = house.id === 'none' ? `${house.address}, [улица, дом]` : house.address;
+  const address = isHouseChosen(house) ? house.address : `${house.address}, [улица, дом]`;
   const where = [
     user.entrance ? `подъезд ${user.entrance}` : '',
     user.flat ? `кв. ${user.flat}` : '',

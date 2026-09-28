@@ -24,15 +24,7 @@ export function SearchOverlay() {
     }
   }, [state.searchOpen]);
 
-  const hits = useMemo(() => {
-    const seen = new Set<string>();
-    return search(q, house, 20).filter((h) => {
-      const key = h.problemId ?? `e:${h.elementId}`;
-      if (seen.has(key)) return false;
-      seen.add(key);
-      return true;
-    });
-  }, [q, house]);
+  const hits = useMemo(() => search(q, house, 20), [q, house]);
 
   if (!state.searchOpen) return null;
 

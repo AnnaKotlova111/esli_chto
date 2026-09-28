@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
-  ALL_ELEMENTS, CITY, CITY_SERVICES, NORMS, ORGANIZATIONS, PARTIES, HOUSES, collectOutcomes, getHouse, hasUnsureOption, isQuestion, localize, searchHouses,
+  ALL_ELEMENTS, CITY, CITY_SERVICES, NORMS, NORM_CHECKS, ORGANIZATIONS, PARTIES, HOUSES, collectOutcomes, formatDateRu, getHouse, hasUnsureOption,
+  isHouseChosen, isQuestion, localize, normsCheckSummary, searchHouses,
   type Outcome, type Question,
 } from '../src';
 
@@ -9,7 +10,7 @@ const allOutcomes = allProblems.flatMap(({ problem }) => collectOutcomes(problem
 /** Один вид номера во всём справочнике: +7 (493) 543-58-33, бесплатные линии – 8 (800) 350-42-12; экстренные – 112, 104, 102. */
 const PHONE = /^(\+7 \(\d{3}\) \d{3}-\d{2}-\d{2}|8 \(800\) \d{3}-\d{2}-\d{2})$/;
 
-describe('целостность данных (раздел 6 ТЗ)', () => {
+describe('целостность данных', () => {
   it('id объектов и ситуаций уникальны во всём проекте', () => {
     const el = ALL_ELEMENTS.map((e) => e.id);
     expect(new Set(el).size).toBe(el.length);
@@ -42,7 +43,7 @@ describe('целостность данных (раздел 6 ТЗ)', () => {
     }
   });
 
-  it('если основание – практика или договор, ответ помечен как спорный (раздел 13)', () => {
+  it('если основание – практика или договор, ответ помечен как спорный', () => {
     for (const { problem, o } of allOutcomes) {
       if (o.basis !== 'norm') expect(o.certainty, `${problem.id}: «${o.headline}»`).toBe('disputed');
     }
@@ -85,7 +86,7 @@ describe('целостность данных (раздел 6 ТЗ)', () => {
     }
   });
 
-  it('у каждого объекта 1–4 типовые ситуации, покрытие не ниже требований раздела 14', () => {
+  it('у каждого объекта 1–4 типовые ситуации, общее покрытие не меньше заявленного', () => {
     for (const e of ALL_ELEMENTS) {
       expect(e.problems.length, e.id).toBeGreaterThanOrEqual(1);
       expect(e.problems.length, e.id).toBeLessThanOrEqual(5);
@@ -101,6 +102,15 @@ describe('целостность данных (раздел 6 ТЗ)', () => {
         expect(all, problem.id).not.toMatch(/\{M/);
       }
     }
+  });
+
+  it('сводка сверки норм совпадает с журналом: число сверенных и дата последней сверки', () => {
+    const s = normsCheckSummary();
+    expect(s.total).toBe(Object.keys(NORMS).length);
+    expect(s.verified).toBe(Object.values(NORMS).filter((n) => n.verified).length);
+    expect(Object.keys(NORM_CHECKS).length).toBe(s.verified);
+    const key = (date: string) => date.split('.').reverse().join('');
+    for (const c of Object.values(NORM_CHECKS)) expect(key(c.date) <= key(s.lastChecked)).toBe(true);
   });
 
   it('в справочнике норм нет лишних записей и у каждой есть пересказ', () => {
@@ -148,6 +158,13 @@ describe('справочник домов Вичуги', () => {
     expect(h.contacts.manager?.name).toBe('ТСЖ «Московский»');
     expect(h.contacts.manager?.note).toContain('УК «Стоун»');
     expect(CITY.warnings.some((w) => w.includes('Московская, 13'))).toBe(true);
+  });
+
+  it('дата актуальности показывается в привычном виде, выбор дома определяется одной проверкой', () => {
+    expect(formatDateRu('2026-09-23')).toBe('23.09.2026');
+    expect(isHouseChosen(getHouse('vch_korovina_11'))).toBe(true);
+    expect(isHouseChosen(getHouse(undefined))).toBe(false);
+    expect(isHouseChosen(getHouse('нет такого'))).toBe(false);
   });
 
   it('неизвестный дом – профиль «дом не выбран»: городские службы есть, управляющей организации нет', () => {
@@ -207,7 +224,7 @@ describe('справочник домов Вичуги', () => {
   });
 });
 
-describe('подстановка формы управления (раздел 10 ТЗ)', () => {
+describe('подстановка формы управления', () => {
   const uk = getHouse('vch_korovina_11');
   const tszh = getHouse('vch_pyatnitskiy_13');
 

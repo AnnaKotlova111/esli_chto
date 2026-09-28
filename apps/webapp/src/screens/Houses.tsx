@@ -1,5 +1,7 @@
 import { useMemo, useState } from 'react';
-import { ALL_FEATURES, CITY, HOUSES, organizationOf, searchHouses, typo, type Feature, type HouseProfile } from '@esli-chto/core';
+import {
+  ALL_FEATURES, CITY, HOUSES, formatDateRu, isHouseChosen, organizationOf, searchHouses, typo, type Feature, type HouseProfile,
+} from '@esli-chto/core';
 import { Input } from '@maxhub/max-ui';
 import { haptic } from '../bridge';
 import { useApp } from '../state';
@@ -23,7 +25,7 @@ export function HousesView() {
   const { house, setHouse, closeAll, toast } = useApp();
   const [q, setQ] = useState('');
   const hits = useMemo(() => searchHouses(q, 30), [q]);
-  const chosen = house.id !== 'none';
+  const chosen = isHouseChosen(house);
 
   const pick = (h: HouseProfile) => {
     setHouse(h.id);
@@ -89,7 +91,7 @@ export function HousesView() {
       </Section>
 
       <p className="fineprint">
-        Источник: {CITY.source}. Сведения на {CITY.updatedAt.split('-').reverse().join('.')}. Если данные о вашем доме устарели, ориентируйтесь на квитанцию.
+        Источник: {CITY.source}. Сведения на {formatDateRu(CITY.updatedAt)}. Если данные о вашем доме устарели, ориентируйтесь на квитанцию.
       </p>
     </div>
   );

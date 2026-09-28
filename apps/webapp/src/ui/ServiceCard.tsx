@@ -1,5 +1,6 @@
-import { typo, type HouseProfile, type PartyId, type ResolvedParty } from '@esli-chto/core';
+import { needsHouseChoice, typo, type HouseProfile, type PartyId, type ResolvedParty } from '@esli-chto/core';
 import { Fragment } from 'react';
+import { openLink } from '../bridge';
 import { Button } from './Button';
 import { Rich } from './Rich';
 import { Icon, PartyIcon } from './icons';
@@ -43,10 +44,7 @@ interface Props {
   onChooseHouse?: () => void;
 }
 
-/** Стороны, контакты которых берутся из карточки дома: до выбора дома их нет (лифт – через диспетчерскую дома). */
-const HOUSE_PARTIES = new Set<PartyId>(['manager', 'dispatch', 'lift_service']);
-
-/** Карточка организации или службы (дизайн-код, раздел 15): кто, тип, зона ответственности, режим, «Позвонить». */
+/** Карточка организации или службы: кто, тип, зона ответственности, режим работы, «Позвонить». */
 export function ServiceCard({ party, house, primary, onWhy, onCall, onChooseHouse }: Props) {
   const c = party.contact;
   const [main, ...more] = c?.phones ?? [];
@@ -57,6 +55,7 @@ export function ServiceCard({ party, house, primary, onWhy, onCall, onChooseHous
   // короткие экстренные номера – отдельными кнопками, обычные – строками под «Позвонить»
   const moreShort = more.filter((p) => isShort(p.number));
   const moreLong = more.filter((p) => !isShort(p.number));
+  const askHouse = needsHouseChoice(house, party);
 
   return (
     <article className={['service-card', primary ? 'is-primary' : '', critical ? 'is-critical' : ''].join(' ').trim()}>
@@ -91,13 +90,24 @@ export function ServiceCard({ party, house, primary, onWhy, onCall, onChooseHous
           )}
           {c?.site && (
             <li>
-              <Icon name="site" size={16} /> {c.site}
+              <Icon name="site" size={16} />{' '}
+              {/* сайт открывается по нажатию: в MAX – через Bridge, вне MAX – новой вкладкой */}
+              <a
+                className="service-card__link"
+                href={`https://${c.site}`}
+                onClick={(e) => {
+                  e.preventDefault();
+                  openLink(`https://${c.site}`);
+                }}
+              >
+                {c.site}
+              </a>
             </li>
           )}
         </ul>
       )}
 
-      {party.missingContact && house.id === 'none' && HOUSE_PARTIES.has(party.id) ? (
+      {askHouse ? (
         <div className="service-card__missing">
           <Icon name="location" size={16} />
           <span>Выберите свой дом – покажем телефоны его управляющей организации и аварийной службы.</span>
@@ -108,7 +118,7 @@ export function ServiceCard({ party, house, primary, onWhy, onCall, onChooseHous
           <span>Телефона нет в справочнике. Посмотрите его в квитанции или на доске объявлений в подъезде.</span>
         </div>
       ) : null}
-      {party.missingContact && house.id === 'none' && HOUSE_PARTIES.has(party.id) && onChooseHouse && (
+      {askHouse && onChooseHouse && (
         <Button kind="secondary" block icon={<Icon name="location" />} onClick={onChooseHouse}>
           Выбрать дом
         </Button>

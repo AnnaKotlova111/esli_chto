@@ -139,6 +139,12 @@ export const NO_HOUSE: HouseProfile = {
 
 export const DEFAULT_HOUSE_ID = NO_HOUSE.id;
 
+/** Житель выбрал дом: до выбора действует профиль NO_HOUSE. */
+export const isHouseChosen = (house: HouseProfile): boolean => house.id !== DEFAULT_HOUSE_ID;
+
+/** «2026-09-23» → «23.09.2026» – дата актуальности данных на экране и в ответах бота. */
+export const formatDateRu = (iso: string): string => iso.split('-').reverse().join('.');
+
 const houseById = new Map(HOUSES.map((h) => [h.id, h]));
 
 export const isKnownHouse = (id: string | undefined | null): boolean => Boolean(id && houseById.has(id));

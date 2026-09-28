@@ -13,6 +13,7 @@ const U354 = 'https://legalacts.ru/doc/postanovlenie-pravitelstva-rf-ot-06052011
 const U290 = 'https://legalacts.ru/doc/postanovlenie-pravitelstva-rf-ot-03042013-n-290/';
 const U410 = 'https://legalacts.ru/doc/postanovlenie-pravitelstva-rf-ot-14052013-n-410/';
 const U958 = 'https://legalacts.ru/doc/postanovlenie-pravitelstva-rf-ot-21112011-n-958/';
+const U1309 = 'https://legalacts.ru/doc/postanovlenie-pravitelstva-rf-ot-29111999-n-1309/';
 const UZHK = 'https://www.consultant.ru/document/cons_doc_LAW_51057/';
 const UGK1 = 'https://www.consultant.ru/document/cons_doc_LAW_5142/';
 const UGK2 = 'https://www.consultant.ru/document/cons_doc_LAW_9027/';
@@ -75,6 +76,14 @@ const list: NormRef[] = [
   {
     id: 'pp958', short: 'ПП № 958, Положение, п. 4, 7', doc: 'Постановление Правительства РФ от 21.11.2011 № 958 «О системе обеспечения вызова экстренных оперативных служб по единому номеру „112“»', url: U958, verified: true,
     gist: 'По номеру 112 принимают сообщения о происшествиях и передают их экстренным службам по компетенции: пожарной охране, службе реагирования в чрезвычайных ситуациях, полиции, скорой помощи, аварийной службе газовой сети.',
+  },
+  {
+    id: 'pp1309_p4', short: 'ПП № 1309, Порядок, п. 2, 4', doc: 'Постановление Правительства РФ от 29.11.1999 № 1309 «О порядке создания убежищ и иных объектов гражданской обороны»', url: U1309, verified: true,
+    gist: 'Население укрывают в защитных сооружениях гражданской обороны, а если их нет – в заглубленных помещениях, приспособленных для укрытия: это часть здания, полностью или частично заглублённая в грунт (например, подвал), которая защищает от обломков и осколков.',
+  },
+  {
+    id: 'pp1309_p9', short: 'ПП № 1309, Порядок, п. 9', doc: 'Постановление Правительства РФ от 29.11.1999 № 1309 «О порядке создания убежищ и иных объектов гражданской обороны»', url: U1309, verified: true,
+    gist: 'Органы власти региона и органы местного самоуправления создают объекты гражданской обороны (в том числе укрытия), поддерживают их в готовности к использованию, контролируют их состояние и ведут их учёт.',
   },
   {
     id: 'pp293', short: 'Правила обращения с ТКО (ПП № 293), п. 3, 5–6, 31–32', doc: 'Постановление Правительства РФ от 07.03.2025 № 293 «О порядке обращения с твёрдыми коммунальными отходами» (Правила обращения с ТКО)', url: `${U293}34b64a5c6fc18e18e77d02a17cdab05103354d81/`, verified: true,
@@ -271,7 +280,18 @@ export const NORM_CHECKS: Record<string, { date: string; source: string; edition
   gk_1064: { date: '23.09.2026', source: 'consultant.ru', edition: 'действующая редакция' },
   fz131_16: { date: '23.09.2026', source: 'consultant.ru', edition: 'ред. от 20.02.2026; утрачивает силу с 01.01.2028 (33-ФЗ)' },
   pp958: { date: '23.09.2026', source: 'legalacts.ru', edition: 'ред. от 20.11.2018' },
+  pp1309_p4: { date: '28.09.2026', source: 'legalacts.ru', edition: 'ред. от 02.10.2025' },
+  pp1309_p9: { date: '28.09.2026', source: 'legalacts.ru', edition: 'ред. от 02.10.2025' },
   pp293: { date: '23.09.2026', source: 'consultant.ru', edition: 'ред. от 16.05.2026; заменили Правила по ПП № 1156 с 01.09.2025' },
   ppr_p26_27: { date: '23.09.2026', source: 'consultant.ru', edition: 'ред. от 03.02.2025' },
   ppr_p71: { date: '23.09.2026', source: 'consultant.ru', edition: 'ред. от 03.02.2025' },
 };
+
+/** Сколько норм сверено по пунктам и дата последней сверки – для раздела «О приложении». */
+export function normsCheckSummary(): { verified: number; total: number; lastChecked: string } {
+  // «28.09.2026» → «20260928»: так даты сравниваются как строки
+  const sortKey = (date: string) => date.split('.').reverse().join('');
+  const dates = Object.values(NORM_CHECKS).map((c) => c.date);
+  const lastChecked = dates.sort((a, b) => sortKey(a).localeCompare(sortKey(b))).at(-1) ?? '';
+  return { verified: list.filter((n) => n.verified).length, total: list.length, lastChecked };
+}

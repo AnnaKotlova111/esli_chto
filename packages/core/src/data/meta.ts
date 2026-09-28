@@ -12,6 +12,4 @@ export const APP_META = {
   ageRating: '0+',
   /** Канал поддержки и приёма жалоб */
   supportBot: '@t527_hakaton_max_bot',
-  /** Дата сверки норм права (подробности – docs/NORMS.md) */
-  normsCheckedAt: '23.09.2026',
 } as const;

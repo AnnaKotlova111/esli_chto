@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import { ALL_ELEMENTS, HOUSES, collectOutcomes, encodeDeepLink, getHouse, localizeOutcome, resolve } from '@esli-chto/core';
 import {
-  addressReply, askAddressReply, cbProblem, elementReply, emergencyReply, help, houseChosenReply, houseFromStart, housesListReply, parseCallback,
-  problemReply, searchReply, startReply, stepForChat, welcome, type ChatReply,
+  addressReply, askAddressReply, cbProblem, elementReply, emergencyReply, help, houseChosenReply, houseFromStart, housesListReply, menuReply,
+  nonTextReply, parseCallback, problemReply, searchReply, startReply, stepForChat, welcome, type ChatReply,
 } from '../src/chat';
 
 const uk = getHouse('vch_korovina_11');
@@ -98,6 +98,16 @@ describe('экраны бота', () => {
     const r = searchReply('Ленинградская 6', none);
     assertValidReply(r);
     expect(r.buttons.flat().some((b) => b.kind === 'cb' && b.payload === 'h:vch_leningradskaya_6')).toBe(true);
+  });
+
+  it('фото, стикер или файл вместо текста – подсказка и выход в приложение, а не молчание', () => {
+    for (const house of [uk, none]) {
+      const r = nonTextReply(house);
+      assertValidReply(r);
+      expect(r.text).toContain('только текст');
+      expect(r.buttons.flat().some((b) => b.kind === 'app')).toBe(true);
+    }
+    assertValidReply(menuReply());
   });
 
   it('поиск по свободному тексту предлагает ситуации, а не тупик', () => {

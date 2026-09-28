@@ -23,7 +23,7 @@ export interface SceneDef {
   hint: string;
   image: { src: string; w: number; h: number };
   spots: Spot[];
-  /** Кнопка над схемой для категории, которой нет на картинке (дизайн-код: «Соседи») */
+  /** Кнопка над схемой для категории, которой нет на картинке (например, «Соседи») */
   corner?: { target: string; label: string };
 }
 

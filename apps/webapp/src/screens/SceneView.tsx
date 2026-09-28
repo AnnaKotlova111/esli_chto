@@ -22,14 +22,13 @@ export function SceneView({ scene }: { scene: SceneDef }) {
   const scrollToScene = useRef(false);
 
   // После смены масштаба высота схемы меняется почти вдвое, а прокрутка страницы остаётся прежней:
-  // без этого «Обычный размер» уводил схему за верх экрана. Возвращаем начало схемы под верхнюю плашку.
+  // без этого «Обычный размер» уводил схему за верх экрана. Возвращаем начало схемы к верху экрана.
   useEffect(() => {
     if (!scrollToScene.current) return;
     scrollToScene.current = false;
     const fig = figureRef.current;
     if (!fig) return;
-    const banner = document.querySelector('.demo-banner')?.getBoundingClientRect().height ?? 0;
-    const top = fig.getBoundingClientRect().top + window.scrollY - banner - 8;
+    const top = fig.getBoundingClientRect().top + window.scrollY - 8;
     const smooth = !window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
     window.scrollTo({ top: Math.max(0, top), behavior: smooth ? 'smooth' : 'auto' });
   }, [zoomed]);
@@ -53,18 +52,25 @@ export function SceneView({ scene }: { scene: SceneDef }) {
   };
 
   const corner = scene.corner && getElement(scene.corner.target);
+  const zoomButton = (
+    <button type="button" className="scene__tool" aria-pressed={zoomed} onClick={toggleZoom}>
+      <Icon name={zoomed ? 'zoomOut' : 'zoomIn'} size={18} /> {zoomed ? 'Обычный размер' : 'Крупнее'}
+    </button>
+  );
 
   return (
     <figure ref={figureRef} className="scene" aria-label={`Схема «${scene.title}»`}>
-      {/* над схемой, а не на ней: в углу картинки кнопка перекрывала бы подписи объектов */}
-      {corner && scene.corner && (
-        <div className="scene__top">
+      {/* Над схемой, а не на ней: в углу картинки кнопки перекрывали бы подписи объектов.
+          Масштаб – и здесь, и под схемой, чтобы не листать вниз за кнопкой. */}
+      <div className="scene__top">
+        {corner && scene.corner && (
           <button type="button" className="scene__corner" onClick={() => activate(corner.id)} aria-label={`${scene.corner.label}: шум, запахи, залив, перепланировка`}>
             <ElementIcon id={corner.id} size={20} />
             <span>{scene.corner.label}</span>
           </button>
-        </div>
-      )}
+        )}
+        {zoomButton}
+      </div>
       <div className={zoomed ? 'scene__viewport is-zoomed' : 'scene__viewport'}>
         <div key={scene.id} className="scene__canvas" style={{ aspectRatio: `${w} / ${h}` }}>
           <img
@@ -113,11 +119,7 @@ export function SceneView({ scene }: { scene: SceneDef }) {
             })}
         </div>
       </div>
-      <div className={zoomed ? 'scene__tools is-sticky' : 'scene__tools'}>
-        <button type="button" className="scene__tool" aria-pressed={zoomed} onClick={toggleZoom}>
-          <Icon name={zoomed ? 'zoomOut' : 'zoomIn'} size={18} /> {zoomed ? 'Обычный размер' : 'Крупнее'}
-        </button>
-      </div>
+      <div className={zoomed ? 'scene__tools is-sticky' : 'scene__tools'}>{zoomButton}</div>
       <figcaption className="scene__hint">{scene.hint}</figcaption>
     </figure>
   );

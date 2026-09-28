@@ -5,7 +5,7 @@
  * оранжевый – срочность, зелёный – подтверждённый результат.
  */
 :root {
-  /* палитра дизайн-кода, раздел 27 */
+  /* палитра – см. docs/DESIGN.md */
   --color-primary: #2563eb;
   --color-primary-dark: #173b6c;
   --color-primary-soft: #dceeff;
@@ -30,13 +30,13 @@
   --color-marker-ring: #ffffff;
   --color-critical-soft: #fee4e2;
   --color-warning-soft: #fef3e2;
-  /* оранжевый дизайн-кода плохо читается мелким текстом, поэтому текст на жёлтом фоне – темнее */
+  /* оранжевый из палитры плохо читается мелким текстом, поэтому текст на жёлтом фоне – темнее */
   --color-warning-text: #9a4a05;
   --color-success-soft: #dcf5e8;
   --color-scrim: rgba(23, 32, 51, 0.42);
   --color-scene-dim: rgba(246, 248, 250, 0.72);
 
-  /* форма и поверхность, раздел 8 */
+  /* форма и поверхность */
   --radius-card: 16px;
   --radius-control: 12px;
   --radius-small: 8px;
@@ -48,7 +48,7 @@
   --shadow-sheet: 0 -2px 12px rgba(16, 24, 40, 0.08);
   --focus-ring: 0 0 0 3px rgba(37, 99, 235, 0.45);
 
-  /* маркеры, раздел 14 */
+  /* маркеры на схемах */
   --marker-size: 32px;
   --marker-size-active: 40px;
   --marker-size-home: 48px;
@@ -62,7 +62,7 @@
   --space-6: 24px;
   --space-8: 32px;
 
-  /* типографика, раздел 7: одно семейство Inter */
+  /* типографика: одно семейство Inter */
   --font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
   --text-h1: 700 28px/34px var(--font-family);
   --text-h2: 700 22px/28px var(--font-family);

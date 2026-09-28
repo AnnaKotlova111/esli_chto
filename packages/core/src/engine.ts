@@ -3,7 +3,7 @@ import { HOUSE_ELEMENTS_MORE } from './data/elements-house-more';
 import { FLAT_ELEMENTS as FLAT_BASE } from './data/elements-flat';
 import { FLAT_ELEMENTS_MORE } from './data/elements-flat-more';
 import { PARTIES, NATIONAL_CONTACTS } from './data/parties';
-import { getHouse } from './data/houses';
+import { getHouse, isHouseChosen } from './data/houses';
 import type {
   Contact,
   HouseElement,
@@ -139,25 +139,26 @@ export function collectOutcomes(problem: Problem): Outcome[] {
 
 // ─────────────────────────── Контакты ───────────────────────────
 
+/** Если у стороны нет своего контакта, звоним этой: у ТСЖ без диспетчерской аварии принимает правление. */
 const NO_CONTACT_FALLBACK: Partial<Record<PartyId, PartyId>> = { dispatch: 'manager' };
+
+/** Общероссийский номер (112, 104, 102) – одинаков для всех домов. */
+function nationalContact(id: PartyId): Contact | undefined {
+  if (!(id in NATIONAL_CONTACTS)) return undefined;
+  const c = NATIONAL_CONTACTS[id as keyof typeof NATIONAL_CONTACTS];
+  return { ...c, phones: [...c.phones] };
+}
 
 export function resolveParties(house: HouseProfile, ids: PartyId[]): ResolvedParty[] {
   return ids.map((id) => {
     const info = PARTIES[id];
-    let contact: Contact | undefined =
-      id === 'emergency112'
-        ? { ...NATIONAL_CONTACTS.emergency112, phones: [...NATIONAL_CONTACTS.emergency112.phones] }
-        : id === 'gas_emergency'
-          ? { ...NATIONAL_CONTACTS.gas_emergency, phones: [...NATIONAL_CONTACTS.gas_emergency.phones] }
-          : id === 'police'
-            ? { ...NATIONAL_CONTACTS.police, phones: [...NATIONAL_CONTACTS.police.phones] }
-            : house.contacts[id];
-    if (!contact && NO_CONTACT_FALLBACK[id]) contact = house.contacts[NO_CONTACT_FALLBACK[id]!];
-    const title =
-      id === 'manager' && contact ? contact.name : id === 'manager' ? FORMS[house.managerKind].M : info.title;
+    const fallback = NO_CONTACT_FALLBACK[id];
+    const contact = nationalContact(id) ?? house.contacts[id] ?? (fallback ? house.contacts[fallback] : undefined);
+    // управляющую организацию называем по имени из справочника, а до выбора дома – по форме управления
+    const title = id === 'manager' ? capitalize(contact?.name ?? FORMS[house.managerKind].M) : info.title;
     return {
       id,
-      title: id === 'manager' ? capitalize(title) : title,
+      title,
       role: info.role,
       icon: info.icon,
       contact,
@@ -167,6 +168,13 @@ export function resolveParties(house: HouseProfile, ids: PartyId[]): ResolvedPar
 }
 
 const capitalize = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
+
+/** Стороны, контакты которых берутся из карточки дома (лифт – через диспетчерскую дома). */
+const HOUSE_CONTACT_PARTIES = new Set<PartyId>(['manager', 'dispatch', 'lift_service']);
+
+/** Телефона нет только потому, что дом ещё не выбран: вместо «номер в квитанции» предлагаем выбрать дом. */
+export const needsHouseChoice = (house: HouseProfile, party: ResolvedParty): boolean =>
+  party.missingContact && !isHouseChosen(house) && HOUSE_CONTACT_PARTIES.has(party.id);
 
 // ─────────────────────────── Срочные ситуации ───────────────────────────
 

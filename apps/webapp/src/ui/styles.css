@@ -190,10 +190,8 @@ figure {
   padding: 0 var(--space-4) calc(var(--nav-height) + env(safe-area-inset-bottom) + var(--space-8));
 }
 
+/* Плашка об источнике данных – только в начале страницы, при прокрутке уходит вместе с ней */
 .demo-banner {
-  position: sticky;
-  top: 0;
-  z-index: 20;
   display: flex;
   align-items: center;
   gap: var(--space-2);
@@ -597,8 +595,15 @@ figure {
 
 .scene__top {
   display: flex;
-  justify-content: flex-end;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
   margin-bottom: var(--space-2);
+}
+
+/* без кнопки «Соседи» масштаб – справа, как и под схемой */
+.scene__top > :only-child {
+  margin-left: auto;
 }
 
 .scene__corner {
@@ -1370,6 +1375,14 @@ figure {
 .service-card__meta svg {
   flex: none;
   margin-top: 2px;
+}
+
+.service-card__link {
+  color: var(--color-primary);
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  word-break: break-all;
 }
 
 .service-card__missing {

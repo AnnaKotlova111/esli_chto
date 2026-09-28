@@ -187,13 +187,25 @@ async function scenario(mock, deliver) {
   const again = await next(tap(42, 'p:lamp_entrance__burned:'), 'ответ после /forget');
   assert.match(again.body.text, /Выберите свой дом командой \/house/);
 
-  // 10. В групповом чате бот молчит
+  // 10. Фото или стикер без текста – подсказка; сообщение от бота (эхо) – без ответа
+  const photo = text(45, undefined);
+  photo.message.body.attachments = [{ type: 'image', payload: { url: 'https://example.org/p.jpg' } }];
+  const hint = await next(photo, 'ответ на сообщение без текста');
+  assert.match(hint.body.text, /только текст/);
+  const beforeEcho = sent.length;
+  const echo = text(45, undefined);
+  echo.message.sender = { user_id: 1, is_bot: true };
+  await deliver(echo);
+  await sleep(600);
+  assert.equal(sent.length, beforeEcho, 'на свои сообщения бот не отвечает');
+
+  // 11. В групповом чате бот молчит
   const beforeGroup = sent.length;
   await deliver(text(43, 'течёт кран', 'chat'));
   await sleep(600);
   assert.equal(sent.length, beforeGroup, 'в группе нет ответа');
 
-  // 11. Ограничение частоты: сверх лимита события одного пользователя не обрабатываются
+  // 12. Ограничение частоты: сверх лимита события одного пользователя не обрабатываются
   const beforeFlood = sent.length;
   for (let i = 0; i < 25; i += 1) await deliver(text(44, 'лампочка'));
   await sleep(1500);

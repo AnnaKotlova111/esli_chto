@@ -136,7 +136,7 @@ describe('стороны ответственности и контакты', ()
   });
 });
 
-describe('поиск свободным текстом (раздел 8 ТЗ)', () => {
+describe('поиск свободным текстом', () => {
   const top = (q: string, house = uk) => search(q, house)[0];
 
   // контрольный список: разговорная формулировка → ожидаемый верхний результат
@@ -208,9 +208,16 @@ describe('поиск свободным текстом (раздел 8 ТЗ)', (
   it('одинаковый запрос и дом – одинаковый результат', () => {
     expect(search('течёт кран', uk)).toEqual(search('течёт кран', uk));
   });
+
+  it('каждый объект и каждая ситуация встречаются в выдаче не больше одного раза', () => {
+    for (const q of ['течёт', 'нет воды', 'лампочка', 'засор', 'газ']) {
+      const keys = search(q, uk, 50).map((h) => h.problemId ?? `e:${h.elementId}`);
+      expect(new Set(keys).size, q).toBe(keys.length);
+    }
+  });
 });
 
-describe('диплинки (раздел 9 ТЗ)', () => {
+describe('диплинки', () => {
   it('кодирование → разбор возвращает исходные данные', () => {
     const raw = encodeDeepLink({ houseId: 'vch_korovina_11', problemId: 'roof__leak' });
     expect(raw).toBe('h_vch_korovina_11-p_roof__leak');

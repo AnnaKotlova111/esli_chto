@@ -27,7 +27,7 @@ const VARIANT: Record<ButtonKind, ButtonVariant> = {
 };
 
 /**
- * Единая кнопка для всех действий (дизайн-код, раздел 20): кнопка UI-кита MAX
+ * Единая кнопка для всех действий: кнопка UI-кита MAX
  * с высотой 52 px и цветами из токенов. Одинаковое действие – всегда одинаковое слово.
  */
 export function Button({ kind = 'primary', block, href, icon, iconAfter, disabled, loading, onClick, className, children, ...aria }: Props) {

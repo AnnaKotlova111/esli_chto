@@ -1,6 +1,6 @@
 import { useEffect, useMemo } from 'react';
 import {
-  emergencyPartyOf, getNorm, localizeOutcome, resolveParties, typo,
+  emergencyPartyOf, formatDateRu, getNorm, localizeOutcome, resolveParties, typo,
   type HouseElement, type Outcome, type Problem,
 } from '@esli-chto/core';
 import { haptic, shareText } from '../bridge';
@@ -199,7 +199,7 @@ export function ResultView({ element, problem, outcome: raw, answers }: Props) {
 
       <p className="fineprint">
         Справочная информация, не юридическая консультация.
-        {house.isDemo ? ' Организации и телефоны этого дома – демонстрационные.' : ` Контакты – на ${house.updatedAt.split('-').reverse().join('.')}; если номер не отвечает, сверьтесь с квитанцией.`}
+        {house.isDemo ? ' Организации и телефоны этого дома – демонстрационные.' : ` Контакты – на ${formatDateRu(house.updatedAt)}; если номер не отвечает, сверьтесь с квитанцией.`}
       </p>
     </div>
   );

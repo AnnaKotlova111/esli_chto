@@ -58,7 +58,7 @@ export const UI_ICONS = {
   urgent: Siren,
 } satisfies Record<string, LucideIcon>;
 
-/** Категории проблем (дизайн-код, раздел 17). */
+/** Иконки категорий проблем. */
 export const CATEGORY_ICONS = {
   water: Droplets,
   electricity: Zap,

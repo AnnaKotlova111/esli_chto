@@ -1,6 +1,7 @@
 import {
-  CITY, HOUSES, decodeDeepLink, emergencyPartyOf, emphasize, encodeDeepLink, getElement, getHouse, getProblem, isKnownHouse,
-  localizeOutcome, localizeQuestion, organizationOf, resolve, resolveParties, search, searchHouses,
+  CITY, HOUSES, decodeDeepLink, emergencyPartyOf, emphasize, encodeDeepLink, formatDateRu, getElement, getHouse, getProblem,
+  isHouseChosen, isKnownHouse, localizeOutcome, localizeQuestion, needsHouseChoice, organizationOf, resolve, resolveParties, search,
+  searchHouses,
   type HouseProfile, type Outcome, type PartyId,
 } from '@esli-chto/core';
 
@@ -19,7 +20,15 @@ export interface ChatReply {
 }
 
 const MAX_TEXT = 3800;
-const clip = (s: string) => (s.length > MAX_TEXT ? `${s.slice(0, MAX_TEXT - 1)}…` : s);
+/**
+ * Обрезает слишком длинное сообщение по границе строки: разметка (<b>, <i>, <u>) открывается
+ * и закрывается внутри одной строки, поэтому после обрезки она остаётся корректной.
+ */
+const clip = (s: string) => {
+  if (s.length <= MAX_TEXT) return s;
+  const cut = s.lastIndexOf('\n', MAX_TEXT - 1);
+  return `${s.slice(0, cut > 0 ? cut : MAX_TEXT - 1)}\n…`;
+};
 
 // Тексты сообщений – в разметке HTML (сервер отправляет их с format: 'html').
 // Любые данные перед вставкой экранируются; <b> – главное (номера, запреты), <i> – второстепенное.
@@ -42,11 +51,8 @@ const PARTY_MARK: Record<PartyId, string> = {
 
 // Для города, подключённого с тестовыми данными (meta.json: "demo": true), – явная пометка по п. 10 ограничений ТЗ.
 const DEMO_NOTE = 'Демо-данные: организации и телефоны вымышлены, реальны только 112, 104 и 102.';
-const dateRu = (iso: string) => iso.split('-').reverse().join('.');
-const DATA_NOTE = `Контакты – из открытых данных на ${dateRu(CITY.updatedAt)}; если номер не отвечает, сверьтесь с квитанцией.`;
+const DATA_NOTE = `Контакты – из открытых данных на ${formatDateRu(CITY.updatedAt)}; если номер не отвечает, сверьтесь с квитанцией.`;
 const dataNote = (house: HouseProfile) => (house.isDemo ? DEMO_NOTE : DATA_NOTE);
-/** Стороны, контакты которых появляются только после выбора дома */
-const HOUSE_PARTIES = new Set<PartyId>(['manager', 'dispatch', 'lift_service']);
 
 // ─────────────── Данные кнопок (callback) ───────────────
 //  p:<problemId>:<a.b.c>  – ситуация и цепочка ответов
@@ -95,6 +101,14 @@ const appBtn = (house: HouseProfile, text: string, target?: { problemId?: string
 
 const menuRow = (): ChatButton[] => [{ kind: 'cb', text: '🔎 Другая ситуация', payload: 'menu' }];
 
+/** Ответ на кнопку «Другая ситуация». */
+export function menuReply(): ChatReply {
+  return {
+    text: 'Опишите, что случилось, своими словами – например: «течёт кран», «нет света в подъезде».',
+    buttons: [[{ kind: 'app', text: '🏢 Открыть карту дома' }], [{ kind: 'cb', text: '🚨 Срочно', payload: 'urgent' }]],
+  };
+}
+
 // ─────────────── Экраны ───────────────
 
 export function welcome(house: HouseProfile): ChatReply {
@@ -105,9 +119,9 @@ export function welcome(house: HouseProfile): ChatReply {
         '',
         'Напишите, что случилось, своими словами: «течёт кран», «не горит свет в подъезде», «нет горячей воды». Или откройте карту дома и нажмите на нужный предмет.',
         '',
-        house.id === 'none'
-          ? `📍 Чтобы видеть телефоны своей управляющей организации, выберите дом: /house и адрес.`
-          : `🏠 Ваш дом: ${b(house.address)}\nУправляет: ${esc(house.contacts.manager?.name ?? house.managerKind)}`,
+        isHouseChosen(house)
+          ? `🏠 Ваш дом: ${b(house.address)}\nУправляет: ${esc(house.contacts.manager?.name ?? house.managerKind)}`
+          : `📍 Чтобы видеть телефоны своей управляющей организации, выберите дом: /house и адрес.`,
         '',
         `🆘 Угроза жизни, пожар – ${b('112')}`,
         `🔥 Запах газа – ${b('104')}`,
@@ -116,7 +130,7 @@ export function welcome(house: HouseProfile): ChatReply {
     buttons: [
       [appBtn(house, '🏢 Открыть карту дома')],
       [{ kind: 'cb', text: '🚨 Срочно: газ, пожар, потоп', payload: 'urgent' }],
-      [{ kind: 'cb', text: house.id === 'none' ? '📍 Выбрать свой дом' : '📍 Сменить дом', payload: 'houses' }],
+      [{ kind: 'cb', text: isHouseChosen(house) ? '📍 Сменить дом' : '📍 Выбрать свой дом', payload: 'houses' }],
     ],
   };
 }
@@ -149,7 +163,7 @@ export function emergencyReply(house: HouseProfile): ChatReply {
   const blocks = rows.map(([id, what]) => {
     const p = resolveParties(house, [id])[0]!;
     const phones = p.contact?.phones.map((x) => b(x.number)).join(', ');
-    const ph = phones ?? (house.id === 'none' ? 'выберите дом командой /house' : 'контакт не указан');
+    const ph = phones ?? (isHouseChosen(house) ? 'контакт не указан' : 'выберите дом командой /house');
     return `${PARTY_MARK[id]} ${esc(p.contact?.name ?? p.title)}: ${ph}\n${what}`;
   });
   return {
@@ -177,7 +191,7 @@ export function emergencyReply(house: HouseProfile): ChatReply {
 export function askAddressReply(house: HouseProfile): ChatReply {
   return {
     text: [
-      house.id === 'none' ? '' : `Сейчас выбран: ${b(house.address)}`,
+      isHouseChosen(house) ? `Сейчас выбран: ${b(house.address)}` : '',
       `Напишите адрес своего дома – улицу и номер, например ${b('Коровина 11')}.`,
       em(`В справочнике ${HOUSES.length} домов: ${Object.values(CITY.settlements).join(', ')}.`),
     ].filter(Boolean).join('\n\n'),
@@ -251,15 +265,7 @@ export function housesListReply(currentId: string, requested?: number): ChatRepl
 }
 
 export function searchReply(query: string, house: HouseProfile): ChatReply {
-  const seen = new Set<string>();
-  const top = search(query, house, 12)
-    .filter((h) => {
-      const key = h.problemId ?? `e:${h.elementId}`;
-      if (seen.has(key)) return false;
-      seen.add(key);
-      return true;
-    })
-    .slice(0, 5);
+  const top = search(query, house, 5);
 
   if (top.length === 0) {
     const houses = /\d/.test(query) ? searchHouses(query, 3) : [];
@@ -285,6 +291,14 @@ export function searchReply(query: string, house: HouseProfile): ChatReply {
   };
 }
 
+/** Фото, стикер, файл или геометка вместо текста: бот понимает только слова – подсказываем, а не молчим. */
+export function nonTextReply(house: HouseProfile): ChatReply {
+  return {
+    text: 'Я понимаю только текст. Опишите, что случилось, словами – например: «течёт кран», «нет света в подъезде». Или найдите предмет на схеме дома.',
+    buttons: [[appBtn(house, '🏢 Открыть карту дома')], [{ kind: 'cb', text: '🚨 Срочно', payload: 'urgent' }]],
+  };
+}
+
 export function elementReply(elementId: string, house: HouseProfile): ChatReply {
   const el = getElement(elementId);
   if (!el) return welcome(house);
@@ -303,7 +317,7 @@ function renderOutcome(elementTitle: string, problemTitle: string, o: Outcome, h
     const c = p.contact;
     const name = c?.name && p.id !== 'owner' ? c.name : p.title;
     const phones = c?.phones.map((x) => `📞 ${b(x.number)}${x.label ? ` – ${esc(x.label)}` : ''}`) ?? [];
-    const missing = house.id === 'none' && HOUSE_PARTIES.has(p.id) ? 'Выберите свой дом командой /house – покажу телефон.' : 'Контакта нет в справочнике, номер – в квитанции.';
+    const missing = needsHouseChoice(house, p) ? 'Выберите свой дом командой /house – покажу телефон.' : 'Контакта нет в справочнике, номер – в квитанции.';
     const detail =
       p.id === 'owner' || p.id === 'neighbor' || phones.length ? '' : p.missingContact ? missing : (c?.note ?? p.role);
     const extra = n === 0 ? [c?.hours ? `🕒 ${esc(c.hours)}` : '', phones.length && c?.note ? em(c.note) : ''] : [];
@@ -327,7 +341,7 @@ function renderOutcome(elementTitle: string, problemTitle: string, o: Outcome, h
           ? 'Случай спорный: почему так, нормы и готовый текст обращения – в приложении.'
           : 'Почему так и на какие нормы это опирается – в приложении.',
       ),
-      em(house.id === 'none' ? 'Справочная информация, не юридическая консультация.' : dataNote(house)),
+      em(isHouseChosen(house) ? dataNote(house) : 'Справочная информация, не юридическая консультация.'),
     ]),
   );
 }

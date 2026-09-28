@@ -63,7 +63,7 @@ export type Certainty = 'clear' | 'disputed';
  */
 export type Urgency = 'urgent' | 'emergency';
 
-/** Категории проблем из дизайн-кода: одна категория на объект, для фильтра и раздела «Срочно». */
+/** Категории проблем: одна категория на объект, для фильтра и раздела «Срочно». */
 export type Category = 'water' | 'electricity' | 'gas' | 'heating' | 'elevator' | 'entrance' | 'trash' | 'other';
 
 export type RequestKind = 'repair' | 'clarify' | 'act' | 'recalc';

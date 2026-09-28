@@ -320,6 +320,12 @@ describe('сценарии', () => {
     expect(text(el.querySelector('.sheet'))).toContain('также указан за УК «Стоун»');
   });
 
+  it('повреждённые данные в хранилище не мешают запуску', async () => {
+    const el = await mount('', { house: 'vch_korovina_11', recent: { broken: true }, searches: '"строка вместо списка"', user: '[1, 2]', features: 'не JSON' });
+    expect(el.querySelector('.boot')).toBeNull();
+    expect(text(el.querySelector('.house-picker__address'))).toBe('ул. Коровина, 11');
+  });
+
   it('данные хранятся под своим префиксом, старые ключи переносятся, чужие не трогаются', async () => {
     // старый формат без префикса: дом и данные жителя переносятся, старые ключи удаляются
     await mount('', { house: 'vch_korovina_11', user: { name: 'Иванов И. И.' } }, { raw: true });

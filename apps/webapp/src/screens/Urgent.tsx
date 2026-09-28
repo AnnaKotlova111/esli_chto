@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { CATEGORIES, categoryOf, resolveParties, typo, urgentProblems, type UrgentItem } from '@esli-chto/core';
+import { CATEGORIES, categoryOf, isHouseChosen, resolveParties, typo, urgentProblems, type UrgentItem } from '@esli-chto/core';
 import { haptic } from '../bridge';
 import { useApp } from '../state';
 import { Button } from '../ui/Button';
@@ -92,9 +92,9 @@ export function UrgentView() {
       <p className="fineprint">
         {house.isDemo
           ? 'Кроме 112, 104 и 102, номера в этом доме демонстрационные.'
-          : house.id === 'none'
-            ? 'Выберите свой дом – покажем телефон его аварийной службы.'
-            : 'Если номер не отвечает, сверьтесь с квитанцией.'}
+          : isHouseChosen(house)
+            ? 'Если номер не отвечает, сверьтесь с квитанцией.'
+            : 'Выберите свой дом – покажем телефон его аварийной службы.'}
       </p>
     </div>
   );

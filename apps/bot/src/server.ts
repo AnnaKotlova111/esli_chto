@@ -6,8 +6,8 @@ import { Bot, Keyboard, type Context } from '@maxhub/max-bot-api';
 import { ALL_ELEMENTS, APP_META, DEFAULT_HOUSE_ID, getHouse, HOUSES } from '@esli-chto/core';
 import { maxFetch } from './tls';
 import {
-  addressReply, askAddressReply, elementReply, emergencyReply, help, houseChosenReply, houseFromStart, housesListReply, parseCallback,
-  problemReply, searchReply, startReply, welcome,
+  addressReply, askAddressReply, elementReply, emergencyReply, help, houseChosenReply, houseFromStart, housesListReply, menuReply,
+  nonTextReply, parseCallback, problemReply, searchReply, startReply, welcome,
   type ChatButton, type ChatReply,
 } from './chat';
 
@@ -28,9 +28,12 @@ const PUBLIC_URL = env('PUBLIC_URL')?.replace(/\/+$/, '');
 const WEBHOOK_PATH = env('WEBHOOK_PATH') ?? '/max/webhook';
 /**
  * Секрет вебхука: MAX присылает его в заголовке каждого запроса, чужие запросы отклоняются.
- * Если не задан – генерируется при запуске и регистрируется вместе с подпиской.
+ * MAX принимает 5–256 символов [A-Za-z0-9_-]. Если секрет не задан или не подходит по формату,
+ * он генерируется при запуске и регистрируется вместе с подпиской.
  */
-const WEBHOOK_SECRET = env('WEBHOOK_SECRET') ?? randomBytes(24).toString('hex');
+const WEBHOOK_SECRET_FORMAT = /^[A-Za-z0-9_-]{5,256}$/;
+const configuredSecret = env('WEBHOOK_SECRET');
+const WEBHOOK_SECRET = configuredSecret && WEBHOOK_SECRET_FORMAT.test(configuredSecret) ? configuredSecret : randomBytes(24).toString('hex');
 const WEBAPP_DIST = resolve(env('WEBAPP_DIST') ?? join(process.cwd(), 'apps/webapp/dist'));
 /** Сколько событий в минуту обрабатывается от одного пользователя (защита от спама и лимита Bot API – 30 запросов/с). */
 const RATE_LIMIT_PER_MINUTE = Math.max(1, Number(env('RATE_LIMIT_PER_MINUTE') ?? 20) || 20);
@@ -209,7 +212,7 @@ function createBot(token: string): Bot {
         return void (await send(ctx, emergencyReply(house)));
       case 'menu':
         expectAddress(uid, false);
-        return void (await send(ctx, { text: 'Опишите, что случилось, своими словами – например: «течёт кран», «нет света в подъезде».', buttons: [[{ kind: 'app', text: '🏢 Открыть карту дома' }], [{ kind: 'cb', text: '🚨 Срочно', payload: 'urgent' }]] }));
+        return void (await send(ctx, menuReply()));
       case 'element':
         return void (await send(ctx, elementReply(action.elementId, house)));
       case 'problem':
@@ -219,9 +222,11 @@ function createBot(token: string): Bot {
 
   // Свободный текст – поиск ситуации (команды обрабатываются выше)
   bot.on('message_created', async (ctx) => {
-    const text = ctx.message?.body?.text?.trim();
-    if (!text || text.startsWith('/')) return;
+    if (ctx.message?.sender?.is_bot) return;
     const uid = userIdOf(ctx);
+    const text = ctx.message?.body?.text?.trim();
+    if (!text) return send(ctx, nonTextReply(houseOf(uid)));
+    if (text.startsWith('/')) return;
     if (uid !== undefined && awaitingAddress.has(uid)) return chooseHouse(ctx, uid, text.slice(0, 120));
     await send(ctx, searchReply(text.slice(0, 200), houseOf(uid)));
   });
@@ -367,7 +372,10 @@ async function main() {
 
   if (bot) {
     if (PUBLIC_URL) {
-      if (!env('WEBHOOK_SECRET')) log('info', 'WEBHOOK_SECRET не задан: секрет сгенерирован при запуске');
+      if (!configuredSecret) log('info', 'WEBHOOK_SECRET не задан: секрет сгенерирован при запуске');
+      else if (configuredSecret !== WEBHOOK_SECRET) {
+        log('warn', 'WEBHOOK_SECRET не подходит по формату (5–256 символов: латиница, цифры, _ и -): секрет сгенерирован при запуске');
+      }
       if (!PUBLIC_URL.startsWith('https://')) log('warn', 'PUBLIC_URL должен быть https:// – MAX принимает вебхуки только по HTTPS');
     }
     await connect(bot);

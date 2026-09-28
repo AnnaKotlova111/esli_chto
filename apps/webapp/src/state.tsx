@@ -200,6 +200,12 @@ const parse = <T,>(raw: string | null, fallback: T): T => {
   }
 };
 
+/** Список строк из хранилища: повреждённое значение (не массив, не строки) превращается в пустой список. */
+const parseStrings = (raw: string | null): string[] => {
+  const v = parse<unknown>(raw, []);
+  return Array.isArray(v) ? v.filter((x): x is string => typeof x === 'string') : [];
+};
+
 export function AppProvider({ children }: { children: ReactNode }) {
   const [state, dispatch] = useReducer(reducer, initial);
   const house = useMemo(() => withFeatures(getHouse(state.houseId), state.features[state.houseId]), [state.houseId, state.features]);
@@ -285,8 +291,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
         houseId: known(link.houseId) ?? known(h),
         features,
         user: cleanUserInfo(parse<unknown>(u ?? null, {})),
-        recent: parse<string[]>(r ?? null, []).filter((id) => getProblem(id)),
-        searches: parse<string[]>(q ?? null, []).filter((x) => typeof x === 'string').slice(0, 6),
+        recent: parseStrings(r ?? null).filter((id) => getProblem(id)),
+        searches: parseStrings(q ?? null).slice(0, 6),
       });
       if (link.elementId) actions.goToElement(link.elementId, link.problemId);
     })();

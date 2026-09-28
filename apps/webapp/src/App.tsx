@@ -1,4 +1,4 @@
-import { CITY } from '@esli-chto/core';
+import { CITY, formatDateRu, isHouseChosen } from '@esli-chto/core';
 import { IconButton, Spinner } from '@maxhub/max-ui';
 import { HowItWorks, TabContent } from './screens/Home';
 import { SearchOverlay } from './screens/Search';
@@ -33,7 +33,7 @@ function Shell() {
           <span>
             {house.isDemo
               ? 'Демо-данные: организации и телефоны вымышлены'
-              : `${CITY.name}: данные из открытых источников на ${CITY.updatedAt.split('-').reverse().join('.')}`}
+              : `${CITY.name}: данные из открытых источников на ${formatDateRu(CITY.updatedAt)}`}
           </span>
         </div>
 
@@ -49,7 +49,7 @@ function Shell() {
           </IconButton>
         </header>
 
-        {house.id === 'none' ? (
+        {!isHouseChosen(house) ? (
           <button type="button" className="house-picker is-empty" onClick={() => open({ t: 'houses' })}>
             <span className="house-picker__icon">
               <Icon name="location" />
@@ -72,7 +72,7 @@ function Shell() {
             <Icon name="expand" size={20} />
           </button>
         )}
-        {house.id !== 'none' && !house.featuresKnown && (
+        {isHouseChosen(house) && !house.featuresKnown && (
           <button type="button" className="features-hint" onClick={() => open({ t: 'features' })}>
             <Icon name="help" size={18} />
             <span>Есть ли в доме лифт, газ, мусоропровод? Отметьте – лишнее скроем</span>
