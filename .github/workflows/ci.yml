@@ -1,4 +1,4 @@
-# Проверка при каждом изменении: типы, тесты трёх пакетов, сборка, интеграционный тест бота,
+# Проверка при каждом push и pull request: типы, тесты трёх пакетов, сборка, интеграционный тест бота, подключение другого города,
 # аудит зависимостей, сборка Docker-образа по compose.yaml и проверка /healthz.
 name: CI
 
@@ -28,6 +28,25 @@ jobs:
           npm run data:import
           npm run docs
           git diff --exit-code -- packages/core/src/data/city.json docs/SCHEMES.md docs/NORMS.md docs/PRIVACY.md docs/TERMS.md
+
+  # Масштабирование: другой город подключается только данными. Подключаем образец data/example
+  # (вымышленный город) и прогоняем те же проверки – без правки кода.
+  other-city:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci --no-audit --no-fund
+      - name: Подключение города из data/example
+        run: npm run data:import -- data/example
+      - run: npm run typecheck
+      - run: npm test
+      - run: npm run build
+      - run: npm run test:integration
 
   docker:
     runs-on: ubuntu-latest

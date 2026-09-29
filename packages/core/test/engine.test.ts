@@ -1,13 +1,14 @@
 import { describe, expect, it } from 'vitest';
 import {
-  ALL_ELEMENTS, blanksOf, buildRequest, cleanUserInfo, collectOutcomes, phoneHint, decodeDeepLink, emergencyPartyOf, encodeDeepLink, getElements, getHouse,
+  ALL_ELEMENTS, CITY_SERVICES, blanksOf, buildRequest, cleanUserInfo, collectOutcomes, phoneHint, decodeDeepLink, emergencyPartyOf, encodeDeepLink, getElements, getHouse,
   getProblem, isElementAvailable, localizeOutcome, resolve, resolveParties, search, urgentProblems, withFeatures, type Outcome,
 } from '../src';
+import { BOARD_HOUSE, UK_HOUSE, dispatchPhone, managerOf } from './fixtures';
 
-// дом УК «Жилищно-ремонтный участок №1»; особенности в реестре не указаны – показываются все объекты
-const uk = getHouse('vch_korovina_11');
-// дом ТСЖ «Старатели», житель отметил: лифта и мусоропровода нет
-const tszh = withFeatures(getHouse('vch_pyatnitskiy_13'), ['gas', 'central_heating', 'intercom', 'basement']);
+// дом УК с диспетчерской (в Вичуге – ул. Коровина, 11); особенности в реестре не указаны – показываются все объекты
+const uk = UK_HOUSE;
+// дом ТСЖ, ЖСК или ТСН без диспетчерской (в Вичуге – ТСЖ «Старатели»), житель отметил: лифта и мусоропровода нет
+const tszh = withFeatures(BOARD_HOUSE, ['gas', 'central_heating', 'intercom', 'basement']);
 
 const outcomeOf = (problemId: string, answers: number[] = []): Outcome => {
   const r = resolve(problemId, answers);
@@ -108,23 +109,23 @@ describe('стороны ответственности и контакты', ()
 
   it('контакты организаций берутся из справочника дома', () => {
     const [manager, dispatch] = resolveParties(uk, ['manager', 'dispatch']);
-    expect(manager!.contact!.name).toBe('УК «Жилищно-ремонтный участок №1»');
+    expect(manager!.contact!.name).toBe(managerOf(uk).name);
     expect(manager!.missingContact).toBe(false);
-    expect(dispatch!.contact!.phones[0]!.number).toBe('+7 (493) 542-34-73');
+    expect(dispatch!.contact!.phones[0]!.number).toBe(dispatchPhone(uk));
   });
 
-  it('у ТСЖ без диспетчерской аварии принимает правление', () => {
+  it('у ТСЖ, ЖСК и ТСН без диспетчерской аварии принимает правление', () => {
     const [dispatch] = resolveParties(tszh, ['dispatch']);
-    expect(dispatch!.contact!.name).toBe('ТСЖ «Старатели»');
+    expect(dispatch!.contact!.name).toBe(managerOf(tszh).name);
   });
 
   it('контакты городских служб подставляются; до выбора дома нет только контактов управляющей организации', () => {
     const [water, heat] = resolveParties(uk, ['water_utility', 'heat_utility']);
     expect(water!.missingContact).toBe(false);
-    expect(heat!.contact!.name).toContain('МУП «ОК и ТС»');
+    expect(heat!.contact!.name).toBe(CITY_SERVICES.heat_utility!.name);
     const [manager, gzhi] = resolveParties(getHouse('none'), ['manager', 'housing_inspection']);
     expect(manager!.missingContact).toBe(true);
-    expect(gzhi!.contact!.phones[0]!.number).toBe('+7 (493) 241-05-61');
+    expect(gzhi!.contact!.phones[0]!.number).toBe(CITY_SERVICES.housing_inspection!.phones[0]!.number);
   });
 
   it('у собственника, соседа и оператора связи контактов нет по смыслу – это не пустая карточка', () => {
@@ -193,6 +194,12 @@ describe('поиск свободным текстом', () => {
     expect(hits.some((h) => h.elementId === 'elevator')).toBe(false);
   });
 
+  it('совпадение по одному случайному слову не попадает в выдачу', () => {
+    expect(search('течёт кран', uk).some((h) => h.elementId === 'stair_heating')).toBe(false);
+    expect(search('течёт стиральная машина', uk).some((h) => h.elementId === 'parking')).toBe(false);
+    expect(search('шумят соседи ночью', uk).every((h) => h.elementId === 'neighbors')).toBe(true);
+  });
+
   it('учитывает особенности дома: лифта нет – его нет и в выдаче', () => {
     expect(search('лифт', tszh).some((h) => h.elementId === 'elevator')).toBe(false);
     expect(search('застрял в лифте', uk).some((h) => h.elementId === 'elevator')).toBe(true);
@@ -258,8 +265,9 @@ describe('шаблоны обращений', () => {
     expect(r.body).toContain('кв. 42');
     expect(r.body).toContain('[телефон]');
     expect(r.body).toContain('23.09.2026');
-    expect(r.body).toContain('УК «Жилищно-ремонтный участок №1» (ИНН 3701043128)');
-    expect(r.body).toContain('г. Вичуга, ул. Коровина, д. 11');
+    const m = managerOf(uk);
+    expect(r.body).toContain(m.inn ? `${m.name} (ИНН ${m.inn})` : m.name);
+    expect(r.body).toContain(uk.address);
     expect(r.body).not.toMatch(/\{M/);
   });
 
@@ -268,16 +276,16 @@ describe('шаблоны обращений', () => {
     const r = buildRequest('repair', collectOutcomes(problem)[0]!, getHouse('none'), { element, problem });
     expect(blanksOf(r.body)).toContain('[ФИО]');
     expect(blanksOf('Кому: УК. Всё заполнено.')).toEqual([]);
-    expect(r.body).toContain('г. Вичуга, [улица, дом]');
+    expect(r.body).toContain(`${getHouse('none').address}, [улица, дом]`);
     expect(r.body).toContain('[название управляющей организации]');
   });
 
-  it('все четыре вида обращения собираются для ТСЖ без ошибок', () => {
+  it('все четыре вида обращения собираются для ТСЖ, ЖСК и ТСН без ошибок', () => {
     const { element, problem } = getProblem('radiator__cold')!;
     const outcome = collectOutcomes(problem)[0]!;
     for (const kind of ['repair', 'clarify', 'act', 'recalc'] as const) {
       const r = buildRequest(kind, outcome, tszh, { element, problem });
-      expect(r.body, kind).toContain('ТСЖ «Старатели»');
+      expect(r.body, kind).toContain(managerOf(tszh).name);
       expect(r.body, kind).not.toMatch(/\{M|undefined/);
     }
   });

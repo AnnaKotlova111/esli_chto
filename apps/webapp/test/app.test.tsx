@@ -1,7 +1,8 @@
 import { act } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
-import { ALL_ELEMENTS, getElement, getHouse, isElementAvailable, withFeatures, type Feature } from '@esli-chto/core';
+import { ALL_ELEMENTS, CITY, getElement, getHouse, isElementAvailable, withFeatures, type Feature } from '@esli-chto/core';
+import { BOARD_HOUSE, PILOT, UK_HOUSE, addressQuery, dispatchPhone, managerOf, managerPhone } from '../../../packages/core/test/fixtures';
 import App from '../src/App';
 import { SCENES, hitAreas, type Box } from '../src/scenes/scenes';
 
@@ -60,8 +61,8 @@ describe('обход всех объектов, ситуаций и веток �
   const NO_LIFT: Feature[] = ['gas', 'central_heating', 'intercom', 'basement'];
   const cases = [
     { house: getHouse('none'), saved: {} },
-    { house: getHouse('vch_korovina_11'), saved: {} },
-    { house: withFeatures(getHouse('vch_pyatnitskiy_13'), NO_LIFT), saved: { features: { vch_pyatnitskiy_13: NO_LIFT } } },
+    { house: UK_HOUSE, saved: {} },
+    { house: withFeatures(BOARD_HOUSE, NO_LIFT), saved: { features: { [BOARD_HOUSE.id]: NO_LIFT } } },
   ];
   for (const { house, saved } of cases) {
     it(`дом ${house.id}: всё открывается без ошибок и зависаний`, async () => {
@@ -160,7 +161,7 @@ describe('схемы-иллюстрации', () => {
   });
 
   it('объект, которого нет в доме, приглушён, помечен «нет в доме» и не нажимается', async () => {
-    const el = await mount('h_vch_pyatnitskiy_13', { features: { vch_pyatnitskiy_13: ['gas', 'central_heating', 'intercom', 'basement'] } });
+    const el = await mount(`h_${BOARD_HOUSE.id}`, { features: { [BOARD_HOUSE.id]: ['gas', 'central_heating', 'intercom', 'basement'] } });
     const lift = [...el.querySelectorAll<HTMLButtonElement>('.scene-marker')].find((b) => b.getAttribute('aria-label')?.startsWith('Лифт'));
     expect(lift?.disabled).toBe(true);
     expect(lift?.getAttribute('aria-label')).toContain('нет в этом доме');
@@ -176,7 +177,7 @@ describe('схемы-иллюстрации', () => {
 
 describe('сценарии', () => {
   it('диплинк из бота открывает именно ту ситуацию', async () => {
-    const el = await mount('h_vch_korovina_11-p_gas_stove__smell');
+    const el = await mount(`h_${UK_HOUSE.id}-p_gas_stove__smell`);
     expect(text(el.querySelector('.sheet__title'))).toBe('Газовая плита и газовая труба');
     expect(text(el.querySelector('.alert-panel--critical'))).toContain('104');
     expect(el.querySelector('a[href="tel:104"]')).toBeTruthy();
@@ -190,8 +191,12 @@ describe('сценарии', () => {
 
   it('постоянная плашка об источнике данных видна на главном экране', async () => {
     const el = await mount();
-    expect(text(el.querySelector('.demo-banner'))).toContain('открытых');
-    expect(text(el.querySelector('.demo-banner'))).toContain('Вичуга');
+    const banner = text(el.querySelector('.demo-banner'));
+    if (CITY.demo) expect(banner).toContain('Демо-данные');
+    else {
+      expect(banner).toContain('открытых');
+      expect(banner).toContain(CITY.name);
+    }
   });
 
   it('выбор дома по адресу: поиск, карточка дома с организацией, отметки «что есть в доме»', async () => {
@@ -201,23 +206,23 @@ describe('сценарии', () => {
     const input = el.querySelector<HTMLInputElement>('.houses input')!;
     await act(async () => {
       const setter = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')!.set!;
-      setter.call(input, 'Коровина 11');
+      setter.call(input, addressQuery(UK_HOUSE));
       input.dispatchEvent(new Event('input', { bubbles: true }));
     });
     const first = el.querySelector('.houses .list-row');
-    expect(text(first)).toContain('ул. Коровина, 11');
-    expect(text(first)).toContain('Жилищно-ремонтный участок №1');
+    expect(text(first)).toContain(UK_HOUSE.title);
+    expect(text(first)).toContain(managerOf(UK_HOUSE).name);
     await click(first, 'дом в результатах');
-    expect(text(el.querySelector('.house-card'))).toContain('г. Вичуга, ул. Коровина, д. 11');
-    expect(text(el.querySelector('.house-card'))).toContain('+7 (493) 542-34-73');
+    expect(text(el.querySelector('.house-card'))).toContain(UK_HOUSE.address);
+    expect(text(el.querySelector('.house-card'))).toContain(dispatchPhone(UK_HOUSE));
     // сняли отметку «Лифт» – лифт на схеме приглушается
     const lift = [...el.querySelectorAll('.houses .chip')].find((c) => c.textContent?.includes('Лифт'));
     await click(lift, 'отметка «Лифт»');
     await click([...el.querySelectorAll('.houses button')].find((b) => b.textContent?.includes('Готово')), 'Готово');
     const marker = [...el.querySelectorAll<HTMLButtonElement>('.scene-marker')].find((b) => b.getAttribute('aria-label')?.startsWith('Лифт'));
     expect(marker?.disabled).toBe(true);
-    expect(text(el.querySelector('.house-picker__address'))).toBe('ул. Коровина, 11');
-    expect(JSON.parse(window.localStorage.getItem(KEY('features')) ?? '{}')).toEqual({ vch_korovina_11: ['garbage_chute', 'gas', 'central_heating', 'intercom', 'basement'] });
+    expect(text(el.querySelector('.house-picker__address'))).toBe(UK_HOUSE.title);
+    expect(JSON.parse(window.localStorage.getItem(KEY('features')) ?? '{}')).toEqual({ [UK_HOUSE.id]: ['garbage_chute', 'gas', 'central_heating', 'intercom', 'basement'] });
   });
 
   it('до выбора дома карточка управляющей организации предлагает выбрать дом', async () => {
@@ -251,12 +256,13 @@ describe('сценарии', () => {
   });
 
   it('недосохранённый черновик обращения требует подтверждения при закрытии', async () => {
-    const el = await mount('h_vch_korovina_11-p_roof__leak');
+    const el = await mount(`h_${UK_HOUSE.id}-p_roof__leak`);
     const request = [...sheetBody(el)!.querySelectorAll('button')].find((b) => b.textContent?.includes('Составить обращение'));
     await click(request, 'кнопка «Составить обращение»');
     const area = el.querySelector<HTMLTextAreaElement>('.sheet textarea')!;
-    expect(area.value).toContain('УК «Жилищно-ремонтный участок №1» (ИНН 3701043128)');
-    expect(area.value).toContain('г. Вичуга, ул. Коровина, д. 11');
+    const m = managerOf(UK_HOUSE);
+    expect(area.value).toContain(m.inn ? `${m.name} (ИНН ${m.inn})` : m.name);
+    expect(area.value).toContain(UK_HOUSE.address);
     await act(async () => {
       const setter = Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype, 'value')!.set!;
       setter.call(area, `${area.value}\nДополнение жильца.`);
@@ -272,7 +278,7 @@ describe('сценарии', () => {
   });
 
   it('обращение: пределы полей, подсказка по телефону, предупреждение о незаполненных местах', async () => {
-    const el = await mount('h_vch_korovina_11-p_roof__leak');
+    const el = await mount(`h_${UK_HOUSE.id}-p_roof__leak`);
     const request = [...sheetBody(el)!.querySelectorAll('button')].find((b) => b.textContent?.includes('Составить обращение'));
     await click(request, 'кнопка «Составить обращение»');
     const inputs = [...el.querySelectorAll<HTMLInputElement>('.sheet .field input')];
@@ -305,33 +311,33 @@ describe('сценарии', () => {
   });
 
   it('дом из диплинка подставляет свою организацию и телефоны', async () => {
-    const tszh = await mount('h_vch_pyatnitskiy_13-p_lamp_entrance__burned');
-    expect(text(tszh.querySelector('.sheet'))).toContain('ТСЖ «Старатели»');
-    expect(tszh.querySelector('.sheet a[href="tel:+79203778788"]')).toBeTruthy();
+    const tszh = await mount(`h_${BOARD_HOUSE.id}-p_lamp_entrance__burned`);
+    expect(text(tszh.querySelector('.sheet'))).toContain(managerOf(BOARD_HOUSE).name);
+    expect(tszh.querySelector(`.sheet a[href="tel:${managerPhone(BOARD_HOUSE).replace(/[^\d+]/g, '')}"]`)).toBeTruthy();
     await act(async () => root?.unmount());
     root = undefined;
     host?.remove();
-    const uk = await mount('h_vch_korovina_11-p_lamp_entrance__burned');
-    expect(text(uk.querySelector('.sheet'))).toContain('УК «Жилищно-ремонтный участок №1»');
+    const uk = await mount(`h_${UK_HOUSE.id}-p_lamp_entrance__burned`);
+    expect(text(uk.querySelector('.sheet'))).toContain(managerOf(UK_HOUSE).name);
   });
 
-  it('дом за двумя организациями показывает расхождение из источника', async () => {
+  it.runIf(PILOT)('пилот: дом за двумя организациями показывает расхождение из источника', async () => {
     const el = await mount('h_vch_moskovskaya_13-p_lamp_entrance__burned');
     expect(text(el.querySelector('.sheet'))).toContain('также указан за УК «Стоун»');
   });
 
   it('повреждённые данные в хранилище не мешают запуску', async () => {
-    const el = await mount('', { house: 'vch_korovina_11', recent: { broken: true }, searches: '"строка вместо списка"', user: '[1, 2]', features: 'не JSON' });
+    const el = await mount('', { house: UK_HOUSE.id, recent: { broken: true }, searches: '"строка вместо списка"', user: '[1, 2]', features: 'не JSON' });
     expect(el.querySelector('.boot')).toBeNull();
-    expect(text(el.querySelector('.house-picker__address'))).toBe('ул. Коровина, 11');
+    expect(text(el.querySelector('.house-picker__address'))).toBe(UK_HOUSE.title);
   });
 
   it('данные хранятся под своим префиксом, старые ключи переносятся, чужие не трогаются', async () => {
     // старый формат без префикса: дом и данные жителя переносятся, старые ключи удаляются
-    await mount('', { house: 'vch_korovina_11', user: { name: 'Иванов И. И.' } }, { raw: true });
+    await mount('', { house: UK_HOUSE.id, user: { name: 'Иванов И. И.' } }, { raw: true });
     await tick();
-    expect(text(host!.querySelector('.house-picker__address'))).toBe('ул. Коровина, 11');
-    expect(window.localStorage.getItem(KEY('house'))).toBe('vch_korovina_11');
+    expect(text(host!.querySelector('.house-picker__address'))).toBe(UK_HOUSE.title);
+    expect(window.localStorage.getItem(KEY('house'))).toBe(UK_HOUSE.id);
     expect(JSON.parse(window.localStorage.getItem(KEY('user')) ?? '{}')).toEqual({ name: 'Иванов И. И.' });
     expect(window.localStorage.getItem('house')).toBeNull();
     expect(window.localStorage.getItem('user')).toBeNull();

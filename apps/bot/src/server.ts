@@ -1,3 +1,4 @@
+import './env';
 import { randomBytes } from 'node:crypto';
 import { createServer, type IncomingMessage, type ServerResponse } from 'node:http';
 import { existsSync, statSync, createReadStream } from 'node:fs';
@@ -13,8 +14,7 @@ import {
 
 // ─────────────────────────── Настройки ───────────────────────────
 
-// Локальный запуск (npm start) читает .env из текущей папки; переменные окружения (Docker, хостинг) важнее файла.
-if (existsSync('.env')) process.loadEnvFile('.env');
+// .env загружается в ./env – он импортирован первым
 
 const env = (k: string): string | undefined => {
   const v = process.env[k]?.trim();
@@ -37,6 +37,12 @@ const WEBHOOK_SECRET = configuredSecret && WEBHOOK_SECRET_FORMAT.test(configured
 const WEBAPP_DIST = resolve(env('WEBAPP_DIST') ?? join(process.cwd(), 'apps/webapp/dist'));
 /** Сколько событий в минуту обрабатывается от одного пользователя (защита от спама и лимита Bot API – 30 запросов/с). */
 const RATE_LIMIT_PER_MINUTE = Math.max(1, Number(env('RATE_LIMIT_PER_MINUTE') ?? 20) || 20);
+/**
+ * Запустить long polling, даже если у бота есть подписка на вебхук. Библиотека при старте polling снимает
+ * все подписки, и сервер, который работает через вебхук, перестаёт получать сообщения. Поэтому по умолчанию
+ * при найденной подписке polling не запускается.
+ */
+const FORCE_POLLING = ['1', 'true', 'yes'].includes(env('FORCE_POLLING')?.toLowerCase() ?? '');
 /** Только для тестов: адрес имитации MAX API. В продакшене не задавать. */
 const MAX_API_BASE_URL = env('MAX_API_BASE_URL');
 /** Пауза перед повторным подключением к MAX: 5 с, затем вдвое больше, но не больше минуты. */
@@ -179,10 +185,11 @@ function createBot(token: string): Bot {
     forget(userIdOf(ctx));
     await ctx.reply('Готово: бот забыл выбранный вами дом. Тексты сообщений бот не хранит.');
   });
-  bot.command('house', async (ctx) => {
+  // Адрес можно написать сразу после команды: «/house Коровина 11». Строковая команда в библиотеке
+  // совпадает только со всей строкой, поэтому нужно регулярное выражение; «/houses» под него не попадает.
+  bot.command(/^house(?:@\S+)?(?:\s+([\s\S]*))?$/i, async (ctx) => {
     const uid = userIdOf(ctx);
-    // адрес можно написать сразу после команды: «/house Коровина 11»
-    const rest = ctx.message?.body?.text?.replace(/^\/house(@\S+)?\s*/i, '').trim();
+    const rest = (ctx.match as RegExpExecArray | null | undefined)?.[1]?.trim().slice(0, 120);
     if (rest) return chooseHouse(ctx, uid, rest);
     expectAddress(uid, true);
     await send(ctx, askAddressReply(houseOf(uid)));
@@ -296,8 +303,11 @@ function serveStatic(req: IncomingMessage, res: ServerResponse): void {
 
 async function main() {
   let bot: Bot | undefined;
-  /** error – MAX Bot API недоступен, сервер повторяет подключение; мини-приложение при этом работает. */
-  let mode: 'disabled' | 'connecting' | 'polling' | 'webhook' | 'error' = 'disabled';
+  /**
+   * error – MAX Bot API недоступен, сервер повторяет подключение; мини-приложение при этом работает.
+   * conflict – у бота уже есть вебхук (работает другой сервер), long polling не запущен, чтобы его не отключить.
+   */
+  let mode: 'disabled' | 'connecting' | 'polling' | 'webhook' | 'error' | 'conflict' = 'disabled';
   let webhookHandler: ((req: IncomingMessage, res: ServerResponse) => void) | undefined;
   let retryTimer: NodeJS.Timeout | undefined;
   let stopping = false;
@@ -332,8 +342,16 @@ async function main() {
         mode = 'webhook';
         log('info', 'webhook mode', { url: `${PUBLIC_URL}${WEBHOOK_PATH}` });
       } else {
+        if (!FORCE_POLLING) {
+          const webhooks = ((await b.api.getSubscriptions()) ?? []).map((s) => s.url);
+          if (webhooks.length) {
+            mode = 'conflict';
+            log('error', 'У бота уже есть вебхук: этим токеном пользуется другой сервер в режиме вебхука. Long polling не запущен, чтобы не отключить его. Используйте токен своего бота или задайте FORCE_POLLING=1', { webhooks });
+            return;
+          }
+        }
         mode = 'polling';
-        log('info', 'long polling mode (только для разработки)');
+        log('info', 'long polling mode');
         // start() отклоняется только при сбое на старте; ошибки во время опроса библиотека повторяет сама
         void b.start().catch(retry);
       }

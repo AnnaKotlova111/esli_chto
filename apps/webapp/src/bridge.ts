@@ -57,9 +57,23 @@ const wa = (): MaxWebApp | undefined => (isInMax() ? raw() : undefined);
 /** DeviceStorage не поддерживается веб-версией MAX – там сразу используем localStorage. */
 const deviceStorage = () => (raw()?.platform === 'web' ? undefined : wa()?.DeviceStorage);
 
-/** Ограничивает ожидание ответа от нативного клиента, чтобы интерфейс не зависал. */
-const withTimeout = <T,>(p: Promise<T> | undefined, ms = 1500): Promise<T | undefined> =>
-  p ? Promise.race([p, new Promise<undefined>((r) => window.setTimeout(() => r(undefined), ms))]) : Promise.resolve(undefined);
+/** Сколько ждать ответа хранилища MAX, прежде чем перейти на запасной вариант. */
+const DEVICE_STORAGE_TIMEOUT_MS = 1500;
+const NO_ANSWER = Symbol('no answer');
+
+/**
+ * Вызов хранилища устройства MAX с ограничением ожидания, чтобы интерфейс не зависал.
+ * NO_ANSWER – хранилища нет, оно не ответило вовремя или вернуло ошибку: тогда работает localStorage.
+ */
+async function deviceCall<T>(call: (s: NonNullable<MaxWebApp['DeviceStorage']>) => Promise<T>): Promise<T | typeof NO_ANSWER> {
+  const s = deviceStorage();
+  if (!s) return NO_ANSWER;
+  try {
+    return await Promise.race([call(s), new Promise<typeof NO_ANSWER>((r) => window.setTimeout(() => r(NO_ANSWER), DEVICE_STORAGE_TIMEOUT_MS))]);
+  } catch {
+    return NO_ANSWER;
+  }
+}
 
 export type UiPlatform = 'ios' | 'android';
 
@@ -109,42 +123,22 @@ export const closingConfirmation = (on: boolean) =>
  */
 const KEY_PREFIX = 'esli_chto:';
 
-const rawStorage = {
-  async get(key: string): Promise<string | null> {
-    try {
-      const v = await withTimeout(deviceStorage()?.getItem(key));
-      if (typeof v === 'string' && v) return v;
-      if (v && typeof v === 'object' && 'value' in (v as object)) {
-        const val = (v as { value?: unknown }).value;
-        if (typeof val === 'string' && val) return val;
-      }
-    } catch {
-      /* fallthrough */
-    }
+const local = {
+  get: (key: string): string | null => {
     try {
       return window.localStorage.getItem(key);
     } catch {
       return null;
     }
   },
-  async set(key: string, value: string): Promise<void> {
-    try {
-      await withTimeout(deviceStorage()?.setItem(key, value));
-    } catch {
-      /* fallthrough */
-    }
+  set: (key: string, value: string) => {
     try {
       window.localStorage.setItem(key, value);
     } catch {
       /* private mode */
     }
   },
-  async remove(key: string): Promise<void> {
-    try {
-      await withTimeout(deviceStorage()?.removeItem(key));
-    } catch {
-      /* ignore */
-    }
+  remove: (key: string) => {
     try {
       window.localStorage.removeItem(key);
     } catch {
@@ -153,7 +147,36 @@ const rawStorage = {
   },
 };
 
-/** Хранилище: DeviceStorage в MAX (мобильные), иначе localStorage; любые сбои не критичны. */
+/**
+ * Основное хранилище – DeviceStorage MAX. localStorage – только запасной вариант, если DeviceStorage
+ * нет (вне MAX, веб-версия MAX) или он не ответил: данные не дублируются в двух местах.
+ */
+const rawStorage = {
+  async get(key: string): Promise<string | null> {
+    // Копия в браузере есть, только если последняя запись не дошла до DeviceStorage, – значит, она новее
+    const saved = local.get(key);
+    if (saved !== null) return saved;
+    const v = await deviceCall((s) => s.getItem(key));
+    if (typeof v === 'string' && v) return v;
+    if (v && typeof v === 'object' && 'value' in (v as object)) {
+      const val = (v as { value?: unknown }).value;
+      if (typeof val === 'string' && val) return val;
+    }
+    return null;
+  },
+  async set(key: string, value: string): Promise<void> {
+    const r = await deviceCall((s) => s.setItem(key, value));
+    if (r === NO_ANSWER) return local.set(key, value);
+    // сохранено в MAX – запасная копия в браузере больше не нужна
+    local.remove(key);
+  },
+  async remove(key: string): Promise<void> {
+    await deviceCall((s) => s.removeItem(key));
+    local.remove(key);
+  },
+};
+
+/** Хранилище: DeviceStorage в MAX (мобильные), если его нет или он не ответил – localStorage; любые сбои не критичны. */
 export const storage = {
   get: (key: string) => rawStorage.get(KEY_PREFIX + key),
   set: (key: string, value: string) => rawStorage.set(KEY_PREFIX + key, value),

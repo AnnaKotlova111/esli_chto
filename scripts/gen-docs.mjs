@@ -19,7 +19,8 @@ const bundle = async (entry, name) => {
 
 const core = await bundle('packages/core/src/index.ts', 'core-docs');
 const { SCENES } = await bundle('apps/webapp/src/scenes/scenes.ts', 'scenes-docs');
-const { ALL_ELEMENTS, NORMS, NORM_CHECKS, PRIVACY, TERMS, collectOutcomes, getHouse, localize } = core;
+const { ALL_ELEMENTS, NORMS, NORM_CHECKS, PRIVACY, TERMS, collectOutcomes, NO_HOUSE, localize } = core;
+// Опись не зависит от подключённого города: формулировки – для дома управляющей компании (NO_HOUSE – УК)
 const byId = new Map(ALL_ELEMENTS.map((e) => [e.id, e]));
 const write = (file, lines) => writeFileSync(resolve(root, 'docs', file), `${lines.join('\n').replace(/\n{3,}/g, '\n\n').trim()}\n`);
 
@@ -117,7 +118,7 @@ for (const e of ALL_ELEMENTS) {
   for (const p of e.problems) {
     for (const o of collectOutcomes(p)) {
       if (o.basis === 'norm') continue;
-      normsDoc.push(`| ${cell(e.title)} | ${cell(p.title)} | ${cell(localize(o.headline, getHouse('vch_korovina_11')))} | ${o.basis === 'practice' ? 'практика' : 'договор'} |`);
+      normsDoc.push(`| ${cell(e.title)} | ${cell(p.title)} | ${cell(localize(o.headline, NO_HOUSE))} | ${o.basis === 'practice' ? 'практика' : 'договор'} |`);
     }
   }
 }

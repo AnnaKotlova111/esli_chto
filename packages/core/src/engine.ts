@@ -292,7 +292,11 @@ export function search(queryRaw: string, house: HouseProfile, limit = 12): Searc
       }
     }
   }
-  return hits.sort((a, b) => b.score - a.score).slice(0, limit);
+  hits.sort((a, b) => b.score - a.score);
+  // Совпадения по одному случайному слову («течёт» в «течёт батарея» на запрос «течёт кран») набирают
+  // намного меньше лучшего результата – такие не показываем, чтобы не отвлекать от нужной ситуации.
+  const best = hits[0]?.score ?? 0;
+  return hits.filter((h) => h.score * 2 >= best).slice(0, limit);
 }
 
 // ─────────────────────────── Диплинки ───────────────────────────

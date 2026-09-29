@@ -1,12 +1,14 @@
 import { describe, expect, it } from 'vitest';
-import { ALL_ELEMENTS, HOUSES, collectOutcomes, encodeDeepLink, getHouse, localizeOutcome, resolve } from '@esli-chto/core';
+import { ADDRESS_EXAMPLES, ALL_ELEMENTS, CITY_SERVICES, HOUSES, collectOutcomes, encodeDeepLink, getHouse, localizeOutcome, resolve } from '@esli-chto/core';
 import {
   addressReply, askAddressReply, cbProblem, elementReply, emergencyReply, help, houseChosenReply, houseFromStart, housesListReply, menuReply,
   nonTextReply, parseCallback, problemReply, searchReply, startReply, stepForChat, textReply, thanksReply, welcome, type ChatReply,
 } from '../src/chat';
+import { BOARD_HOUSE, PILOT, UK_HOUSE, addressQuery, dispatchPhone, managerOf, managerPhone } from '../../../packages/core/test/fixtures';
 
-const uk = getHouse('vch_korovina_11');
-const tszh = getHouse('vch_pyatnitskiy_13');
+// дома из справочника подключённого города (в Вичуге – ул. Коровина, 11 и ТСЖ «Старатели»)
+const uk = UK_HOUSE;
+const tszh = BOARD_HOUSE;
 const none = getHouse('none');
 /** Текст сообщения без HTML-разметки – как его видит пользователь. */
 const plain = (html: string) => html.replace(/<[^>]+>/g, '').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&amp;/g, '&');
@@ -55,8 +57,8 @@ describe('экраны бота', () => {
     expect(r.text).toContain('/house');
     expect(r.text).toContain('112');
     const mine = welcome(uk).text;
-    expect(mine).toContain('г. Вичуга, ул. Коровина, д. 11');
-    expect(mine).toContain('УК «Жилищно-ремонтный участок №1»');
+    expect(mine).toContain(uk.address);
+    expect(mine).toContain(managerOf(uk).name);
     expect(mine).toContain('<b>112</b>');
   });
 
@@ -66,24 +68,27 @@ describe('экраны бота', () => {
     const e = emergencyReply(uk).text;
     expect(e).toContain('112');
     expect(e).toContain('104');
-    expect(e).toContain('+7 (493) 542-34-73');
+    expect(e).toContain(dispatchPhone(uk));
     expect(emergencyReply(none).text).toContain('выберите дом');
   });
 
   it('выбор дома по адресу: один дом – сразу, несколько – кнопки, ни одного – повторить', () => {
-    expect(addressReply('Коровина 11').houseId).toBe('vch_korovina_11');
-    expect(addressReply('пер. Пятницкий, д. 13').houseId).toBe('vch_pyatnitskiy_13');
-    const many = addressReply('Коровина');
-    expect(many.houseId).toBeUndefined();
-    assertValidReply(many.reply!);
-    expect(many.reply!.buttons.flat().filter((b) => b.kind === 'cb' && b.payload.startsWith('h:')).length).toBeGreaterThan(1);
+    expect(addressReply(addressQuery(uk)).houseId).toBe(uk.id);
+    expect(addressReply(addressQuery(tszh)).houseId).toBe(tszh.id);
+    // улица, на которой несколько домов: бот предлагает выбрать кнопкой
+    const street = HOUSES.map((h) => addressQuery(h).replace(/\s+\S+$/, '')).find((st, i, all) => all.indexOf(st) !== i);
+    if (street) {
+      const many = addressReply(street);
+      expect(many.houseId).toBeUndefined();
+      assertValidReply(many.reply!);
+      expect(many.reply!.buttons.flat().filter((b) => b.kind === 'cb' && b.payload.startsWith('h:')).length).toBeGreaterThan(1);
+    }
     const miss = addressReply('улица Несуществующая 999');
     expect(miss.houseId).toBeUndefined();
     expect(miss.reply!.text).toContain('Не нашёл');
     const chosen = houseChosenReply(uk);
     assertValidReply(chosen);
-    expect(chosen.text).toContain('Аварийная служба: <b>+7 (493) 542-34-73</b>');
-    expect(houseChosenReply(getHouse('vch_moskovskaya_13')).text).toContain('УК «Стоун»');
+    expect(chosen.text).toContain(`Аварийная служба: <b>${dispatchPhone(uk)}</b>`);
   });
 
   it('список всех домов разбит на страницы и помещается в сообщение', () => {
@@ -95,15 +100,24 @@ describe('экраны бота', () => {
       listed += r.text.split('\n').filter((l) => /^[•✓] /.test(l)).length;
     }
     expect(listed).toBe(HOUSES.length);
-    expect(housesListReply(uk.id).text).toContain('✓ ул. Коровина, 11');
+    expect(housesListReply(uk.id).text).toContain(`✓ ${uk.title}`);
     expect(housesListReply(none.id).text).toContain('страница 1 из');
     expect(parseCallback(`hl:${pages}`)).toBeUndefined();
   });
 
   it('адрес вместо описания проблемы – бот предлагает выбрать этот дом', () => {
-    const r = searchReply('Ленинградская 6', none);
+    const r = searchReply(addressQuery(uk), none);
     assertValidReply(r);
-    expect(r.buttons.flat().some((b) => b.kind === 'cb' && b.payload === 'h:vch_leningradskaya_6')).toBe(true);
+    const houses = r.buttons.flat().filter((b) => b.kind === 'cb' && b.payload.startsWith('h:'));
+    expect(houses.map((b) => b.kind === 'cb' && b.payload)).toEqual([`h:${uk.id}`]);
+  });
+
+  // дом, номер которого – начало номера соседнего дома на той же улице: как «Ленинградская 6» и 60, 62
+  const prefixed = HOUSES.find((h) => HOUSES.some((o) => o !== h && addressQuery(o).startsWith(`${addressQuery(h)}`) && /\d$/.test(addressQuery(h))));
+  it.runIf(prefixed)('номер дома совпал целиком – предлагается только этот дом, без 60 и 62', () => {
+    expect(addressReply(addressQuery(prefixed!)).houseId).toBe(prefixed!.id);
+    const houses = searchReply(addressQuery(prefixed!), none).buttons.flat().filter((b) => b.kind === 'cb' && b.payload.startsWith('h:'));
+    expect(houses.map((b) => b.kind === 'cb' && b.payload)).toEqual([`h:${prefixed!.id}`]);
   });
 
   it('фото, стикер или файл вместо текста – подсказка и выход в приложение, а не молчание', () => {
@@ -168,10 +182,11 @@ describe('экраны бота', () => {
     expect(gas.text.indexOf('104')).toBeLessThan(gas.text.indexOf('Куда обращаться'));
   });
 
-  it('форма управления учитывается: в ТСЖ нет «управляющей организации»', () => {
+  it('форма управления учитывается: в ТСЖ, ЖСК и ТСН нет «управляющей организации»', () => {
     const r = problemReply('lamp_entrance__burned', [], tszh);
-    expect(r.text).toContain('ТСЖ «Старатели»');
-    expect(r.text).toContain('+7 (920) 377-87-88');
+    expect(r.text).toContain(managerOf(tszh).name);
+    expect(r.text).toContain(managerPhone(tszh));
+    expect(r.text).not.toContain('управляющая организация');
     expect(r.text).not.toContain('{M');
   });
 
@@ -234,13 +249,13 @@ describe('экраны бота', () => {
       return out.join('\n\n');
     };
     const mine = texts(uk);
-    for (const number of ['+7 (493) 542-22-79', '+7 (493) 542-44-72', '+7 (493) 543-58-33', '+7 (493) 295-09-50', '+7 (493) 241-05-61', '+7 (493) 542-50-27'])
-      expect(mine, number).toContain(number);
-    expect(mine).toContain('на панели домофона');
+    const serviceNumbers = (['water_utility', 'heat_utility', 'energy_utility', 'tko_operator', 'housing_inspection', 'municipality'] as const).map((p) => CITY_SERVICES[p]!.phones[0]!.number);
+    for (const number of serviceNumbers) expect(mine, number).toContain(number);
+    if (PILOT) expect(mine).toContain('на панели домофона');
     expect(mine).not.toMatch(/: $/m);
     const noHouse = texts(none);
-    expect(noHouse).toContain('+7 (493) 542-22-79');
-    expect(noHouse).not.toContain('+7 (493) 542-34-73');
+    expect(noHouse).toContain(serviceNumbers[0]);
+    expect(noHouse).not.toContain(dispatchPhone(uk));
     expect(noHouse).not.toContain('контакта нет в справочнике');
   });
 });
@@ -250,7 +265,7 @@ describe('callback и диплинки', () => {
     expect(parseCallback('menu')).toEqual({ t: 'menu' });
     expect(parseCallback(cbProblem('roof__leak'))).toEqual({ t: 'problem', problemId: 'roof__leak', answers: [] });
     expect(parseCallback(cbProblem('pipes_valves__leak', [0, 2]))).toEqual({ t: 'problem', problemId: 'pipes_valves__leak', answers: [0, 2] });
-    expect(parseCallback('h:vch_pyatnitskiy_13')).toEqual({ t: 'house', houseId: 'vch_pyatnitskiy_13' });
+    expect(parseCallback(`h:${tszh.id}`)).toEqual({ t: 'house', houseId: tszh.id });
     expect(parseCallback('hl:0')).toEqual({ t: 'housesPage', page: 0 });
   });
 
@@ -262,7 +277,7 @@ describe('callback и диплинки', () => {
   });
 
   it('старт по диплинку открывает нужную ситуацию', () => {
-    const payload = encodeDeepLink({ houseId: 'vch_korovina_11', problemId: 'roof__leak' });
+    const payload = encodeDeepLink({ houseId: uk.id, problemId: 'roof__leak' });
     const r = startReply(payload, uk);
     assertValidReply(r);
     expect(r.text).toContain('Крыша');
@@ -271,11 +286,11 @@ describe('callback и диплинки', () => {
   });
 
   it('диплинк только с домом показывает этот дом, а не прежний', () => {
-    const r = startReply(encodeDeepLink({ houseId: 'vch_pyatnitskiy_13' }), uk);
+    const r = startReply(encodeDeepLink({ houseId: tszh.id }), uk);
     assertValidReply(r);
     expect(r.text).toContain('Ваш дом');
-    expect(r.text).toContain('ТСЖ «Старатели»');
-    expect(houseFromStart('h_vch_pyatnitskiy_13')).toBe('vch_pyatnitskiy_13');
+    expect(r.text).toContain(managerOf(tszh).name);
+    expect(houseFromStart(`h_${tszh.id}`)).toBe(tszh.id);
     expect(houseFromStart('h_hacked-p_roof__leak')).toBeUndefined();
     expect(houseFromStart(undefined)).toBeUndefined();
   });
@@ -285,7 +300,7 @@ describe('ответ бота совпадает с мини-приложени�
   it('кнопка «Подробнее» ведёт в ту же ситуацию того же дома', () => {
     const r = problemReply('roof__leak', [], tszh);
     const app = r.buttons.flat().find((b) => b.kind === 'app');
-    expect(app && app.kind === 'app' && app.payload).toBe(encodeDeepLink({ houseId: 'vch_pyatnitskiy_13', problemId: 'roof__leak' }));
+    expect(app && app.kind === 'app' && app.payload).toBe(encodeDeepLink({ houseId: tszh.id, problemId: 'roof__leak' }));
   });
 
   it('каждая аварийная ситуация в чате сразу называет номер 112 или 104', () => {
@@ -299,5 +314,31 @@ describe('ответ бота совпадает с мини-приложени�
         walk([]);
       }
     }
+  });
+});
+
+describe.runIf(PILOT)('пилот: ответы бота по справочнику Вичуги', () => {
+  it('адрес с «пер.» и «д.», дом за двумя организациями, «Ленинградская 6» без домов 60 и 62', () => {
+    expect(addressReply('пер. Пятницкий, д. 13').houseId).toBe('vch_pyatnitskiy_13');
+    expect(houseChosenReply(getHouse('vch_moskovskaya_13')).text).toContain('УК «Стоун»');
+    const houses = searchReply('Ленинградская 6', none).buttons.flat().filter((b) => b.kind === 'cb' && b.payload.startsWith('h:'));
+    expect(houses.map((b) => b.kind === 'cb' && b.payload)).toEqual(['h:vch_leningradskaya_6']);
+  });
+
+  it('телефоны из источника: диспетчерская УК, правление ТСЖ', () => {
+    expect(emergencyReply(uk).text).toContain('+7 (493) 542-34-73');
+    expect(problemReply('lamp_entrance__burned', [], tszh).text).toContain('+7 (920) 377-87-88');
+  });
+
+  it('примеры адресов в подсказках – из данных Вичуги', () => {
+    expect(askAddressReply(none).text).toContain('Коровина 11');
+    expect(addressReply('улица Несуществующая 999').reply!.text).toContain('«Ленинградская 6»');
+  });
+});
+
+describe('подсказки с адресами – из справочника подключённого города', () => {
+  it('в приглашении и в ответе «не нашёл» – примеры этого города', () => {
+    expect(askAddressReply(none).text).toContain(`например <b>${ADDRESS_EXAMPLES[0]}</b>`);
+    expect(addressReply('улица Несуществующая 999').reply!.text).toContain(`«${ADDRESS_EXAMPLES[0]}»`);
   });
 });

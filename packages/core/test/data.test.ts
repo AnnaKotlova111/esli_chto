@@ -1,9 +1,10 @@
 import { describe, expect, it } from 'vitest';
 import {
-  ALL_ELEMENTS, CITY, CITY_SERVICES, NORMS, NORM_CHECKS, ORGANIZATIONS, PARTIES, HOUSES, collectOutcomes, formatDateRu, getHouse, hasUnsureOption,
+  ADDRESS_EXAMPLES, ALL_ELEMENTS, CITY, CITY_SERVICES, NORMS, NORM_CHECKS, ORGANIZATIONS, PARTIES, HOUSES, collectOutcomes, formatDateRu, getHouse, hasUnsureOption,
   isHouseChosen, isQuestion, localize, normsCheckSummary, searchHouses,
   type Outcome, type Question,
 } from '../src';
+import { BOARD_HOUSE, PILOT, UK_HOUSE, addressQuery, dispatchPhone, managerPhone } from './fixtures';
 
 const allProblems = ALL_ELEMENTS.flatMap((e) => e.problems.map((p) => ({ element: e, problem: p })));
 const allOutcomes = allProblems.flatMap(({ problem }) => collectOutcomes(problem).map((o) => ({ problem, o })));
@@ -122,16 +123,16 @@ describe('целостность данных', () => {
   });
 });
 
-describe('справочник домов Вичуги', () => {
-  it('все дома из реестра на месте, у каждого есть управляющая организация с телефоном', () => {
-    expect(HOUSES.length).toBe(223);
+describe(`справочник подключённого города (${CITY.name})`, () => {
+  it('у каждого дома есть организация с телефоном в едином формате', () => {
+    expect(HOUSES.length).toBeGreaterThan(0);
     for (const h of HOUSES) {
       const m = h.contacts.manager;
       expect(m?.name, h.id).toBeTruthy();
       expect(m!.phones.length, `${h.id}: нет телефона организации`).toBeGreaterThan(0);
-      for (const p of m!.phones) expect(p.number, h.id).toMatch(/^\+7 \(\d{3}\) \d{3}-\d{2}-\d{2}$/);
-      expect(h.isDemo).toBe(false);
-      expect(h.source).toContain('mingkh.ru');
+      for (const p of m!.phones) expect(p.number, h.id).toMatch(PHONE);
+      expect(h.isDemo).toBe(CITY.demo);
+      expect(h.source).toBe(CITY.source);
     }
   });
 
@@ -140,29 +141,21 @@ describe('справочник домов Вичуги', () => {
     for (const h of HOUSES) expect(h.id).toMatch(/^[A-Za-z0-9_]{1,64}$/);
   });
 
-  it('форма управления берётся из карточки организации: УК, ТСЖ, ЖСК, ТСН', () => {
-    expect(getHouse('vch_korovina_11').managerKind).toBe('УК');
-    expect(getHouse('vch_pyatnitskiy_13').managerKind).toBe('ТСЖ');
-    expect(getHouse('vch_uritskogo_20').managerKind).toBe('ЖСК');
-    expect(getHouse('vch_volodarskogo_102').managerKind).toBe('ТСН');
-    expect(new Set(ORGANIZATIONS.map((o) => o.kind))).toEqual(new Set(['УК', 'ТСЖ', 'ЖСК', 'ТСН']));
+  it('форма управления – одна из УК, ТСЖ, ЖСК, ТСН', () => {
+    for (const o of ORGANIZATIONS) expect(['УК', 'ТСЖ', 'ЖСК', 'ТСН']).toContain(o.kind);
+    expect(UK_HOUSE.managerKind).toBe('УК');
+    expect(BOARD_HOUSE.managerKind).not.toBe('УК');
   });
 
-  it('у УК есть отдельная диспетчерская, у ТСЖ аварии принимает правление', () => {
-    expect(getHouse('vch_korovina_11').contacts.dispatch?.phones[0]?.number).toBe('+7 (493) 542-34-73');
-    expect(getHouse('vch_pyatnitskiy_13').contacts.dispatch).toBeUndefined();
-  });
-
-  it('дом, указанный за двумя организациями, не скрывает расхождение', () => {
-    const h = getHouse('vch_moskovskaya_13');
-    expect(h.contacts.manager?.name).toBe('ТСЖ «Московский»');
-    expect(h.contacts.manager?.note).toContain('УК «Стоун»');
-    expect(CITY.warnings.some((w) => w.includes('Московская, 13'))).toBe(true);
+  it('у УК есть отдельная диспетчерская, у ТСЖ, ЖСК и ТСН без неё аварии принимает правление', () => {
+    expect(UK_HOUSE.contacts.dispatch?.phones[0]?.number).toMatch(PHONE);
+    expect(BOARD_HOUSE.contacts.dispatch).toBeUndefined();
   });
 
   it('дата актуальности показывается в привычном виде, выбор дома определяется одной проверкой', () => {
+    expect(CITY.updatedAt).toMatch(/^\d{4}-\d{2}-\d{2}$/);
     expect(formatDateRu('2026-09-23')).toBe('23.09.2026');
-    expect(isHouseChosen(getHouse('vch_korovina_11'))).toBe(true);
+    expect(isHouseChosen(UK_HOUSE)).toBe(true);
     expect(isHouseChosen(getHouse(undefined))).toBe(false);
     expect(isHouseChosen(getHouse('нет такого'))).toBe(false);
   });
@@ -172,20 +165,17 @@ describe('справочник домов Вичуги', () => {
     expect(none.id).toBe('none');
     expect(none.contacts.manager).toBeUndefined();
     expect(none.contacts.dispatch).toBeUndefined();
-    expect(none.contacts.water_utility?.phones[0]?.number).toBe('+7 (493) 542-22-79');
+    expect(none.contacts.water_utility).toEqual(CITY_SERVICES.water_utility);
     expect(none.features.length).toBe(6);
   });
 
   it('городские службы одинаковы для всех домов, телефоны в едином формате', () => {
     for (const party of ['water_utility', 'heat_utility', 'energy_utility', 'gas_service', 'tko_operator', 'municipality', 'housing_inspection'] as const) {
       const c = CITY_SERVICES[party];
-      expect(c?.phones.length, party).toBeGreaterThan(0);
-      for (const p of c!.phones) {
-        expect(p.number, party).toMatch(PHONE);
-      }
-      for (const h of [getHouse('vch_korovina_11'), getHouse('vch_pyatnitskiy_13')]) expect(h.contacts[party]).toEqual(c);
+      expect(c?.phones.length, `services.csv: нет телефона у ${party}`).toBeGreaterThan(0);
+      for (const p of c!.phones) expect(p.number, party).toMatch(PHONE);
+      for (const h of [UK_HOUSE, BOARD_HOUSE]) expect(h.contacts[party]).toEqual(c);
     }
-    expect(CITY_SERVICES.heat_utility?.phones[0]?.label).toBe('Диспетчерская');
   });
 
   it('все номера всех домов – в одном формате (кроме коротких экстренных)', () => {
@@ -199,15 +189,63 @@ describe('справочник домов Вичуги', () => {
     }
   });
 
+  it('лифт без своего телефона в services.csv – заявку принимает диспетчерская или правление дома', () => {
+    if (CITY_SERVICES.lift_service?.phones.length) return;
+    expect(UK_HOUSE.contacts.lift_service?.phones).toEqual(UK_HOUSE.contacts.dispatch?.phones);
+    expect(BOARD_HOUSE.contacts.lift_service?.phones).toEqual(BOARD_HOUSE.contacts.manager?.phones);
+  });
+
+  it('поиск дома по адресу в свободной форме', () => {
+    expect(searchHouses(addressQuery(UK_HOUSE))[0]?.id).toBe(UK_HOUSE.id);
+    expect(searchHouses(addressQuery(BOARD_HOUSE))[0]?.id).toBe(BOARD_HOUSE.id);
+    expect(searchHouses('')).toEqual([]);
+    expect(searchHouses('несуществующая 999')).toEqual([]);
+  });
+
+  it('примеры адресов в подсказках – из данных города, и по каждому находится дом', () => {
+    expect(ADDRESS_EXAMPLES.length).toBeGreaterThan(0);
+    for (const a of ADDRESS_EXAMPLES) expect(searchHouses(a).length, `meta.json → addressExamples: «${a}» не находит дом`).toBeGreaterThan(0);
+  });
+});
+
+describe.runIf(PILOT)('пилот: справочник Вичуги', () => {
+  it('все 223 дома из реестра на месте, источник – открытые данные', () => {
+    expect(HOUSES.length).toBe(223);
+    expect(CITY.demo).toBe(false);
+    for (const h of HOUSES) expect(h.source).toContain('mingkh.ru');
+  });
+
+  it('форма управления берётся из карточки организации: УК, ТСЖ, ЖСК, ТСН', () => {
+    expect(getHouse('vch_korovina_11').managerKind).toBe('УК');
+    expect(getHouse('vch_pyatnitskiy_13').managerKind).toBe('ТСЖ');
+    expect(getHouse('vch_uritskogo_20').managerKind).toBe('ЖСК');
+    expect(getHouse('vch_volodarskogo_102').managerKind).toBe('ТСН');
+    expect(new Set(ORGANIZATIONS.map((o) => o.kind))).toEqual(new Set(['УК', 'ТСЖ', 'ЖСК', 'ТСН']));
+  });
+
+  it('телефоны из источника: диспетчерская УК, правление ТСЖ, водоснабжение', () => {
+    expect(dispatchPhone(UK_HOUSE)).toBe('+7 (493) 542-34-73');
+    expect(managerPhone(BOARD_HOUSE)).toBe('+7 (920) 377-87-88');
+    expect(getHouse('nope').contacts.water_utility?.phones[0]?.number).toBe('+7 (493) 542-22-79');
+    expect(CITY_SERVICES.heat_utility?.phones[0]?.label).toBe('Диспетчерская');
+  });
+
+  it('дом, указанный за двумя организациями, не скрывает расхождение', () => {
+    const h = getHouse('vch_moskovskaya_13');
+    expect(h.contacts.manager?.name).toBe('ТСЖ «Московский»');
+    expect(h.contacts.manager?.note).toContain('УК «Стоун»');
+    expect(CITY.warnings.some((w) => w.includes('Московская, 13'))).toBe(true);
+  });
+
   it('лифт: отдельной лифтовой организации нет – заявку принимает диспетчерская или правление дома', () => {
-    const uk = getHouse('vch_korovina_11').contacts.lift_service;
+    const uk = UK_HOUSE.contacts.lift_service;
     expect(uk?.phones[0]?.number).toBe('+7 (493) 542-34-73');
     expect(uk?.note).toContain('лифтовой службы');
-    expect(getHouse('vch_pyatnitskiy_13').contacts.lift_service?.phones[0]?.number).toBe('+7 (920) 377-87-88');
+    expect(BOARD_HOUSE.contacts.lift_service?.phones[0]?.number).toBe('+7 (920) 377-87-88');
   });
 
   it('домофон: телефона нет, но есть пояснение, где его найти', () => {
-    const c = getHouse('vch_korovina_11').contacts.intercom_service;
+    const c = UK_HOUSE.contacts.intercom_service;
     expect(c?.phones).toEqual([]);
     expect(c?.note).toContain('на панели домофона');
   });
@@ -219,21 +257,19 @@ describe('справочник домов Вичуги', () => {
     expect(searchHouses('Каменка Николаева 5')[0]?.id).toBe('vch_kamenka_nikolaeva_5');
     expect(searchHouses('коровина').length).toBeGreaterThan(5);
     expect(searchHouses('коровина').every((h) => h.title.includes('Коровина'))).toBe(true);
-    expect(searchHouses('')).toEqual([]);
-    expect(searchHouses('несуществующая 999')).toEqual([]);
   });
 });
 
 describe('подстановка формы управления', () => {
-  const uk = getHouse('vch_korovina_11');
-  const tszh = getHouse('vch_pyatnitskiy_13');
+  const uk = UK_HOUSE;
+  const board = BOARD_HOUSE;
 
-  it('падежи для УК и ТСЖ', () => {
+  it('падежи для УК; у ТСЖ, ЖСК и ТСН – их название', () => {
     expect(localize('Отвечает {M}', uk)).toBe('Отвечает управляющая организация');
     expect(localize('Заявка в {M_acc}', uk)).toBe('Заявка в управляющую организацию');
     expect(localize('Сотрудник {M_gen}', uk)).toBe('Сотрудник управляющей организации');
     expect(localize('Акт с {M_ins}', uk)).toBe('Акт с управляющей организацией');
-    expect(localize('Отвечает {M}', tszh)).toBe('Отвечает ТСЖ');
+    expect(localize('Отвечает {M}', board)).toBe(`Отвечает ${board.managerKind}`);
   });
 
   it('заглавная буква в начале предложения – и в начале строки, и после точки', () => {

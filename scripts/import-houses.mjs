@@ -6,14 +6,27 @@
 // Скрипт проверяет данные и печатает предупреждения: дубли адресов, организации без домов,
 // расхождение числа домов с карточкой. Так же подключается любой другой город (docs/SCALING.md).
 //
-// Запуск: npm run data:import            (по умолчанию data/vichuga)
-//         node scripts/import-houses.mjs data/<город>
+// Формат всех файлов – data/README.md, образец – data/example/.
+//
+// Запуск: npm run data:import -- data/<город>   подключить город (он запоминается в city.json)
+//         npm run data:import                   пересобрать справочник уже подключённого города
 import { existsSync, readFileSync, writeFileSync } from 'node:fs';
-import { resolve } from 'node:path';
+import { relative, resolve } from 'node:path';
 
 const root = resolve(import.meta.dirname, '..');
-const dir = resolve(root, process.argv[2] ?? 'data/vichuga');
+const cityFile = resolve(root, 'packages/core/src/data/city.json');
+/** Подключённый город: папка, из которой собран текущий city.json. */
+const connected = existsSync(cityFile) ? JSON.parse(readFileSync(cityFile, 'utf8')).dataDir : undefined;
+const dir = resolve(root, process.argv[2] ?? connected ?? 'data/vichuga');
+for (const f of ['meta.json', 'organizations.csv', 'houses.csv']) {
+  if (!existsSync(resolve(dir, f))) throw new Error(`Нет файла ${relative(root, resolve(dir, f))} – формат описан в data/README.md`);
+}
 const meta = JSON.parse(readFileSync(resolve(dir, 'meta.json'), 'utf8'));
+for (const key of ['city', 'region', 'idPrefix', 'settlements', 'updatedAt', 'source']) {
+  if (meta[key] === undefined || meta[key] === '') throw new Error(`meta.json: не заполнено поле «${key}» – см. data/README.md`);
+}
+if (!/^[a-z][a-z0-9]*$/.test(meta.idPrefix)) throw new Error(`meta.json: idPrefix «${meta.idPrefix}» – только строчная латиница и цифры, например «vch»`);
+if (!/^\d{4}-\d{2}-\d{2}$/.test(meta.updatedAt)) throw new Error(`meta.json: updatedAt «${meta.updatedAt}» – дата в виде ГГГГ-ММ-ДД`);
 
 /** CSV по RFC 4180: запятая, кавычки, удвоенные кавычки внутри поля. */
 function parseCsv(text) {
@@ -138,8 +151,12 @@ for (const r of houseRows) {
   byAddress.get(key).orgs.push(org);
 }
 
-/** Адрес без служебных слов: «Ивановская обл., г. Вичуга, ул. Московская, д. 13» → «московская 13». */
-const ADDR_NOISE = new Set(['ивановская', 'обл', 'область', 'г', 'город', 'д', 'дом', 'ул', 'улица', 'пер', 'переулок', 'пос', 'поселок', ...Object.keys(meta.settlements).map((s) => s.toLowerCase())]);
+/** Адрес без служебных слов: «Ивановская обл., г. Вичуга, ул. Московская, д. 13» → «московская 13». Регион и города берутся из meta.json. */
+const words = (s) => s.toLowerCase().replace(/ё/g, 'е').split(/[^а-яa-z0-9]+/).filter(Boolean);
+const ADDR_NOISE = new Set([
+  'обл', 'область', 'край', 'республика', 'г', 'город', 'д', 'дом', 'ул', 'улица', 'пер', 'переулок', 'пос', 'поселок',
+  ...words(meta.region), ...Object.keys(meta.settlements).flatMap(words),
+]);
 const normalizeAddr = (s) =>
   s
     .toLowerCase()
@@ -215,7 +232,28 @@ if (existsSync(servicesFile)) {
 const placeRank = (h) => Object.keys(meta.settlements).indexOf(h.settlement);
 houses.sort((a, b) => placeRank(a) - placeRank(b) || a.streetName.localeCompare(b.streetName, 'ru') || a.number.localeCompare(b.number, 'ru', { numeric: true }));
 
+/**
+ * Примеры адресов для подсказок («например, Коровина 11») в боте и мини-приложении.
+ * Берутся из meta.json (addressExamples), а если их нет – из первых домов справочника на разных улицах.
+ */
+let addressExamples = meta.addressExamples;
+if (addressExamples !== undefined) {
+  if (!Array.isArray(addressExamples) || !addressExamples.length || addressExamples.some((s) => typeof s !== 'string' || !s.trim())) {
+    throw new Error('meta.json: addressExamples – список непустых строк, например ["Коровина 11", "Ленинградская 6"]');
+  }
+} else {
+  const seen = new Set();
+  addressExamples = [];
+  for (const h of houses) {
+    if (seen.has(h.streetName) || addressExamples.length === 3) continue;
+    seen.add(h.streetName);
+    addressExamples.push(`${h.streetName} ${h.number}`);
+  }
+}
+
 const out = {
+  // папка исходных данных: по ней npm run data:import и CI пересобирают справочник подключённого города
+  dataDir: relative(root, dir).split('\\').join('/'),
   city: meta.city,
   region: meta.region,
   settlements: Object.fromEntries(Object.entries(meta.settlements).map(([k, v]) => [k, v.title])),
@@ -223,11 +261,12 @@ const out = {
   updatedAt: meta.updatedAt,
   // true – в справочнике тестовые или вымышленные данные: интерфейс и бот явно это помечают
   demo: meta.demo === true,
+  addressExamples,
   services,
   organizations: organizations.filter((o) => houses.some((h) => h.orgId === o.id || h.alsoOrgIds?.includes(o.id))),
   houses,
   warnings,
 };
-writeFileSync(resolve(root, 'packages/core/src/data/city.json'), `${JSON.stringify(out, null, 2)}\n`);
+writeFileSync(cityFile, `${JSON.stringify(out, null, 2)}\n`);
 console.log(`${meta.city}: домов ${houses.length}, организаций ${out.organizations.length}, городских служб ${Object.keys(services).length}`);
 for (const w of warnings) console.log(`  ! ${w}`);

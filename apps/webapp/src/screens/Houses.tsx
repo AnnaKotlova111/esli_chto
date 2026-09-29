@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 import {
-  ALL_FEATURES, CITY, HOUSES, formatDateRu, isHouseChosen, organizationOf, searchHouses, typo, type Feature, type HouseProfile,
+  ADDRESS_EXAMPLES, ALL_FEATURES, CITY, HOUSES, formatDateRu, isHouseChosen, organizationOf, searchHouses, typo, type Feature, type HouseProfile,
 } from '@esli-chto/core';
 import { Input } from '@maxhub/max-ui';
 import { haptic } from '../bridge';
@@ -18,7 +18,10 @@ export const FEATURE_LABEL: Record<Feature, string> = {
   basement: 'Подвал',
 };
 
-const EXAMPLES = ['Коровина 11', 'Ленинградская', '50 лет Октября', 'Каменка'];
+/** Подсказки берутся из справочника подключённого города (meta.json → addressExamples), а не пишутся в коде. */
+const EXAMPLES = ADDRESS_EXAMPLES.slice(0, 4);
+/** «Ленинградская 6» → «Ленинградская»: пример поиска по одной улице. */
+const STREET_EXAMPLE = (ADDRESS_EXAMPLES[1] ?? ADDRESS_EXAMPLES[0] ?? '').replace(/\s+\d\S*$/, '');
 
 /** Выбор дома по адресу из справочника города и отметки о том, что в доме есть. */
 export function HousesView() {
@@ -54,7 +57,7 @@ export function HousesView() {
           <Input
             value={q}
             onChange={(e) => setQ(e.target.value)}
-            placeholder="Например: Коровина 11"
+            placeholder={`Например: ${EXAMPLES[0] ?? 'улица и номер дома'}`}
             aria-label="Адрес дома: улица и номер"
             iconBefore={<Icon name="location" size={20} />}
             withClearButton
@@ -72,7 +75,7 @@ export function HousesView() {
           </div>
         ) : hits.length === 0 ? (
           <p className="text-secondary">
-            Такого адреса нет в справочнике. Проверьте написание или выберите ближайший вариант по улице – например, «Ленинградская».
+            Такого адреса нет в справочнике. Проверьте написание или выберите ближайший вариант по улице{STREET_EXAMPLE ? ` – например, «${STREET_EXAMPLE}»` : ''}.
           </p>
         ) : (
           <div className="card-list" role="listbox" aria-label="Найденные дома">

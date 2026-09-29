@@ -1,7 +1,7 @@
 import {
-  CITY, HOUSES, decodeDeepLink, emergencyPartyOf, emphasize, encodeDeepLink, formatDateRu, getElement, getHouse, getProblem,
+  ADDRESS_EXAMPLES, CITY, HOUSES, decodeDeepLink, emergencyPartyOf, emphasize, encodeDeepLink, formatDateRu, getElement, getHouse, getProblem,
   isHouseChosen, isKnownHouse, localizeOutcome, localizeQuestion, needsHouseChoice, organizationOf, resolve, resolveParties, search,
-  searchHouses,
+  plural, searchHouses,
   type HouseProfile, type Outcome, type PartyId,
 } from '@esli-chto/core';
 
@@ -124,7 +124,7 @@ export function welcome(house: HouseProfile): ChatReply {
       lines([
         `👋 Здравствуйте! Это ${b('«Если что»')} – помощник для жителей многоквартирных домов.`,
         '',
-        'Что-то сломалось в квартире, подъезде или во дворе? Подскажу, кто за это отвечает, дам телефон нужной организации, шаги и норму закона, на которую можно сослаться.',
+        'Что-то сломалось в квартире, подъезде или во дворе? Подскажу, кто за это отвечает, дам телефон нужной организации и шаги. Норму закона, на которую можно сослаться, покажет мини-приложение.',
         '',
         `${b('Как начать:')} напишите своими словами, что случилось, – например, «течёт кран», «не горит свет в подъезде», «нет горячей воды».`,
         '',
@@ -208,23 +208,35 @@ export function askAddressReply(house: HouseProfile): ChatReply {
   return {
     text: [
       isHouseChosen(house) ? `Сейчас выбран: ${b(house.address)}` : '',
-      `Напишите адрес своего дома – улицу и номер, например ${b('Коровина 11')}.`,
-      em(`В справочнике ${HOUSES.length} домов: ${Object.values(CITY.settlements).join(', ')}.`),
+      `Напишите адрес своего дома – улицу и номер, например ${b(ADDRESS_EXAMPLES[0]!)}.`,
+      em(`В справочнике ${HOUSES.length} ${plural(HOUSES.length, 'дом', 'дома', 'домов')}: ${Object.values(CITY.settlements).join(', ')}.`),
     ].filter(Boolean).join('\n\n'),
     buttons: [[{ kind: 'cb', text: '📋 Список всех домов', payload: 'hl:0' }], menuRow()],
   };
 }
 
+/**
+ * Дома по адресу. Если номер в запросе совпал с номером одного дома целиком, остаётся только он:
+ * «Ленинградская 6» – это дом 6, а не 60 и 62.
+ */
+function housesByAddress(query: string, limit: number): HouseProfile[] {
+  const hits = searchHouses(query, limit);
+  const number = query.trim().split(/[\s,]+/).pop()?.toLowerCase();
+  const exact = hits.filter((h) => h.title.toLowerCase().endsWith(`, ${number}`));
+  return exact.length === 1 ? exact : hits;
+}
+
+/** Примеры адресов подключённого города: «Коровина 11» или «Ленинградская 6» – для Вичуги. */
+const examplesText = () => ADDRESS_EXAMPLES.slice(0, 2).map((a) => `«${a}»`).join(' или ');
+
 /** Разбор адреса: один дом – выбираем сразу, несколько – просим уточнить кнопками. */
 export function addressReply(query: string): { houseId?: string; reply?: ChatReply } {
-  const hits = searchHouses(query, 8);
+  const hits = housesByAddress(query, 8);
   if (hits.length === 1) return { houseId: hits[0]!.id };
-  const exact = hits.filter((h) => h.title.toLowerCase().endsWith(`, ${query.trim().split(/[\s,]+/).pop()?.toLowerCase()}`));
-  if (exact.length === 1) return { houseId: exact[0]!.id };
   if (hits.length === 0) {
     return {
       reply: {
-        text: 'Не нашёл такой адрес в справочнике. Напишите улицу и номер дома, например «Ленинградская 6» или «пер. Пятницкий 13».',
+        text: `Не нашёл такой адрес в справочнике. Напишите улицу и номер дома, например ${examplesText()}.`,
         buttons: [[{ kind: 'cb', text: '📋 Список всех домов', payload: 'hl:0' }], menuRow()],
       },
     };
@@ -284,7 +296,7 @@ export function searchReply(query: string, house: HouseProfile): ChatReply {
   const top = search(query, house, 5);
 
   if (top.length === 0) {
-    const houses = /\d/.test(query) ? searchHouses(query, 3) : [];
+    const houses = /\d/.test(query) ? housesByAddress(query, 3) : [];
     if (houses.length) {
       return {
         text: 'Похоже на адрес. Сделать этот дом вашим? Тогда в ответах будут телефоны его управляющей организации.',

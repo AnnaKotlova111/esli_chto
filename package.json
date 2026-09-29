@@ -20,7 +20,7 @@
     "test:integration": "npm run test:integration -w @esli-chto/bot",
     "typecheck": "tsc -p packages/core --noEmit && tsc -p apps/webapp --noEmit && tsc -p apps/bot --noEmit",
     "start": "node apps/bot/dist/server.mjs",
-    "data:import": "node scripts/import-houses.mjs data/vichuga",
+    "data:import": "node scripts/import-houses.mjs",
     "docs": "node scripts/gen-docs.mjs",
     "scenes:detect": "node tools/detect-hotspots.mjs"
   },

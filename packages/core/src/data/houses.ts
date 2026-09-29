@@ -43,6 +43,8 @@ interface CityData {
   updatedAt: string;
   /** Тестовые или вымышленные данные (meta.json города: "demo": true) */
   demo?: boolean;
+  /** Примеры адресов для подсказок: из meta.json города или из первых домов справочника */
+  addressExamples?: string[];
   organizations: Organization[];
   houses: CityHouse[];
   warnings: string[];
@@ -64,6 +66,14 @@ export const CITY = {
 };
 
 export const ORGANIZATIONS: Organization[] = DATA.organizations;
+
+/**
+ * Примеры адресов подключённого города для подсказок в боте и мини-приложении («например, Коровина 11»).
+ * В тексте интерфейса адреса конкретного города не пишутся: при подключении другого города примеры меняются вместе с данными.
+ */
+export const ADDRESS_EXAMPLES: string[] = DATA.addressExamples?.length
+  ? DATA.addressExamples
+  : DATA.houses.slice(0, 3).map((h) => `${h.streetName} ${h.number}`);
 
 /** Городские службы – одинаковы для всех домов города (водоканал, теплосеть, администрация и т. д.). */
 export const CITY_SERVICES: Partial<Record<PartyId, Contact>> = DATA.services ?? {};

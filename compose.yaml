@@ -1,5 +1,6 @@
 # Запуск всего решения одной командой:   docker compose up --build
-# Значения берутся из файла .env (создайте его из .env.example). Без токена поднимается только мини-приложение.
+# Файл .env не обязателен: у всех переменных есть значения по умолчанию, и без токена поднимается только мини-приложение.
+# Чтобы включить бота, создайте .env из .env.example и впишите BOT_TOKEN.
 services:
   app:
     build: .
@@ -13,6 +14,7 @@ services:
       WEBHOOK_PATH: ${WEBHOOK_PATH:-}
       RATE_LIMIT_PER_MINUTE: ${RATE_LIMIT_PER_MINUTE:-20}
       MAX_API_TIMEOUT_MS: ${MAX_API_TIMEOUT_MS:-}
+      FORCE_POLLING: ${FORCE_POLLING:-}
     ports:
       - "${APP_PORT:-8080}:8080"
     read_only: true
