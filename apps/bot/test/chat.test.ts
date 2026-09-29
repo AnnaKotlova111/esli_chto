@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { ADDRESS_EXAMPLES, ALL_ELEMENTS, CITY_SERVICES, HOUSES, collectOutcomes, encodeDeepLink, getHouse, localizeOutcome, resolve } from '@esli-chto/core';
 import {
-  addressReply, askAddressReply, cbProblem, elementReply, emergencyReply, help, houseChosenReply, houseFromStart, housesListReply, menuReply,
+  HOUSE_CHOICES, addressReply, askAddressReply, cbProblem, elementReply, emergencyReply, help, houseChosenReply, houseFromStart, housesListReply, menuReply,
   nonTextReply, parseCallback, problemReply, searchReply, startReply, stepForChat, textReply, thanksReply, welcome, type ChatReply,
 } from '../src/chat';
 import { BOARD_HOUSE, PILOT, UK_HOUSE, addressQuery, dispatchPhone, managerOf, managerPhone } from '../../../packages/core/test/fixtures';
@@ -340,5 +340,33 @@ describe('подсказки с адресами – из справочника
   it('в приглашении и в ответе «не нашёл» – примеры этого города', () => {
     expect(askAddressReply(none).text).toContain(`например <b>${ADDRESS_EXAMPLES[0]}</b>`);
     expect(addressReply('улица Несуществующая 999').reply!.text).toContain(`«${ADDRESS_EXAMPLES[0]}»`);
+  });
+});
+
+describe('выбор дома по улице без номера', () => {
+  // самая длинная улица справочника: все её дома должны быть на кнопках (в Вичуге – Ленинградская, 28 домов)
+  const byStreet = new Map<string, number>();
+  for (const h of HOUSES) {
+    const street = addressQuery(h).replace(/\s+\S+$/, '');
+    byStreet.set(street, (byStreet.get(street) ?? 0) + 1);
+  }
+  const [longest, count] = [...byStreet].sort((a, b) => b[1] - a[1])[0]!;
+
+  it('на кнопках все дома улицы, сообщение укладывается в лимиты MAX', () => {
+    const r = addressReply(longest);
+    if (count === 1) return void expect(r.houseId).toBeDefined();
+    assertValidReply(r.reply!);
+    const houses = r.reply!.buttons.flat().filter((b) => b.kind === 'cb' && b.payload.startsWith('h:'));
+    expect(houses.length).toBe(Math.min(count, HOUSE_CHOICES));
+    if (count <= HOUSE_CHOICES) expect(r.reply!.text).not.toContain('Показаны не все');
+  });
+
+  it.runIf(PILOT)('пилот: на «Коровина» все 14 домов, включая 17–26; при избытке совпадений – подсказка', () => {
+    const korovina = addressReply('Коровина').reply!.buttons.flat().filter((b) => b.kind === 'cb' && b.payload.startsWith('h:'));
+    expect(korovina.length).toBe(14);
+    expect(korovina.some((b) => b.kind === 'cb' && b.payload === 'h:vch_korovina_21')).toBe(true);
+    const many = addressReply('л').reply!;
+    assertValidReply(many);
+    expect(many.text).toContain('Показаны не все дома');
   });
 });

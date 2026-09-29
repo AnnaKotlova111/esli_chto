@@ -229,9 +229,16 @@ function housesByAddress(query: string, limit: number): HouseProfile[] {
 /** Примеры адресов подключённого города: «Коровина 11» или «Ленинградская 6» – для Вичуги. */
 const examplesText = () => ADDRESS_EXAMPLES.slice(0, 2).map((a) => `«${a}»`).join(' или ');
 
+/**
+ * Сколько домов показывать кнопками на выбор. MAX допускает до 30 рядов кнопок, один занят «Другой ситуацией»,
+ * поэтому улица целиком (в Вичуге самая длинная – Ленинградская, 28 домов) помещается в одно сообщение.
+ */
+export const HOUSE_CHOICES = 28;
+
 /** Разбор адреса: один дом – выбираем сразу, несколько – просим уточнить кнопками. */
 export function addressReply(query: string): { houseId?: string; reply?: ChatReply } {
-  const hits = housesByAddress(query, 8);
+  // на один дом больше лимита – чтобы знать, что показаны не все
+  const hits = housesByAddress(query, HOUSE_CHOICES + 1);
   if (hits.length === 1) return { houseId: hits[0]!.id };
   if (hits.length === 0) {
     return {
@@ -241,10 +248,15 @@ export function addressReply(query: string): { houseId?: string; reply?: ChatRep
       },
     };
   }
+  const shown = hits.slice(0, HOUSE_CHOICES);
+  // не поместившиеся дома не пропадают молча: подсказываем написать адрес с номером
+  const hidden = hits[HOUSE_CHOICES];
   return {
     reply: {
-      text: 'Какой из домов ваш?',
-      buttons: [...hits.map((h): ChatButton[] => [{ kind: 'cb', text: h.title, payload: `h:${h.id}` }]), menuRow()],
+      text: hidden
+        ? `Какой из домов ваш? Показаны не все дома – если вашего нет, напишите адрес с номером, например «${hidden.title.replace(/\s*\(.*\)$/, '')}».`
+        : 'Какой из домов ваш?',
+      buttons: [...shown.map((h): ChatButton[] => [{ kind: 'cb', text: h.title, payload: `h:${h.id}` }]), menuRow()],
     },
   };
 }
