@@ -1,7 +1,7 @@
 export * from './types';
 export * from './engine';
 export * from './templates';
-export * from './emphasis';
+export * from './text-format';
 export {
   ALL_FEATURES, CITY, CITY_SERVICES, DEFAULT_HOUSE_ID, HOUSES, NO_HOUSE, ORGANIZATIONS, formatDateRu, isHouseChosen, isKnownHouse, organizationOf,
   searchHouses, withFeatures,

@@ -30,7 +30,7 @@ export interface SceneDef {
 type Raw = { image: string; size: [number, number]; spots: Record<string, { box: Box; icon: [number, number, number] | null }> };
 const RAW = hotspots as unknown as Record<string, Raw>;
 
-/** Запас зоны нажатия вокруг плашки, в пикселях картинки (~6–8 px на экране телефона). */
+/** Запас зоны нажатия вокруг плашки, в пикселях картинки (~6-8 px на экране телефона). */
 const PAD = 18;
 
 const overlaps = (a: Box, b: Box) => a[0] < b[0] + b[2] && b[0] < a[0] + a[2] && a[1] < b[1] + b[3] && b[1] < a[1] + a[3];

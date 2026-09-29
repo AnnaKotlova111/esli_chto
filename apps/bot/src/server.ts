@@ -28,7 +28,7 @@ const PUBLIC_URL = env('PUBLIC_URL')?.replace(/\/+$/, '');
 const WEBHOOK_PATH = env('WEBHOOK_PATH') ?? '/max/webhook';
 /**
  * Секрет вебхука: MAX присылает его в заголовке каждого запроса, чужие запросы отклоняются.
- * MAX принимает 5–256 символов [A-Za-z0-9_-]. Если секрет не задан или не подходит по формату,
+ * MAX принимает 5-256 символов [A-Za-z0-9_-]. Если секрет не задан или не подходит по формату,
  * он генерируется при запуске и регистрируется вместе с подпиской.
  */
 const WEBHOOK_SECRET_FORMAT = /^[A-Za-z0-9_-]{5,256}$/;
@@ -374,7 +374,7 @@ async function main() {
     if (PUBLIC_URL) {
       if (!configuredSecret) log('info', 'WEBHOOK_SECRET не задан: секрет сгенерирован при запуске');
       else if (configuredSecret !== WEBHOOK_SECRET) {
-        log('warn', 'WEBHOOK_SECRET не подходит по формату (5–256 символов: латиница, цифры, _ и -): секрет сгенерирован при запуске');
+        log('warn', 'WEBHOOK_SECRET не подходит по формату (5-256 символов: латиница, цифры, _ и -): секрет сгенерирован при запуске');
       }
       if (!PUBLIC_URL.startsWith('https://')) log('warn', 'PUBLIC_URL должен быть https:// – MAX принимает вебхуки только по HTTPS');
     }
