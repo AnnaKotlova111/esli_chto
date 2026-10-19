@@ -7,7 +7,8 @@
  * подтверждение нажатий, выбор дома (/house и адрес отдельным сообщением или одной командой),
  * меню команд и путь по меню кнопками до ответа, «Мой дом» и телефоны служб, молчание в группах, ограничение частоты и команда /forget, а также устойчивость: недоступный
  * при старте API и зависший запрос не роняют сервер, тайм-аут API читается из .env,
- * long polling не снимает вебхук другого сервера, без токена работает мини-приложение.
+ * long polling не снимает вебхук другого сервера, остановка сервера в режиме вебхука не снимает его подписку,
+ * без токена работает мини-приложение.
  *
  * Запуск: npm run build && npm run test:integration
  */
@@ -340,7 +341,16 @@ async function runWebhook() {
     });
     const health = await (await fetch('http://localhost:18084/healthz')).json();
     assert.equal(health.bot, 'webhook');
-    console.log(`OK webhook: сообщений отправлено ${mock.state.sent.length}`);
+
+    // Остановка не снимает подписку: после запуска сервер подпишется на тот же адрес снова.
+    // На Windows SIGTERM завершает процесс сразу, без обработчика, поэтому журнал остановки проверяется только в Linux (CI)
+    const exited = new Promise((r) => app.child.once('exit', r));
+    app.child.kill('SIGTERM');
+    await Promise.race([exited, sleep(5000)]);
+    if (process.platform !== 'win32') assert.match(app.out.log, /shutting down/, 'сервер остановлен своим обработчиком SIGTERM');
+    assert.deepEqual(mock.state.unsubscribed, [], 'подписка на вебхук при остановке не снята');
+    assert.equal(mock.state.subscriptions.length, 1, 'подписка на месте');
+    console.log(`OK webhook: сообщений отправлено ${mock.state.sent.length}, подписка после остановки сохранена`);
   } catch (e) {
     console.error(app.out.log);
     throw e;

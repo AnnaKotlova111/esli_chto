@@ -436,8 +436,11 @@ async function main() {
     log('info', 'shutting down', { signal });
     stopping = true;
     clearTimeout(retryTimer);
+    // В режиме вебхука подписку в MAX при остановке не снимаем: после запуска сервер подписывается на тот же
+    // адрес заново (createWebhook), а без подписки бот на время перезапуска остался бы без событий.
+    // bot.stopWebhook() здесь не подходит: он останавливает только вебхук, запущенный через startWebhook.
     try {
-      if (bot) mode === 'webhook' ? await bot.stopWebhook() : bot.stopPolling();
+      if (bot && mode !== 'webhook') bot.stopPolling();
     } catch {
       /* ignore */
     }
