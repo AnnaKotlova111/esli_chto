@@ -1,8 +1,11 @@
 import { describe, expect, it } from 'vitest';
-import { ADDRESS_EXAMPLES, ALL_ELEMENTS, CITY_SERVICES, HOUSES, collectOutcomes, encodeDeepLink, getHouse, localizeOutcome, resolve } from '@esli-chto/core';
 import {
-  HOUSE_CHOICES, addressReply, askAddressReply, cbProblem, elementReply, emergencyReply, help, houseChosenReply, houseFromStart, housesListReply, menuReply,
-  nonTextReply, parseCallback, problemReply, searchReply, startReply, stepForChat, textReply, thanksReply, welcome, type ChatReply,
+  ADDRESS_EXAMPLES, ALL_ELEMENTS, CATEGORIES, CITY_SERVICES, HOUSES, categoryOf, collectOutcomes, encodeDeepLink, getHouse, localizeOutcome, resolve,
+} from '@esli-chto/core';
+import {
+  HOUSE_CHOICES, addressReply, askAddressReply, brokenReply, categoryReply, cbProblem, elementReply, emergencyReply, help, houseChosenReply, houseFromStart,
+  housesListReply, menuReply, myHouseReply, nonTextReply, parseCallback, phonesReply, problemReply, searchReply, startReply, stepForChat, textReply,
+  thanksReply, welcome, type ChatReply,
 } from '../src/chat';
 import { BOARD_HOUSE, PILOT, UK_HOUSE, addressQuery, dispatchPhone, managerOf, managerPhone } from '../../../packages/core/test/fixtures';
 
@@ -13,7 +16,7 @@ const none = getHouse('none');
 /** Текст сообщения без HTML-разметки – как его видит пользователь. */
 const plain = (html: string) => html.replace(/<[^>]+>/g, '').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&amp;/g, '&');
 
-/** Кнопки вариантов ответа на текущий вопрос (без «Назад» и «Другая ситуация»). */
+/** Кнопки вариантов ответа на текущий вопрос (без «Назад» и «Меню»). */
 const optionCount = (r: ChatReply, problemId: string, answers: number[]) => {
   const here = cbProblem(problemId, answers);
   return r.buttons.flat().filter((b) => b.kind === 'cb' && b.payload.startsWith(here) && b.payload !== here).length;
@@ -127,7 +130,6 @@ describe('экраны бота', () => {
       expect(r.text).toContain('только текст');
       expect(r.buttons.flat().some((b) => b.kind === 'app')).toBe(true);
     }
-    assertValidReply(menuReply());
   });
 
   it('«Назад» ведёт на шаг назад: к прошлому вопросу, а с первого шага – к ситуациям объекта', () => {
@@ -260,9 +262,127 @@ describe('экраны бота', () => {
   });
 });
 
+/** Данные callback-кнопок ответа. */
+const payloads = (r: ChatReply) => r.buttons.flat().flatMap((b) => (b.kind === 'cb' ? [b.payload] : []));
+const hasMenu = (r: ChatReply) => payloads(r).includes('menu');
+
+describe('меню бота: базовые функции без ввода текста', () => {
+  it('главное меню и приветствие – разделы бота и вход в мини-приложение', () => {
+    for (const house of [none, uk, tszh]) {
+      for (const r of [menuReply(house), welcome(house)]) {
+        assertValidReply(r);
+        const p = payloads(r);
+        for (const section of ['broken', 'urgent', 'phones', 'help']) expect(p, section).toContain(section);
+        expect(p).toContain(house === none ? 'houses' : 'myhouse');
+        expect(r.buttons.flat().some((b) => b.kind === 'app')).toBe(true);
+      }
+    }
+    expect(menuReply(uk).text).toContain(uk.address);
+    expect(menuReply(none).text).toContain('Дом не выбран');
+    expect(payloads(menuReply(tszh)).length).toBe(5);
+    expect(menuReply(tszh).buttons.flat().map((b) => b.text)).toContain(`🏠 Мой дом и телефоны ${tszh.managerKind}`);
+  });
+
+  it('«меню» словами открывает главное меню, приветствие – по-прежнему рассказ о боте', () => {
+    for (const q of ['меню', 'Меню', 'главное меню', 'Привет, меню']) expect(textReply(q, uk).text, q).toContain('Главное меню');
+    expect(textReply('Привет', uk).text).toContain('помощник для жителей');
+  });
+
+  it('«Что сломалось»: все категории, каждая кнопка ведёт в свою категорию, есть выход на схему', () => {
+    for (const house of [none, uk]) {
+      const r = brokenReply(house);
+      assertValidReply(r);
+      expect(payloads(r).filter((p) => p.startsWith('c:'))).toEqual(CATEGORIES.map((c) => `c:${c.id}`));
+      expect(r.buttons.flat().some((b) => b.kind === 'app')).toBe(true);
+      expect(hasMenu(r)).toBe(true);
+    }
+  });
+
+  it('в категории – все её объекты, «Назад» к категориям; лифт сразу показывает ситуации', () => {
+    for (const house of [none, uk, tszh]) {
+      for (const c of CATEGORIES) {
+        const r = categoryReply(c.id, house);
+        assertValidReply(r);
+        const elements = payloads(r).filter((p) => p.startsWith('e:')).map((p) => p.slice(2));
+        const expected = ALL_ELEMENTS.filter((e) => categoryOf(e.id) === c.id).map((e) => e.id);
+        if (expected.length === 1) {
+          // объект один – сразу его ситуации, «Назад» ведёт к выбору категории
+          expect(r.text).toContain(ALL_ELEMENTS.find((e) => e.id === expected[0])!.title);
+          expect(payloads(r)).toContain('broken');
+          continue;
+        }
+        expect(elements, c.id).toEqual(expected);
+        expect(payloads(r)).toContain('broken');
+        expect(hasMenu(r)).toBe(true);
+        expect(r.buttons.flat().some((b) => b.kind === 'app')).toBe(true);
+      }
+    }
+    expect(payloads(categoryReply('elevator', uk)).some((p) => p.startsWith('p:elevator__'))).toBe(true);
+  });
+
+  it('объект возвращает «Назад» в свою категорию', () => {
+    expect(payloads(elementReply('tap', uk))).toContain('c:water');
+    expect(payloads(elementReply('elevator', uk))).toContain('broken');
+  });
+
+  it('путь кнопками до ответа: «Что сломалось» → «Вода» → кран → «течёт» → кто отвечает', () => {
+    expect(payloads(brokenReply(uk))).toContain('c:water');
+    expect(payloads(categoryReply('water', uk))).toContain('e:tap');
+    const tap = elementReply('tap', uk);
+    const leak = payloads(tap).find((p) => p.startsWith('p:tap__leak'));
+    expect(leak).toBeDefined();
+    const action = parseCallback(leak);
+    expect(action).toEqual({ t: 'problem', problemId: 'tap__leak', answers: [] });
+    const answer = problemReply('tap__leak', [], uk);
+    expect(answer.text).toMatch(/Куда обращаться|❓/);
+  });
+
+  it('«Мой дом»: организация, телефоны, аварийная служба и смена дома', () => {
+    const r = myHouseReply(uk);
+    assertValidReply(r);
+    expect(r.text).toContain(uk.address);
+    expect(r.text).toContain(managerPhone(uk));
+    expect(r.text).toContain(`Аварийная служба: <b>${dispatchPhone(uk)}</b>`);
+    expect(payloads(r)).toEqual(expect.arrayContaining(['broken', 'phones', 'houses', 'menu']));
+    // у ТСЖ без диспетчерской аварии принимает правление по тем же телефонам
+    const board = myHouseReply(tszh);
+    assertValidReply(board);
+    expect(board.text).toContain(managerPhone(tszh));
+    if (!tszh.contacts.dispatch) expect(board.text).toContain('по этим же телефонам');
+  });
+
+  it('«Телефоны городских служб»: все службы справочника и экстренные номера', () => {
+    for (const house of [none, uk]) {
+      const r = phonesReply(house);
+      assertValidReply(r);
+      expect(r.text.endsWith('…')).toBe(false);
+      for (const id of ['water_utility', 'heat_utility', 'energy_utility', 'gas_service', 'tko_operator', 'municipality', 'housing_inspection'] as const) {
+        for (const p of CITY_SERVICES[id]?.phones ?? []) expect(r.text, id).toContain(p.number);
+      }
+      for (const n of ['112', '104', '102']) expect(r.text).toContain(`<b>${n}</b>`);
+      expect(hasMenu(r)).toBe(true);
+    }
+    expect(phonesReply(none).text).toContain('/house');
+    expect(payloads(phonesReply(uk))).toContain('myhouse');
+  });
+
+  it('без тупиков: в каждом ответе есть кнопка «Меню»', () => {
+    const replies: ChatReply[] = [
+      help(uk), emergencyReply(uk), askAddressReply(uk), housesListReply(uk.id), houseChosenReply(uk), myHouseReply(uk), phonesReply(none),
+      brokenReply(uk), searchReply('течёт кран', uk), searchReply('абракадабра', uk), nonTextReply(uk), thanksReply(uk), addressReply('улица Несуществующая 999').reply!,
+      ...CATEGORIES.map((c) => categoryReply(c.id, uk)),
+      ...ALL_ELEMENTS.map((e) => elementReply(e.id, uk)),
+      ...ALL_ELEMENTS.flatMap((e) => e.problems.map((p) => problemReply(p.id, [], uk))),
+    ];
+    for (const r of replies) expect(hasMenu(r), r.text.slice(0, 60)).toBe(true);
+  });
+});
+
 describe('callback и диплинки', () => {
   it('разбирает корректные данные', () => {
     expect(parseCallback('menu')).toEqual({ t: 'menu' });
+    for (const s of ['broken', 'urgent', 'houses', 'myhouse', 'phones', 'help'] as const) expect(parseCallback(s)).toEqual({ t: s });
+    expect(parseCallback('c:water')).toEqual({ t: 'category', category: 'water' });
     expect(parseCallback(cbProblem('roof__leak'))).toEqual({ t: 'problem', problemId: 'roof__leak', answers: [] });
     expect(parseCallback(cbProblem('pipes_valves__leak', [0, 2]))).toEqual({ t: 'problem', problemId: 'pipes_valves__leak', answers: [0, 2] });
     expect(parseCallback(`h:${tszh.id}`)).toEqual({ t: 'house', houseId: tszh.id });
@@ -270,7 +390,7 @@ describe('callback и диплинки', () => {
   });
 
   it('отвергает мусор и неизвестные id', () => {
-    for (const bad of ['', 'p:nope:', 'p:roof__leak:x', 'p:roof__leak:99', 'p:roof__leak:0:1', 'e:???', 'e:roof:1', 'h:hacked', 'a'.repeat(300), 'DROP TABLE']) {
+    for (const bad of ['', 'p:nope:', 'p:roof__leak:x', 'p:roof__leak:99', 'p:roof__leak:0:1', 'e:???', 'e:roof:1', 'h:hacked', 'c:nope', 'c:water:1', 'c:', 'a'.repeat(300), 'DROP TABLE']) {
       expect(parseCallback(bad), bad).toBeUndefined();
     }
     expect(parseCallback(undefined)).toBeUndefined();

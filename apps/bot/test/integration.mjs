@@ -5,7 +5,7 @@
  * Имитация написана по документации MAX и воспроизводит только те методы API, которые использует бот.
  * Проверяется, что реально уходит в API: тексты, клавиатуры, кнопка мини-приложения с диплинком,
  * подтверждение нажатий, выбор дома (/house и адрес отдельным сообщением или одной командой),
- * молчание в группах, ограничение частоты и команда /forget, а также устойчивость: недоступный
+ * меню команд и путь по меню кнопками до ответа, «Мой дом» и телефоны служб, молчание в группах, ограничение частоты и команда /forget, а также устойчивость: недоступный
  * при старте API и зависший запрос не роняют сервер, тайм-аут API читается из .env,
  * long polling не снимает вебхук другого сервера, без токена работает мини-приложение.
  *
@@ -54,13 +54,14 @@ const readBody = (req) =>
 
 /** Имитация MAX Bot API: копит отправленные сообщения, отдаёт очередь событий для long polling. */
 function createMock(port, { failSubscribe = 0, hangMessages = 0, subscriptions = [] } = {}) {
-  const state = { queue: [], sent: [], answered: [], subscriptions: [...subscriptions], unsubscribed: [], commandsSet: false, marker: 0, failSubscribe, hangMessages };
+  const state = { queue: [], sent: [], answered: [], subscriptions: [...subscriptions], unsubscribed: [], commandsSet: false, commands: [], marker: 0, failSubscribe, hangMessages };
   const server = createServer(async (req, res) => {
     const url = new URL(req.url, 'http://x');
     const json = (obj, code = 200) => res.writeHead(code, { 'content-type': 'application/json' }).end(JSON.stringify(obj));
     if (req.headers.authorization !== TOKEN) return json({ code: 'verify.token', message: 'bad token' }, 401);
     if (url.pathname === '/me' && req.method === 'GET') return json({ user_id: 1, first_name: 'Если что', username: 'esli_chto_test_bot', is_bot: true });
     if ((url.pathname === '/me' || url.pathname === '/me/commands') && req.method !== 'GET') {
+      state.commands = (await readBody(req)).commands ?? [];
       state.commandsSet = true;
       return json({ success: true });
     }
@@ -220,13 +221,42 @@ async function scenario(mock, deliver) {
   const lamp = await next(tap(42, 'p:lamp_entrance__burned:'), 'ответ для ТСЖ');
   assert.match(lamp.body.text, re(`${boardOrg.short}</b>\n📞 <b>${boardOrg.phones[0]}</b>`));
 
-  // 9. /forget – бот забывает выбранный дом
+  // 9. Меню: поломка выбирается кнопками без ввода текста, «Мой дом» и телефоны служб.
+  // Отдельный пользователь – чтобы не упереться в ограничение частоты у пользователя 42
+  await next(tap(46, `h:${BOARD.id}`), 'выбор дома для проверки меню');
+  const menu = await next(text(46, '/menu'), 'главное меню');
+  assert.match(menu.body.text, /Главное меню/);
+  for (const section of ['broken', 'urgent', 'myhouse', 'phones', 'help']) {
+    assert.ok(buttons(menu).some((b) => b.type === 'callback' && b.payload === section), `в меню есть раздел ${section}`);
+  }
+  assert.ok(buttons(menu).some((b) => b.type === 'open_app'), 'из меню открывается мини-приложение');
+  const broken = await next(tap(46, 'broken'), 'раздел «Что сломалось»');
+  assert.ok(buttons(broken).some((b) => b.type === 'callback' && b.payload === 'c:water'), 'категория «Вода»');
+  const water = await next(tap(46, 'c:water'), 'объекты категории «Вода»');
+  assert.ok(buttons(water).some((b) => b.type === 'callback' && b.payload === 'e:tap'), 'объект «Смеситель»');
+  const tapEl = await next(tap(46, 'e:tap'), 'ситуации объекта');
+  const leak = buttons(tapEl).find((b) => b.type === 'callback' && b.payload.startsWith('p:tap__leak'));
+  assert.ok(leak, 'ситуация «течёт»');
+  const byButtons = await next(tap(46, leak.payload), 'ответ, найденный кнопками');
+  assert.match(byButtons.body.text, /Куда обращаться|❓/);
+  const mine = await next(text(46, '/myhouse'), '/myhouse');
+  assert.match(mine.body.text, re(`Ваш дом: <b>${BOARD.address}</b>`));
+  const phones = await next(text(46, '/phones'), '/phones');
+  assert.match(phones.body.text, /Телефоны городских служб/);
+  assert.match(phones.body.text, /<b>112<\/b>/);
+  // после /house и перехода в раздел меню текст снова ищет поломку, а не адрес
+  await next(text(46, '/house'), 'приглашение написать адрес');
+  await next(text(46, '/problem'), '/problem');
+  const afterMenu = await next(text(46, 'течёт кран'), 'текст после перехода в меню');
+  assert.ok(buttons(afterMenu).some((b) => b.type === 'callback' && b.payload.startsWith('p:tap__leak')), 'ожидание адреса снято');
+
+  // 10. /forget – бот забывает выбранный дом
   const forgot = await next(text(42, '/forget'), '/forget');
   assert.match(forgot.body.text, /забыл/);
   const again = await next(tap(42, 'p:lamp_entrance__burned:'), 'ответ после /forget');
   assert.match(again.body.text, /Выберите свой дом командой \/house/);
 
-  // 10. Фото или стикер без текста – подсказка; сообщение от бота (эхо) – без ответа
+  // 11. Фото или стикер без текста – подсказка; сообщение от бота (эхо) – без ответа
   const photo = text(45, undefined);
   photo.message.body.attachments = [{ type: 'image', payload: { url: 'https://example.org/p.jpg' } }];
   const hint = await next(photo, 'ответ на сообщение без текста');
@@ -238,13 +268,13 @@ async function scenario(mock, deliver) {
   await sleep(600);
   assert.equal(sent.length, beforeEcho, 'на свои сообщения бот не отвечает');
 
-  // 11. В групповом чате бот молчит
+  // 12. В групповом чате бот молчит
   const beforeGroup = sent.length;
   await deliver(text(43, 'течёт кран', 'chat'));
   await sleep(600);
   assert.equal(sent.length, beforeGroup, 'в группе нет ответа');
 
-  // 12. Ограничение частоты: сверх лимита события одного пользователя не обрабатываются
+  // 13. Ограничение частоты: сверх лимита события одного пользователя не обрабатываются
   const beforeFlood = sent.length;
   for (let i = 0; i < 25; i += 1) await deliver(text(44, 'лампочка'));
   await sleep(1500);
@@ -258,6 +288,11 @@ async function runPolling() {
   try {
     await waitFor(() => app.out.log.includes('long polling mode'), 'запуск в режиме long polling');
     await waitFor(() => mock.state.commandsSet, 'регистрация команд');
+    assert.deepEqual(
+      mock.state.commands.map((c) => c.name),
+      ['menu', 'problem', 'urgent', 'myhouse', 'phones', 'house', 'help', 'forget'],
+      'меню команд MAX – базовые функции бота',
+    );
     await scenario(mock, async (u) => {
       mock.state.queue.push(u);
     });

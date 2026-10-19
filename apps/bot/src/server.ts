@@ -4,11 +4,11 @@ import { createServer, type IncomingMessage, type ServerResponse } from 'node:ht
 import { existsSync, statSync, createReadStream } from 'node:fs';
 import { extname, join, normalize, resolve, sep } from 'node:path';
 import { Bot, Keyboard, type Context } from '@maxhub/max-bot-api';
-import { ALL_ELEMENTS, APP_META, DEFAULT_HOUSE_ID, getHouse, HOUSES } from '@esli-chto/core';
+import { ALL_ELEMENTS, APP_META, DEFAULT_HOUSE_ID, getHouse, HOUSES, isHouseChosen, type HouseProfile } from '@esli-chto/core';
 import { maxFetch } from './tls';
 import {
-  addressReply, askAddressReply, elementReply, emergencyReply, help, houseChosenReply, houseFromStart, housesListReply, menuReply,
-  nonTextReply, parseCallback, problemReply, startReply, textReply, welcome,
+  addressReply, askAddressReply, brokenReply, categoryReply, elementReply, emergencyReply, help, houseChosenReply, houseFromStart, housesListReply,
+  menuReply, myHouseReply, nonTextReply, parseCallback, phonesReply, problemReply, startReply, textReply, welcome,
   type ChatButton, type ChatReply,
 } from './chat';
 
@@ -108,7 +108,7 @@ function toKeyboard(buttons: ChatButton[][]) {
           : // без ника открыть мини-приложение нельзя – заменяем на callback «меню»
             botUsername
             ? Keyboard.button.openApp(b.text, botUsername, undefined, b.payload)
-            : Keyboard.button.callback('🔎 Другая ситуация', 'menu'),
+            : Keyboard.button.callback('☰ Меню', 'menu'),
       ),
     ),
   );
@@ -136,6 +136,14 @@ async function chooseHouse(ctx: Context, uid: number | undefined, text: string) 
   return send(ctx, r.reply!);
 }
 
+/** «Мой дом»: карточка выбранного дома, а если дом не выбран – приглашение написать адрес. */
+async function showMyHouse(ctx: Context, uid: number | undefined) {
+  const house = houseOf(uid);
+  if (isHouseChosen(house)) return send(ctx, myHouseReply(house));
+  expectAddress(uid, true);
+  return send(ctx, askAddressReply(house));
+}
+
 function createBot(token: string): Bot {
   const bot = new Bot(token, { clientOptions: { fetch: maxFetch, ...(MAX_API_BASE_URL ? { baseUrl: MAX_API_BASE_URL } : {}) } });
 
@@ -145,11 +153,14 @@ function createBot(token: string): Bot {
     void ctx?.reply?.('Что-то пошло не так. Попробуйте ещё раз или откройте карту дома в мини-приложении.').catch(() => undefined);
   });
 
+  // Меню команд в MAX – базовые функции бота; /start и /houses работают, но в списке не показываются
   void bot.api.setMyCommands([
-    { name: 'start', description: 'Начать' },
+    { name: 'menu', description: 'Главное меню' },
+    { name: 'problem', description: 'Что сломалось: выбрать кнопками' },
     { name: 'urgent', description: 'Срочно: газ, потоп, пожар' },
-    { name: 'house', description: 'Сменить дом' },
-    { name: 'houses', description: 'Список всех домов' },
+    { name: 'myhouse', description: 'Мой дом и телефоны УК или ТСЖ' },
+    { name: 'phones', description: 'Телефоны городских служб' },
+    { name: 'house', description: 'Выбрать или сменить дом' },
     { name: 'help', description: 'Как пользоваться' },
     { name: 'forget', description: 'Удалить мои данные в боте' },
   ]).catch((e) => log('warn', 'setMyCommands failed', String(e)));
@@ -179,8 +190,20 @@ function createBot(token: string): Bot {
   bot.command('start', async (ctx) => {
     await send(ctx, welcome(houseOf(userIdOf(ctx))));
   });
-  bot.command('help', async (ctx) => send(ctx, help(houseOf(userIdOf(ctx)))));
-  bot.command('urgent', async (ctx) => send(ctx, emergencyReply(houseOf(userIdOf(ctx)))));
+  // Разделы меню командой. Ожидание адреса после /house снимается, как и при нажатии кнопок:
+  // следующий текст – снова описание поломки, а не адрес
+  const section = (name: string, reply: (house: HouseProfile) => ChatReply) =>
+    bot.command(name, async (ctx) => {
+      const uid = userIdOf(ctx);
+      expectAddress(uid, false);
+      await send(ctx, reply(houseOf(uid)));
+    });
+  section('menu', menuReply);
+  section('problem', brokenReply);
+  section('urgent', emergencyReply);
+  section('phones', phonesReply);
+  section('help', help);
+  bot.command('myhouse', async (ctx) => showMyHouse(ctx, userIdOf(ctx)));
   bot.command('forget', async (ctx) => {
     forget(userIdOf(ctx));
     await ctx.reply('Готово: бот забыл выбранный вами дом. Тексты сообщений бот не хранит.');
@@ -203,11 +226,12 @@ function createBot(token: string): Bot {
     // MAX ждёт ответ на callback – подтверждаем сразу, чтобы кнопка не «зависала»
     await ctx.answerOnCallback({}).catch(() => undefined);
     if (!action) return void (await send(ctx, welcome(houseOf(uid))));
+    // нажатие вне выбора дома снимает ожидание адреса: следующий текст – снова описание поломки
+    if (action.t !== 'houses' && action.t !== 'housesPage') expectAddress(uid, false);
     let house = houseOf(uid);
     switch (action.t) {
       case 'house':
         remember(uid, action.houseId);
-        expectAddress(uid, false);
         house = getHouse(action.houseId);
         return void (await send(ctx, houseChosenReply(house)));
       case 'houses':
@@ -215,11 +239,20 @@ function createBot(token: string): Bot {
         return void (await send(ctx, askAddressReply(house)));
       case 'housesPage':
         return void (await send(ctx, housesListReply(house.id, action.page)));
+      case 'myhouse':
+        return void (await showMyHouse(ctx, uid));
+      case 'menu':
+        return void (await send(ctx, menuReply(house)));
+      case 'broken':
+        return void (await send(ctx, brokenReply(house)));
+      case 'category':
+        return void (await send(ctx, categoryReply(action.category, house)));
       case 'urgent':
         return void (await send(ctx, emergencyReply(house)));
-      case 'menu':
-        expectAddress(uid, false);
-        return void (await send(ctx, menuReply()));
+      case 'phones':
+        return void (await send(ctx, phonesReply(house)));
+      case 'help':
+        return void (await send(ctx, help(house)));
       case 'element':
         return void (await send(ctx, elementReply(action.elementId, house)));
       case 'problem':

@@ -1,13 +1,15 @@
 import {
-  ADDRESS_EXAMPLES, CITY, HOUSES, decodeDeepLink, emergencyPartyOf, emphasize, encodeDeepLink, formatDateRu, getElement, getHouse, getProblem,
-  isHouseChosen, isKnownHouse, localizeOutcome, localizeQuestion, needsHouseChoice, organizationOf, resolve, resolveParties, search,
-  plural, searchHouses,
-  type HouseProfile, type Outcome, type PartyId,
+  ADDRESS_EXAMPLES, CATEGORIES, CITY, HOUSES, categoryOf, categoryTitle, decodeDeepLink, emergencyPartyOf, emphasize, encodeDeepLink, formatDateRu,
+  getElement, getElements, getHouse, getProblem, isHouseChosen, isKnownHouse, localizeOutcome, localizeQuestion, needsHouseChoice, organizationOf,
+  resolve, resolveParties, search, plural, searchHouses,
+  type Category, type HouseProfile, type Outcome, type PartyId, type Scope,
 } from '@esli-chto/core';
 
 /**
  * Ответы бота. Только чистые функции «данные → текст и кнопки» – их можно проверять без MAX.
- * В чате – короткий ответ «кто отвечает и куда звонить»; схемы, обращения и подробности – в мини-приложении.
+ * В чате – базовые функции: выбрать поломку кнопками или словами, узнать, кто отвечает и куда звонить,
+ * телефоны дома и городских служб. Схемы дома, нормы с пояснениями и обращение – в мини-приложении:
+ * там нужен визуальный интерфейс и форма, поэтому бот на каждом шаге ведёт в него кнопкой.
  */
 
 export type ChatButton =
@@ -49,6 +51,14 @@ const PARTY_MARK: Record<PartyId, string> = {
   housing_inspection: '📋', police: '👮', telecom: '📡', emergency112: '🆘',
 };
 
+/** Значки категорий в разделе «Что сломалось» – названия те же, что в фильтре мини-приложения. */
+const CATEGORY_MARK: Record<Category, string> = {
+  water: '💧', electricity: '⚡', gas: '🔥', heating: '🌡️', elevator: '↕️', entrance: '🚪', trash: '🗑️', other: '🧰',
+};
+
+/** Где находится объект – как вкладки мини-приложения «Наш дом» и «Моя квартира». */
+const SCOPE_MARK: Record<Scope, string> = { house: '🏢', flat: '🏠' };
+
 // Для города, подключённого с тестовыми данными (meta.json: "demo": true), – явная пометка по п. 10 ограничений ТЗ.
 const DEMO_NOTE = 'Демо-данные: организации и телефоны вымышлены, реальны только 112, 104 и 102.';
 const DATA_NOTE = `Контакты – из открытых данных на ${formatDateRu(CITY.updatedAt)}; если номер не отвечает, сверьтесь с квитанцией.`;
@@ -57,26 +67,30 @@ const dataNote = (house: HouseProfile) => (house.isDemo ? DEMO_NOTE : DATA_NOTE)
 // ─────────────── Данные кнопок (callback) ───────────────
 //  p:<problemId>:<a.b.c>  – ситуация и цепочка ответов
 //  e:<elementId>          – список ситуаций объекта
+//  c:<category>           – объекты категории («Что сломалось»)
 //  h:<houseId>            – выбрать дом
 //  hl:<страница>          – список домов по страницам
-//  menu | urgent | houses
+//  menu | broken | urgent | houses | myhouse | phones | help – разделы меню
+
+/** Разделы меню: данные кнопки совпадают с названием раздела. */
+const SECTIONS = ['menu', 'broken', 'urgent', 'houses', 'myhouse', 'phones', 'help'] as const;
+type Section = (typeof SECTIONS)[number];
+const isSection = (s: string): s is Section => (SECTIONS as readonly string[]).includes(s);
+const isCategory = (s: string): s is Category => CATEGORIES.some((c) => c.id === s);
 
 export type CallbackAction =
   | { t: 'problem'; problemId: string; answers: number[] }
   | { t: 'element'; elementId: string }
+  | { t: 'category'; category: Category }
   | { t: 'house'; houseId: string }
-  | { t: 'menu' }
-  | { t: 'urgent' }
-  | { t: 'houses' }
+  | { t: Section }
   | { t: 'housesPage'; page: number };
 
 export const cbProblem = (problemId: string, answers: number[] = []) => `p:${problemId}:${answers.join('.')}`;
 
 export function parseCallback(payload: string | undefined | null): CallbackAction | undefined {
   if (!payload || payload.length > 200) return undefined;
-  if (payload === 'menu') return { t: 'menu' };
-  if (payload === 'urgent') return { t: 'urgent' };
-  if (payload === 'houses') return { t: 'houses' };
+  if (isSection(payload)) return { t: payload };
   const [kind, a, b, extra] = payload.split(':');
   if (extra !== undefined) return undefined;
   if (kind === 'p' && a && getProblem(a)) {
@@ -85,6 +99,7 @@ export function parseCallback(payload: string | undefined | null): CallbackActio
     return { t: 'problem', problemId: a, answers };
   }
   if (kind === 'e' && a && getElement(a) && b === undefined) return { t: 'element', elementId: a };
+  if (kind === 'c' && a && isCategory(a) && b === undefined) return { t: 'category', category: a };
   if (kind === 'h' && a && isKnownHouse(a) && b === undefined) return { t: 'house', houseId: a };
   if (kind === 'hl' && a && /^\d{1,2}$/.test(a) && b === undefined) {
     const page = Number(a);
@@ -99,7 +114,18 @@ const appBtn = (house: HouseProfile, text: string, target?: { problemId?: string
   payload: encodeDeepLink({ houseId: house.id, ...target }),
 });
 
-const menuRow = (): ChatButton[] => [{ kind: 'cb', text: '🔎 Другая ситуация', payload: 'menu' }];
+/** «☰ Меню» – в каждом ответе, чтобы из любого места вернуться к разделам бота. */
+const menuRow = (): ChatButton[] => [{ kind: 'cb', text: '☰ Меню', payload: 'menu' }];
+const brokenRow = (text = '🔧 Что сломалось'): ChatButton[] => [{ kind: 'cb', text, payload: 'broken' }];
+const urgentRow = (text = '🚨 Срочно: газ, пожар, потоп'): ChatButton[] => [{ kind: 'cb', text, payload: 'urgent' }];
+/** Схема дома в мини-приложении: там предмет находят по картинке, даже не зная, как он называется. */
+const schemeRow = (house: HouseProfile, text = '🗺️ Не знаю, как называется – найти на схеме'): ChatButton[] => [appBtn(house, text)];
+/** «Мой дом» для выбранного дома, иначе – выбор дома. */
+const myHouseRow = (house: HouseProfile): ChatButton[] => [
+  isHouseChosen(house)
+    ? { kind: 'cb', text: `🏠 Мой дом и телефоны ${house.managerKind}`, payload: 'myhouse' }
+    : { kind: 'cb', text: '📍 Выбрать свой дом', payload: 'houses' },
+];
 
 /** «Назад» в диалоге ситуации: к предыдущему вопросу, а с первого шага – к списку ситуаций объекта. */
 const backButton = (elementId: string, problemId: string, answers: number[]): ChatButton => ({
@@ -108,11 +134,74 @@ const backButton = (elementId: string, problemId: string, answers: number[]): Ch
   payload: answers.length ? cbProblem(problemId, answers.slice(0, -1)) : `e:${elementId}`,
 });
 
-/** Ответ на кнопку «Другая ситуация». */
-export function menuReply(): ChatReply {
+// ─────────────── Меню ───────────────
+
+/** Разделы меню: базовые функции бота и вход в мини-приложение. */
+function menuButtons(house: HouseProfile): ChatButton[][] {
+  return [
+    brokenRow(),
+    urgentRow(),
+    myHouseRow(house),
+    [{ kind: 'cb', text: '📞 Телефоны городских служб', payload: 'phones' }],
+    [appBtn(house, '🏢 Открыть карту дома')],
+    [{ kind: 'cb', text: '❓ Как пользоваться', payload: 'help' }],
+  ];
+}
+
+/** Главное меню – команда /menu, слово «меню» и кнопка «☰ Меню». */
+export function menuReply(house: HouseProfile): ChatReply {
   return {
-    text: 'Опишите, что случилось, своими словами – например: «течёт кран», «нет света в подъезде».',
-    buttons: [[{ kind: 'app', text: '🏢 Открыть карту дома' }], [{ kind: 'cb', text: '🚨 Срочно', payload: 'urgent' }]],
+    text: lines([
+      `☰ ${b('Главное меню')}`,
+      '',
+      isHouseChosen(house) ? `🏠 Ваш дом: ${b(house.address)}` : '📍 Дом не выбран. Выберите его, чтобы видеть телефоны своей управляющей организации.',
+      '',
+      'Выберите раздел или напишите своими словами, что случилось, – например, «течёт кран».',
+    ]),
+    buttons: menuButtons(house),
+  };
+}
+
+/** Объекты категории, которые есть в доме: сначала общее имущество дома, затем квартира. */
+const elementsOf = (category: Category, house: HouseProfile) => getElements(house).filter((e) => categoryOf(e.id) === category);
+
+/** «Что сломалось»: поломка выбирается кнопками, без ввода текста. */
+export function brokenReply(house: HouseProfile): ChatReply {
+  const tiles = CATEGORIES.filter((c) => elementsOf(c.id, house).length > 0).map(
+    (c): ChatButton => ({ kind: 'cb', text: `${CATEGORY_MARK[c.id]} ${c.title}`, payload: `c:${c.id}` }),
+  );
+  const rows: ChatButton[][] = [];
+  for (let i = 0; i < tiles.length; i += 2) rows.push(tiles.slice(i, i + 2));
+  return {
+    text: lines([
+      `🔧 ${b('Что сломалось?')}`,
+      '',
+      'Выберите, к чему относится поломка, – дальше подскажу, кто отвечает и куда звонить.',
+      em('Не знаете, как называется предмет? Найдите его на схеме дома или квартиры в мини-приложении.'),
+    ]),
+    buttons: [...rows, schemeRow(house), menuRow()],
+  };
+}
+
+/** Объекты категории. Если объект один (лифт), сразу его ситуации – без лишнего шага. */
+export function categoryReply(category: Category, house: HouseProfile): ChatReply {
+  const els = elementsOf(category, house);
+  if (els.length === 0) return brokenReply(house);
+  if (els.length === 1) return elementReply(els[0]!.id, house);
+  // в одной категории бывают и объекты дома, и объекты квартиры с похожими названиями («Окна» и «Окна и откосы»)
+  const mixed = new Set(els.map((e) => e.scope)).size > 1;
+  return {
+    text: lines([
+      `${CATEGORY_MARK[category]} ${b(categoryTitle(category))}`,
+      '',
+      'Что именно сломалось? Выберите предмет.',
+      mixed ? em(`${SCOPE_MARK.house} – наш дом и двор, ${SCOPE_MARK.flat} – моя квартира.`) : '',
+    ]),
+    buttons: [
+      ...els.map((e): ChatButton[] => [{ kind: 'cb', text: mixed ? `${SCOPE_MARK[e.scope]} ${e.title}` : e.title, payload: `e:${e.id}` }]),
+      schemeRow(house, '🗺️ Нет в списке – найти на схеме'),
+      [{ kind: 'cb', text: '‹ Назад', payload: 'broken' }, ...menuRow()],
+    ],
   };
 }
 
@@ -126,7 +215,7 @@ export function welcome(house: HouseProfile): ChatReply {
         '',
         'Что-то сломалось в квартире, подъезде или во дворе? Подскажу, кто за это отвечает, дам телефон нужной организации и шаги. Норму закона, на которую можно сослаться, покажет мини-приложение.',
         '',
-        `${b('Как начать:')} напишите своими словами, что случилось, – например, «течёт кран», «не горит свет в подъезде», «нет горячей воды».`,
+        `${b('Как начать:')} нажмите «Что сломалось» и выберите поломку кнопками или напишите своими словами, что случилось, – например, «течёт кран», «не горит свет в подъезде», «нет горячей воды».`,
         '',
         `🏢 ${b('Карта дома')} – мини-приложение, кнопка ниже:`,
         '• схемы двора, подъезда, подвала и квартиры – нажмите на сломанный предмет, даже если не знаете, как он называется;',
@@ -140,14 +229,10 @@ export function welcome(house: HouseProfile): ChatReply {
         `🆘 Угроза жизни, пожар – ${b('112')}`,
         `🔥 Запах газа – ${b('104')}`,
         '',
-        em('/help – все команды. Это справочная информация, а не юридическая консультация.'),
+        em('/menu – главное меню, /help – все команды. Это справочная информация, а не юридическая консультация.'),
       ]),
     ),
-    buttons: [
-      [appBtn(house, '🏢 Открыть карту дома')],
-      [{ kind: 'cb', text: '🚨 Срочно: газ, пожар, потоп', payload: 'urgent' }],
-      [{ kind: 'cb', text: isHouseChosen(house) ? '📍 Сменить дом' : '📍 Выбрать свой дом', payload: 'houses' }],
-    ],
+    buttons: menuButtons(house),
   };
 }
 
@@ -156,16 +241,22 @@ export function help(house: HouseProfile): ChatReply {
     text: lines([
       b('Как пользоваться'),
       '',
-      'Напишите, что случилось, – подскажу, кто отвечает и куда звонить.',
+      'Напишите, что случилось, – подскажу, кто отвечает и куда звонить. Или выберите поломку кнопками в разделе «Что сломалось».',
       '',
+      '/menu – главное меню',
+      '/problem – что сломалось: выбрать кнопками',
       '/urgent – срочные и экстренные номера',
-      '/house – выбрать свой дом',
+      '/myhouse – мой дом и телефоны управляющей организации',
+      '/phones – телефоны городских служб',
+      '/house – выбрать или сменить дом',
       '/houses – список всех домов',
       '/forget – забыть выбранный дом',
       '',
+      `🏢 ${b('Карта дома')} – мини-приложение: схемы дома и квартиры, нормы и пояснения к ответу, готовое обращение.`,
+      '',
       em('Бот отвечает только в личных сообщениях. Это справочная информация, а не юридическая консультация.'),
     ]),
-    buttons: [[appBtn(house, '🏢 Открыть карту дома')]],
+    buttons: [[appBtn(house, '🏢 Открыть карту дома')], menuRow()],
   };
 }
 
@@ -230,7 +321,7 @@ function housesByAddress(query: string, limit: number): HouseProfile[] {
 const examplesText = () => ADDRESS_EXAMPLES.slice(0, 2).map((a) => `«${a}»`).join(' или ');
 
 /**
- * Сколько домов показывать кнопками на выбор. MAX допускает до 30 рядов кнопок, один занят «Другой ситуацией»,
+ * Сколько домов показывать кнопками на выбор. MAX допускает до 30 рядов кнопок, один занят кнопкой «Меню»,
  * поэтому улица целиком (в Вичуге самая длинная – Ленинградская, 28 домов) помещается в одно сообщение.
  */
 export const HOUSE_CHOICES = 28;
@@ -261,27 +352,87 @@ export function addressReply(query: string): { houseId?: string; reply?: ChatRep
   };
 }
 
-/** Подтверждение выбора дома: организация и её телефоны из справочника. */
-export function houseChosenReply(house: HouseProfile): ChatReply {
+/** Карточка дома: организация и её телефоны из справочника; подробно – с адресом и почтой организации. */
+function houseCard(house: HouseProfile, detailed: boolean): string[] {
   const m = house.contacts.manager;
   const d = house.contacts.dispatch;
+  // строки без данных пропускаем, чтобы в карточке не было пустых промежутков
+  const org = [
+    house.managerKind === 'УК' ? 'Управляющая организация:' : `Форма управления: ${house.managerKind}`,
+    esc(m?.name ?? '–'),
+    m?.phones.length ? `📞 ${m.phones.map((p) => b(p.number)).join(', ')}` : '',
+    detailed && m?.address ? `📍 ${esc(m.address)}` : '',
+    detailed && m?.email ? `✉️ ${esc(m.email)}` : '',
+    d
+      ? `🚨 Аварийная служба: ${d.phones.map((p) => b(p.number)).join(', ')}`
+      : detailed && m?.phones.length ? '🚨 Отдельной аварийной службы в справочнике нет – об авариях сообщайте по этим же телефонам.' : '',
+  ].filter(Boolean);
+  return [`🏠 Ваш дом: ${b(house.address)}`, '', ...org, m?.note ? `\n${em(m.note)}` : ''];
+}
+
+/** Подтверждение выбора дома: организация и её телефоны из справочника. */
+export function houseChosenReply(house: HouseProfile): ChatReply {
   return {
     text: clip(
       lines([
-        `🏠 Ваш дом: ${b(house.address)}`,
+        ...houseCard(house, false),
         '',
-        `${house.managerKind === 'УК' ? 'Управляющая организация' : `Форма управления: ${house.managerKind}`}:`,
-        esc(m?.name ?? '–'),
-        m?.phones.length ? `📞 ${m.phones.map((p) => b(p.number)).join(', ')}` : '',
-        d ? `🚨 Аварийная служба: ${d.phones.map((p) => b(p.number)).join(', ')}` : '',
-        m?.note ? `\n${em(m.note)}` : '',
-        '',
-        'Теперь напишите, что случилось, – подскажу, кто отвечает.',
+        'Теперь нажмите «Что сломалось» или напишите своими словами, что случилось, – подскажу, кто отвечает.',
         '',
         em(dataNote(house)),
       ]),
     ),
-    buttons: [[appBtn(house, '🏢 Открыть карту дома')], [{ kind: 'cb', text: '🚨 Срочно: газ, пожар, потоп', payload: 'urgent' }]],
+    buttons: [brokenRow(), [appBtn(house, '🏢 Открыть карту дома')], urgentRow(), menuRow()],
+  };
+}
+
+/** «Мой дом» – карточка выбранного дома. Если дом не выбран, сервер вместо неё просит адрес. */
+export function myHouseReply(house: HouseProfile): ChatReply {
+  return {
+    text: clip(lines([...houseCard(house, true), '', em(dataNote(house))])),
+    buttons: [
+      brokenRow(),
+      [{ kind: 'cb', text: '📞 Телефоны городских служб', payload: 'phones' }],
+      [{ kind: 'cb', text: '📍 Сменить дом', payload: 'houses' }],
+      menuRow(),
+    ],
+  };
+}
+
+/** Городские службы в порядке показа – те же организации, что подставляются в ответы бота. */
+const CITY_PARTIES: PartyId[] = ['water_utility', 'heat_utility', 'energy_utility', 'gas_service', 'tko_operator', 'municipality', 'housing_inspection'];
+
+/** Телефоны городских служб из справочника города, экстренные номера и подсказка про телефоны своего дома. */
+export function phonesReply(house: HouseProfile): ChatReply {
+  const blocks = resolveParties(house, CITY_PARTIES)
+    .filter((p) => p.contact?.phones.length)
+    .map((p) =>
+      [
+        `${PARTY_MARK[p.id]} ${b(p.contact!.name)}`,
+        em(p.role),
+        ...p.contact!.phones.map((x) => `📞 ${b(x.number)}${x.label ? ` – ${esc(x.label)}` : ''}`),
+        p.contact!.hours ? `🕒 ${esc(p.contact!.hours)}` : '',
+        p.contact!.note ? esc(p.contact!.note) : '',
+      ]
+        .filter(Boolean)
+        .join('\n'),
+    );
+  return {
+    text: clip(
+      lines([
+        `📞 ${b(`Телефоны городских служб: ${CITY.name}`)}`,
+        '',
+        blocks.join('\n\n'),
+        '',
+        `🆘 Экстренные: ${b('112')} – служба спасения, ${b('104')} – газ, ${b('102')} – полиция.`,
+        isHouseChosen(house)
+          ? `🏠 Телефоны вашей организации и аварийной службы – в разделе «Мой дом».`
+          : `📍 Телефоны управляющей организации – после выбора дома: /house и адрес.`,
+        '',
+        em(dataNote(house)),
+      ]),
+    ),
+    buttons: [myHouseRow(house), urgentRow(), menuRow()],
   };
 }
 
@@ -316,8 +467,8 @@ export function searchReply(query: string, house: HouseProfile): ChatReply {
       };
     }
     return {
-      text: 'Не нашёл подходящей ситуации. Попробуйте другими словами («течёт», «не горит», «засор», «нет воды», «лифт») или найдите предмет на схеме в мини-приложении.',
-      buttons: [[appBtn(house, '🏢 Найти на схеме дома')], [{ kind: 'cb', text: '🚨 Срочно', payload: 'urgent' }]],
+      text: 'Не нашёл подходящей ситуации. Попробуйте другими словами («течёт», «не горит», «засор», «нет воды», «лифт»), выберите поломку из списка или найдите предмет на схеме в мини-приложении.',
+      buttons: [brokenRow('🔧 Выбрать поломку из списка'), schemeRow(house, '🗺️ Найти на схеме дома'), urgentRow('🚨 Срочно'), menuRow()],
     };
   }
   return {
@@ -327,6 +478,7 @@ export function searchReply(query: string, house: HouseProfile): ChatReply {
         h.problemId ? { kind: 'cb', text: h.title, payload: cbProblem(h.problemId) } : { kind: 'cb', text: `${h.title} – выбрать ситуацию`, payload: `e:${h.elementId}` },
       ]),
       [appBtn(house, '🏢 Открыть карту дома')],
+      menuRow(),
     ],
   };
 }
@@ -336,8 +488,9 @@ export function searchReply(query: string, house: HouseProfile): ChatReply {
 /** Приветствия и слова «начать»: в ответ – рассказ о боте, а не поиск поломки. */
 const GREETINGS = [
   'привет', 'приветик', 'приветствую', 'здравствуй', 'здравствуйте', 'здрасте', 'здрасьте', 'добрый день', 'добрый вечер',
-  'доброе утро', 'доброй ночи', 'доброго времени суток', 'хай', 'салют', 'hi', 'hello', 'старт', 'start', 'начать', 'меню',
+  'доброе утро', 'доброй ночи', 'доброго времени суток', 'хай', 'салют', 'hi', 'hello', 'старт', 'start', 'начать',
 ];
+const MENU_PHRASES = ['меню', 'главное меню', 'menu'];
 const HELP_PHRASES = ['помощь', 'помогите', 'справка', 'help', 'что ты умеешь', 'что умеешь', 'как пользоваться', 'кто ты', 'что это', 'что это за бот', 'зачем ты нужен'];
 const THANKS = ['спасибо', 'спасибо большое', 'большое спасибо', 'благодарю', 'спс'];
 
@@ -345,6 +498,7 @@ const normalizePhrase = (s: string) => s.toLowerCase().replace(/ё/g, 'е').repl
 /** Длинные фразы проверяем первыми, чтобы «добрый день» не распознавался частями. */
 const byLength = (list: string[]) => list.map(normalizePhrase).sort((x, y) => y.length - x.length);
 const GREETING_LIST = byLength(GREETINGS);
+const MENU_LIST = byLength(MENU_PHRASES);
 const HELP_LIST = byLength(HELP_PHRASES);
 const THANKS_LIST = byLength(THANKS);
 const leadingPhrase = (text: string, list: string[]) => list.find((p) => text === p || text.startsWith(`${p} `));
@@ -352,13 +506,14 @@ const leadingPhrase = (text: string, list: string[]) => list.find((p) => text ==
 export function thanksReply(house: HouseProfile): ChatReply {
   return {
     text: 'Пожалуйста! Если что-то ещё случится – просто напишите, что произошло.',
-    buttons: [[appBtn(house, '🏢 Открыть карту дома')], [{ kind: 'cb', text: '🚨 Срочно', payload: 'urgent' }]],
+    buttons: [[appBtn(house, '🏢 Открыть карту дома')], menuRow()],
   };
 }
 
 /**
  * Ответ на свободный текст. «Привет», «начать», «что ты умеешь», «спасибо» – разговорные фразы, на них бот
- * рассказывает о себе. Приветствие перед описанием («Здравствуйте, течёт кран») отбрасывается, остальное ищется.
+ * рассказывает о себе, на «меню» – показывает разделы. Приветствие перед описанием («Здравствуйте, течёт кран»)
+ * отбрасывается, остальное ищется.
  */
 export function textReply(query: string, house: HouseProfile): ChatReply {
   let rest = normalizePhrase(query);
@@ -368,6 +523,7 @@ export function textReply(query: string, house: HouseProfile): ChatReply {
     greeted = true;
   }
   if (!rest) return welcome(house);
+  if (leadingPhrase(rest, MENU_LIST) === rest) return menuReply(house);
   if (leadingPhrase(rest, HELP_LIST) === rest) return help(house);
   if (leadingPhrase(rest, THANKS_LIST) === rest) return thanksReply(house);
   // «Здравствуйте, подскажите пожалуйста» – поломки в тексте нет, поэтому рассказываем, как пользоваться
@@ -378,20 +534,23 @@ export function textReply(query: string, house: HouseProfile): ChatReply {
 /** Фото, стикер, файл или геометка вместо текста: бот понимает только слова – подсказываем, а не молчим. */
 export function nonTextReply(house: HouseProfile): ChatReply {
   return {
-    text: 'Я понимаю только текст. Опишите, что случилось, словами – например: «течёт кран», «нет света в подъезде». Или найдите предмет на схеме дома.',
-    buttons: [[appBtn(house, '🏢 Открыть карту дома')], [{ kind: 'cb', text: '🚨 Срочно', payload: 'urgent' }]],
+    text: 'Я понимаю только текст. Опишите, что случилось, словами – например: «течёт кран», «нет света в подъезде». Или выберите поломку из списка либо найдите предмет на схеме дома.',
+    buttons: [brokenRow('🔧 Выбрать поломку из списка'), [appBtn(house, '🏢 Открыть карту дома')], urgentRow('🚨 Срочно'), menuRow()],
   };
 }
 
 export function elementReply(elementId: string, house: HouseProfile): ChatReply {
   const el = getElement(elementId);
   if (!el) return welcome(house);
+  // «Назад» – к объектам той же категории; если объект в ней один (лифт), сразу к выбору категории
+  const category = categoryOf(el.id);
+  const back = elementsOf(category, house).length > 1 ? `c:${category}` : 'broken';
   return {
     text: `${b(el.title)}\n${esc(el.about)}\n\nЧто случилось?`,
     buttons: [
       ...el.problems.map((p): ChatButton[] => [{ kind: 'cb', text: p.title, payload: cbProblem(p.id) }]),
       [appBtn(house, '🏢 Показать на схеме', { elementId })],
-      menuRow(),
+      [{ kind: 'cb', text: '‹ Назад', payload: back }, ...menuRow()],
     ],
   };
 }
