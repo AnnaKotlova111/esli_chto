@@ -136,12 +136,15 @@ async function chooseHouse(ctx: Context, uid: number | undefined, text: string) 
   return send(ctx, r.reply!);
 }
 
-/** «Мой дом»: карточка выбранного дома, а если дом не выбран – приглашение написать адрес. */
+/**
+ * «Мой дом»: карточка выбранного дома, а если дом не выбран – приглашение написать адрес.
+ * Карточка снимает ожидание адреса (например, после «Сменить дом»): следующий текст – снова описание поломки.
+ */
 async function showMyHouse(ctx: Context, uid: number | undefined) {
   const house = houseOf(uid);
-  if (isHouseChosen(house)) return send(ctx, myHouseReply(house));
-  expectAddress(uid, true);
-  return send(ctx, askAddressReply(house));
+  const chosen = isHouseChosen(house);
+  expectAddress(uid, !chosen);
+  return send(ctx, chosen ? myHouseReply(house) : askAddressReply(house));
 }
 
 function createBot(token: string): Bot {

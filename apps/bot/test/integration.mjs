@@ -250,6 +250,12 @@ async function scenario(mock, deliver) {
   await next(text(46, '/problem'), '/problem');
   const afterMenu = await next(text(46, 'течёт кран'), 'текст после перехода в меню');
   assert.ok(buttons(afterMenu).some((b) => b.type === 'callback' && b.payload.startsWith('p:tap__leak')), 'ожидание адреса снято');
+  // «Сменить дом», а затем /myhouse вместо адреса: карточка дома тоже снимает ожидание адреса
+  await next(tap(46, 'houses'), 'кнопка «Сменить дом»');
+  const card = await next(text(46, '/myhouse'), '/myhouse вместо адреса');
+  assert.match(card.body.text, re(`Ваш дом: <b>${BOARD.address}</b>`));
+  const afterCard = await next(text(46, 'течёт кран'), 'текст после карточки дома');
+  assert.ok(buttons(afterCard).some((b) => b.type === 'callback' && b.payload.startsWith('p:tap__leak')), 'после /myhouse текст – описание поломки, а не адрес');
 
   // 10. /forget – бот забывает выбранный дом
   const forgot = await next(text(42, '/forget'), '/forget');
