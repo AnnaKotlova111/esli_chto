@@ -1,5 +1,5 @@
 import {
-  ADDRESS_EXAMPLES, CATEGORIES, CITY, HOUSES, categoryOf, categoryTitle, decodeDeepLink, emergencyPartyOf, emphasize, encodeDeepLink, formatDateRu,
+  ADDRESS_EXAMPLES, APP_META, CATEGORIES, CITY, HOUSES, PRIVACY, categoryOf, categoryTitle, decodeDeepLink, emergencyPartyOf, emphasize, encodeDeepLink, formatDateRu,
   getElement, getElements, getHouse, getProblem, isHouseChosen, isKnownHouse, localizeOutcome, localizeQuestion, needsHouseChoice, organizationOf,
   resolve, resolveParties, search, plural, searchHouses,
   type Category, type HouseProfile, type Outcome, type PartyId, type Scope,
@@ -71,12 +71,18 @@ const dataNote = (house: HouseProfile) => (house.isDemo ? DEMO_NOTE : DATA_NOTE)
 //  h:<houseId>            – выбрать дом
 //  hl:<страница>          – список домов по страницам
 //  menu | broken | urgent | houses | myhouse | phones | help – разделы меню
+//  agree[:<houseId>] | decline[:<houseId>] | privacy[:<houseId>] – согласие на хранение дома
+//                         (дом, который житель хочет запомнить, едет в кнопке, а не хранится до согласия)
 
 /** Разделы меню: данные кнопки совпадают с названием раздела. */
 const SECTIONS = ['menu', 'broken', 'urgent', 'houses', 'myhouse', 'phones', 'help'] as const;
 type Section = (typeof SECTIONS)[number];
 const isSection = (s: string): s is Section => (SECTIONS as readonly string[]).includes(s);
 const isCategory = (s: string): s is Category => CATEGORIES.some((c) => c.id === s);
+/** Ответ на вопрос о согласии и просмотр политики; у каждой кнопки может быть дом, который житель выбрал. */
+const CONSENT_ACTIONS = ['agree', 'decline', 'privacy'] as const;
+type ConsentAction = (typeof CONSENT_ACTIONS)[number];
+const isConsentAction = (s: string | undefined): s is ConsentAction => (CONSENT_ACTIONS as readonly (string | undefined)[]).includes(s);
 
 export type CallbackAction =
   | { t: 'problem'; problemId: string; answers: number[] }
@@ -84,6 +90,7 @@ export type CallbackAction =
   | { t: 'category'; category: Category }
   | { t: 'house'; houseId: string }
   | { t: Section }
+  | { t: ConsentAction; houseId?: string }
   | { t: 'housesPage'; page: number };
 
 export const cbProblem = (problemId: string, answers: number[] = []) => `p:${problemId}:${answers.join('.')}`;
@@ -100,6 +107,10 @@ export function parseCallback(payload: string | undefined | null): CallbackActio
   }
   if (kind === 'e' && a && getElement(a) && b === undefined) return { t: 'element', elementId: a };
   if (kind === 'c' && a && isCategory(a) && b === undefined) return { t: 'category', category: a };
+  if (isConsentAction(kind) && b === undefined) {
+    if (a === undefined) return { t: kind };
+    if (isKnownHouse(a)) return { t: kind, houseId: a };
+  }
   if (kind === 'h' && a && isKnownHouse(a) && b === undefined) return { t: 'house', houseId: a };
   if (kind === 'hl' && a && /^\d{1,2}$/.test(a) && b === undefined) {
     const page = Number(a);
@@ -250,7 +261,8 @@ export function help(house: HouseProfile): ChatReply {
       '/phones – телефоны городских служб',
       '/house – выбрать или сменить дом',
       '/houses – список всех домов',
-      '/forget – забыть выбранный дом',
+      '/privacy – политика обработки данных',
+      '/forget – забыть дом и отозвать согласие на его хранение',
       '',
       `🏢 ${b('Карта дома')} – мини-приложение: схемы дома и квартиры, нормы и пояснения к ответу, готовое обращение.`,
       '',
@@ -433,6 +445,80 @@ export function phonesReply(house: HouseProfile): ChatReply {
       ]),
     ),
     buttons: [myHouseRow(house), urgentRow(), menuRow()],
+  };
+}
+
+// ─────────────── Согласие на хранение дома ───────────────
+
+/** Кнопки согласия. Дом, который житель выбрал, передаётся в кнопке: до согласия бот его не хранит. */
+const consentButtons = (house?: HouseProfile): ChatButton[][] => {
+  const id = house && isHouseChosen(house) ? `:${house.id}` : '';
+  return [
+    [{ kind: 'cb', text: '✅ Даю согласие', payload: `agree${id}` }],
+    [{ kind: 'cb', text: 'Не запоминать дом', payload: `decline${id}` }],
+    [{ kind: 'cb', text: '📄 Политика', payload: `privacy${id}` }],
+  ];
+};
+
+/**
+ * Согласие спрашивается отдельным сообщением перед тем, как бот запомнит дом, – а не в приветствии:
+ * «Срочно», «Что сломалось» и телефоны служб работают без него, хранить для них нечего.
+ */
+export function consentReply(house?: HouseProfile): ChatReply {
+  const chosen = house && isHouseChosen(house) ? house : undefined;
+  return {
+    text: lines([
+      `🔒 ${b('Согласие на обработку данных')}`,
+      chosen ? `\nЗапомнить дом ${b(chosen.address)}?` : '',
+      '',
+      'Чтобы бот помнил ваш дом и показывал телефоны вашей управляющей организации, он хранит:',
+      '• ваш идентификатор пользователя в MAX;',
+      '• адрес выбранного дома – без номера квартиры.',
+      '',
+      `${b('Зачем:')} подставлять в ответы телефоны организации и аварийной службы вашего дома.`,
+      `${b('Как:')} только в памяти бота, без записи в базу данных и в журналы. Данные никому не передаются. Адрес, который вы напишете, нужен только для поиска дома в справочнике и не сохраняется.`,
+      `${b('Сколько:')} до перезапуска бота или до команды /forget – она удаляет данные и отзывает согласие.`,
+      '',
+      `${b('Оператор:')} ${esc(APP_META.operator)}. Связаться можно в этом чате.`,
+      '',
+      em('Нажимая «Даю согласие», вы соглашаетесь на обработку этих данных на условиях политики обработки данных.'),
+    ]),
+    buttons: [...consentButtons(chosen), menuRow()],
+  };
+}
+
+/** Политика обработки данных в чате – тот же текст, что в мини-приложении. Из вопроса о согласии – с его кнопками. */
+export function privacyReply(consentFor?: { house?: HouseProfile }): ChatReply {
+  return {
+    text: clip(
+      lines([
+        `📄 ${b(PRIVACY.title)}`,
+        '',
+        esc(PRIVACY.intro),
+        ...PRIVACY.sections.flatMap((s) => ['', b(s.heading), ...s.items.map((i) => `• ${esc(i)}`)]),
+        '',
+        em(PRIVACY.edition),
+      ]),
+    ),
+    // без кнопки «Политика» – она уже открыта
+    buttons: [...(consentFor ? consentButtons(consentFor.house).slice(0, 2) : []), menuRow()],
+  };
+}
+
+/** «Не запоминать дом»: бот работает дальше, только без телефонов организации дома. Выбранный дом показывается один раз. */
+export function consentDeclinedReply(house?: HouseProfile): ChatReply {
+  const chosen = house && isHouseChosen(house) ? house : undefined;
+  return {
+    text: clip(
+      lines([
+        ...(chosen ? [...houseCard(chosen, false), ''] : []),
+        chosen
+          ? 'Дом не запомнен: в следующих ответах телефонов вашей организации не будет. Чтобы бот помнил дом, нажмите «Выбрать свой дом» в меню.'
+          : 'Хорошо, дом не запоминаю. «Что сломалось», «Срочно» и телефоны городских служб работают и без него, только в ответах не будет телефонов вашей управляющей организации.',
+        chosen ? `\n${em(dataNote(chosen))}` : '',
+      ]),
+    ),
+    buttons: [brokenRow(), urgentRow(), menuRow()],
   };
 }
 

@@ -5,8 +5,9 @@
  * Имитация написана по документации MAX и воспроизводит только те методы API, которые использует бот.
  * Проверяется, что реально уходит в API: тексты, клавиатуры, кнопка мини-приложения с диплинком,
  * подтверждение нажатий, выбор дома (/house и адрес отдельным сообщением или одной командой),
- * меню команд и путь по меню кнопками до ответа, «Мой дом» и телефоны служб, молчание в группах, ограничение частоты и команда /forget, а также устойчивость: недоступный
- * при старте API и зависший запрос не роняют сервер, тайм-аут API читается из .env,
+ * меню команд и путь по меню кнопками до ответа, «Мой дом» и телефоны служб, согласие на хранение дома
+ * (без него дом не запоминается, /forget его отзывает), молчание в группах, ограничение частоты и команда /forget,
+ * а также устойчивость: недоступный при старте API и зависший запрос не роняют сервер, тайм-аут API читается из .env,
  * long polling не снимает вебхук другого сервера, остановка сервера в режиме вебхука не снимает его подписку,
  * без токена работает мини-приложение.
  *
@@ -157,16 +158,30 @@ async function scenario(mock, deliver) {
     await waitFor(() => sent.length > before, `${what} (было ${before}, стало ${sent.length})`);
     return sent[sent.length - 1];
   };
+  /** Событие, на которое бот отвечает несколькими сообщениями подряд. */
+  const nextMany = async (update, count, what) => {
+    const before = sent.length;
+    await deliver(update);
+    await waitFor(() => sent.length >= before + count, `${what} (ждали ${count}, пришло ${sent.length - before})`);
+    return sent.slice(before, before + count);
+  };
+  const hasButton = (msg, payload) => buttons(msg).some((b) => b.type === 'callback' && b.payload === payload);
 
-  // 1. «Начать» с диплинком на ситуацию: ответ по той же ситуации и кнопка мини-приложения с тем же диплинком
-  const first = await next(started(42, `h_${UK.id}-p_roof__leak`), 'ответ на bot_started');
+  // 1. «Начать» с диплинком на ситуацию: ответ по той же ситуации и кнопка мини-приложения с тем же диплинком.
+  // Согласия ещё нет, поэтому вторым сообщением бот предлагает запомнить дом из ссылки
+  const [first, offer] = await nextMany(started(42, `h_${UK.id}-p_roof__leak`), 2, 'ответ на bot_started');
   assert.equal(first.body.format, 'html', 'сообщения размечены HTML: жирные номера и запреты');
   assert.match(first.body.text, /Крыша/);
   assert.match(first.body.text, re(ukOrg.short));
   assert.match(first.body.text, city.demo ? /Демо-данные/ : /открытых данных/);
   assert.ok(buttons(first).some((b) => b.type === 'open_app' && b.web_app === 'esli_chto_test_bot' && b.payload === `h_${UK.id}-p_roof__leak`), 'кнопка «Подробнее в приложении» с диплинком');
-  // дом из диплинка запомнился: следующий ответ – с организацией этого дома
-  const remembered = await next(tap(42, 'p:lamp_entrance__burned:'), 'ответ после диплинка');
+  assert.match(offer.body.text, /Согласие на обработку данных/);
+  assert.match(offer.body.text, re(UK.address), 'в вопросе о согласии – дом из ссылки');
+  assert.ok(hasButton(offer, `agree:${UK.id}`) && hasButton(offer, `decline:${UK.id}`), 'кнопки согласия с домом из ссылки');
+  // после «Даю согласие» дом из ссылки стал домом пользователя (что без согласия дом не запоминается – шаг 10)
+  const agreed = await next(tap(42, `agree:${UK.id}`), 'согласие с домом из ссылки');
+  assert.match(agreed.body.text, re(`Ваш дом: <b>${UK.address}</b>`));
+  const remembered = await next(tap(42, 'p:lamp_entrance__burned:'), 'ответ после согласия');
   assert.match(remembered.body.text, re(ukOrg.short), 'дом из диплинка стал домом пользователя');
 
   // 2. Свободный текст → варианты кнопками
@@ -224,7 +239,9 @@ async function scenario(mock, deliver) {
 
   // 9. Меню: поломка выбирается кнопками без ввода текста, «Мой дом» и телефоны служб.
   // Отдельный пользователь – чтобы не упереться в ограничение частоты у пользователя 42
-  await next(tap(46, `h:${BOARD.id}`), 'выбор дома для проверки меню');
+  const ask46 = await next(tap(46, `h:${BOARD.id}`), 'выбор дома без согласия');
+  assert.ok(hasButton(ask46, `agree:${BOARD.id}`), 'без согласия выбор дома начинается с вопроса о согласии');
+  await next(tap(46, `agree:${BOARD.id}`), 'согласие и выбор дома для проверки меню');
   const menu = await next(text(46, '/menu'), 'главное меню');
   assert.match(menu.body.text, /Главное меню/);
   for (const section of ['broken', 'urgent', 'myhouse', 'phones', 'help']) {
@@ -257,13 +274,41 @@ async function scenario(mock, deliver) {
   const afterCard = await next(text(46, 'течёт кран'), 'текст после карточки дома');
   assert.ok(buttons(afterCard).some((b) => b.type === 'callback' && b.payload.startsWith('p:tap__leak')), 'после /myhouse текст – описание поломки, а не адрес');
 
-  // 10. /forget – бот забывает выбранный дом
+  // 10. Согласие: без него дом не запоминается, «Не запоминать дом» показывает карточку один раз,
+  // политика открывается в чате, /forget отзывает согласие. Отдельные пользователи – из-за ограничения частоты
+  const offer47 = await next(text(47, `/house ${queryOf(UK)}`), '/house с адресом без согласия');
+  assert.match(offer47.body.text, re(UK.address), 'в вопросе о согласии – найденный дом');
+  assert.ok(hasButton(offer47, `agree:${UK.id}`) && hasButton(offer47, `decline:${UK.id}`) && hasButton(offer47, `privacy:${UK.id}`));
+  const declined = await next(tap(47, `decline:${UK.id}`), '«Не запоминать дом»');
+  assert.match(declined.body.text, re(`Ваш дом: <b>${UK.address}</b>`), 'карточка дома показана');
+  assert.match(declined.body.text, /Дом не запомнен/);
+  const noHouse = await next(tap(47, 'p:lamp_entrance__burned:'), 'ответ после отказа');
+  assert.match(noHouse.body.text, /Выберите свой дом командой \/house/, 'после отказа дом не запомнен');
+  const policy = await next(text(47, '/privacy'), '/privacy');
+  assert.match(policy.body.text, /Политика обработки данных/);
+  assert.ok(hasButton(policy, 'agree') && !hasButton(policy, 'privacy'), 'до согласия – политика с кнопками согласия');
+  const offerPlain = await next(text(47, '/house'), '/house без согласия');
+  assert.ok(hasButton(offerPlain, 'agree'), 'без согласия /house сначала спрашивает согласие');
+  const askAfterAgree = await next(tap(47, 'agree'), '«Даю согласие» без дома');
+  assert.match(askAfterAgree.body.text, /Напишите адрес своего дома/);
+  const chosen47 = await next(text(47, queryOf(BOARD)), 'адрес после согласия');
+  assert.match(chosen47.body.text, re(`Ваш дом: <b>${BOARD.address}</b>`));
+  const forgot47 = await next(text(47, '/forget'), '/forget после согласия');
+  assert.match(forgot47.body.text, /согласие отозвано/);
+  const offerAgain = await next(tap(47, `h:${UK.id}`), 'выбор дома после /forget');
+  assert.ok(hasButton(offerAgain, `agree:${UK.id}`), 'после /forget бот снова спрашивает согласие');
+  // ссылка только с домом без согласия – вопрос о согласии с этим домом, а не карточка
+  const linkOffer = await next(started(48, `h_${BOARD.id}`), 'диплинк с домом без согласия');
+  assert.match(linkOffer.body.text, /Согласие на обработку данных/);
+  assert.ok(hasButton(linkOffer, `agree:${BOARD.id}`));
+
+  // 11. /forget – бот забывает выбранный дом
   const forgot = await next(text(42, '/forget'), '/forget');
   assert.match(forgot.body.text, /забыл/);
   const again = await next(tap(42, 'p:lamp_entrance__burned:'), 'ответ после /forget');
   assert.match(again.body.text, /Выберите свой дом командой \/house/);
 
-  // 11. Фото или стикер без текста – подсказка; сообщение от бота (эхо) – без ответа
+  // 12. Фото или стикер без текста – подсказка; сообщение от бота (эхо) – без ответа
   const photo = text(45, undefined);
   photo.message.body.attachments = [{ type: 'image', payload: { url: 'https://example.org/p.jpg' } }];
   const hint = await next(photo, 'ответ на сообщение без текста');
@@ -275,13 +320,13 @@ async function scenario(mock, deliver) {
   await sleep(600);
   assert.equal(sent.length, beforeEcho, 'на свои сообщения бот не отвечает');
 
-  // 12. В групповом чате бот молчит
+  // 13. В групповом чате бот молчит
   const beforeGroup = sent.length;
   await deliver(text(43, 'течёт кран', 'chat'));
   await sleep(600);
   assert.equal(sent.length, beforeGroup, 'в группе нет ответа');
 
-  // 13. Ограничение частоты: сверх лимита события одного пользователя не обрабатываются
+  // 14. Ограничение частоты: сверх лимита события одного пользователя не обрабатываются
   const beforeFlood = sent.length;
   for (let i = 0; i < 25; i += 1) await deliver(text(44, 'лампочка'));
   await sleep(1500);
@@ -297,7 +342,7 @@ async function runPolling() {
     await waitFor(() => mock.state.commandsSet, 'регистрация команд');
     assert.deepEqual(
       mock.state.commands.map((c) => c.name),
-      ['menu', 'problem', 'urgent', 'myhouse', 'phones', 'house', 'help', 'forget'],
+      ['menu', 'problem', 'urgent', 'myhouse', 'phones', 'house', 'help', 'privacy', 'forget'],
       'меню команд MAX – базовые функции бота',
     );
     await scenario(mock, async (u) => {

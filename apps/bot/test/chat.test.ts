@@ -1,11 +1,12 @@
 import { describe, expect, it } from 'vitest';
 import {
-  ADDRESS_EXAMPLES, ALL_ELEMENTS, CATEGORIES, CITY_SERVICES, HOUSES, categoryOf, collectOutcomes, encodeDeepLink, getHouse, localizeOutcome, resolve,
+  ADDRESS_EXAMPLES, ALL_ELEMENTS, APP_META, CATEGORIES, CITY_SERVICES, HOUSES, PRIVACY, categoryOf, collectOutcomes, encodeDeepLink, getHouse, localizeOutcome,
+  resolve,
 } from '@esli-chto/core';
 import {
-  HOUSE_CHOICES, addressReply, askAddressReply, brokenReply, categoryReply, cbProblem, elementReply, emergencyReply, help, houseChosenReply, houseFromStart,
-  housesListReply, menuReply, myHouseReply, nonTextReply, parseCallback, phonesReply, problemReply, searchReply, startReply, stepForChat, textReply,
-  thanksReply, welcome, type ChatReply,
+  HOUSE_CHOICES, addressReply, askAddressReply, brokenReply, categoryReply, cbProblem, consentDeclinedReply, consentReply, elementReply, emergencyReply, help,
+  houseChosenReply, houseFromStart, housesListReply, menuReply, myHouseReply, nonTextReply, parseCallback, phonesReply, privacyReply, problemReply, searchReply,
+  startReply, stepForChat, textReply, thanksReply, welcome, type ChatReply,
 } from '../src/chat';
 import { BOARD_HOUSE, PILOT, UK_HOUSE, addressQuery, dispatchPhone, managerOf, managerPhone } from '../../../packages/core/test/fixtures';
 
@@ -370,6 +371,7 @@ describe('меню бота: базовые функции без ввода т�
     const replies: ChatReply[] = [
       help(uk), emergencyReply(uk), askAddressReply(uk), housesListReply(uk.id), houseChosenReply(uk), myHouseReply(uk), phonesReply(none),
       brokenReply(uk), searchReply('течёт кран', uk), searchReply('абракадабра', uk), nonTextReply(uk), thanksReply(uk), addressReply('улица Несуществующая 999').reply!,
+      consentReply(), consentReply(uk), privacyReply(), privacyReply({ house: uk }), consentDeclinedReply(), consentDeclinedReply(uk),
       ...CATEGORIES.map((c) => categoryReply(c.id, uk)),
       ...ALL_ELEMENTS.map((e) => elementReply(e.id, uk)),
       ...ALL_ELEMENTS.flatMap((e) => e.problems.map((p) => problemReply(p.id, [], uk))),
@@ -378,9 +380,76 @@ describe('меню бота: базовые функции без ввода т�
   });
 });
 
+describe('согласие на хранение выбранного дома', () => {
+  it('вопрос о согласии: что хранится, зачем, сколько, оператор и три кнопки', () => {
+    const r = consentReply();
+    assertValidReply(r);
+    const text = plain(r.text);
+    for (const part of ['идентификатор пользователя в MAX', 'без номера квартиры', 'Зачем:', 'Как:', 'Сколько:', '/forget', 'Оператор:', 'Даю согласие']) {
+      expect(text, part).toContain(part);
+    }
+    expect(text).toContain(APP_META.operator);
+    expect(payloads(r)).toEqual(['agree', 'decline', 'privacy', 'menu']);
+  });
+
+  it('дом, найденный до согласия, едет в кнопках, а не хранится', () => {
+    const r = consentReply(uk);
+    assertValidReply(r);
+    expect(r.text).toContain(uk.address);
+    expect(payloads(r)).toEqual([`agree:${uk.id}`, `decline:${uk.id}`, `privacy:${uk.id}`, 'menu']);
+    // профиль «дом не выбран» в кнопки не попадает
+    expect(payloads(consentReply(none))).toEqual(['agree', 'decline', 'privacy', 'menu']);
+  });
+
+  it('политика в чате – полный текст без обрезки; из вопроса о согласии – с его кнопками, без повторной «Политики»', () => {
+    const r = privacyReply({ house: uk });
+    assertValidReply(r);
+    expect(r.text.endsWith('…'), 'политика не помещается в одно сообщение').toBe(false);
+    const text = plain(r.text);
+    expect(text).toContain(PRIVACY.title);
+    for (const s of PRIVACY.sections) {
+      expect(text).toContain(s.heading);
+      for (const item of s.items) expect(text).toContain(item);
+    }
+    expect(text).toContain(PRIVACY.edition);
+    expect(payloads(r)).toEqual([`agree:${uk.id}`, `decline:${uk.id}`, 'menu']);
+    expect(payloads(privacyReply())).toEqual(['menu']);
+  });
+
+  it('политика описывает согласие, его отзыв и счётчик для защиты от спама', () => {
+    const all = PRIVACY.sections.flatMap((s) => s.items).join('\n');
+    expect(all).toContain('только с вашего согласия');
+    expect(all).toContain('отзывает согласие');
+    expect(all).toContain('не больше 20 сообщений');
+    expect(all).toContain('IP-адреса бот не видит');
+  });
+
+  it('«Не запоминать дом»: карточка выбранного дома один раз и выход в разделы', () => {
+    const withHouse = consentDeclinedReply(uk);
+    assertValidReply(withHouse);
+    expect(withHouse.text).toContain(uk.address);
+    expect(withHouse.text).toContain(managerPhone(uk));
+    expect(withHouse.text).toContain('Дом не запомнен');
+    const plainDecline = consentDeclinedReply();
+    assertValidReply(plainDecline);
+    expect(plainDecline.text).toContain('дом не запоминаю');
+    for (const r of [withHouse, plainDecline]) expect(payloads(r)).toEqual(['broken', 'urgent', 'menu']);
+  });
+
+  it('в справке есть /privacy и /forget с отзывом согласия', () => {
+    const t = help(uk).text;
+    expect(t).toContain('/privacy');
+    expect(t).toContain('отозвать согласие');
+  });
+});
+
 describe('callback и диплинки', () => {
   it('разбирает корректные данные', () => {
     expect(parseCallback('menu')).toEqual({ t: 'menu' });
+    for (const s of ['agree', 'decline', 'privacy'] as const) {
+      expect(parseCallback(s)).toEqual({ t: s });
+      expect(parseCallback(`${s}:${uk.id}`)).toEqual({ t: s, houseId: uk.id });
+    }
     for (const s of ['broken', 'urgent', 'houses', 'myhouse', 'phones', 'help'] as const) expect(parseCallback(s)).toEqual({ t: s });
     expect(parseCallback('c:water')).toEqual({ t: 'category', category: 'water' });
     expect(parseCallback(cbProblem('roof__leak'))).toEqual({ t: 'problem', problemId: 'roof__leak', answers: [] });
@@ -390,7 +459,7 @@ describe('callback и диплинки', () => {
   });
 
   it('отвергает мусор и неизвестные id', () => {
-    for (const bad of ['', 'p:nope:', 'p:roof__leak:x', 'p:roof__leak:99', 'p:roof__leak:0:1', 'e:???', 'e:roof:1', 'h:hacked', 'c:nope', 'c:water:1', 'c:', 'a'.repeat(300), 'DROP TABLE']) {
+    for (const bad of ['', 'p:nope:', 'p:roof__leak:x', 'p:roof__leak:99', 'p:roof__leak:0:1', 'e:???', 'e:roof:1', 'h:hacked', 'c:nope', 'c:water:1', 'c:', 'agree:hacked', 'agree:', 'decline:vch_x:1', 'privacy:none', 'a'.repeat(300), 'DROP TABLE']) {
       expect(parseCallback(bad), bad).toBeUndefined();
     }
     expect(parseCallback(undefined)).toBeUndefined();

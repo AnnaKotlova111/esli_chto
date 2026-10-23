@@ -4,11 +4,12 @@ import { createServer, type IncomingMessage, type ServerResponse } from 'node:ht
 import { existsSync, statSync, createReadStream } from 'node:fs';
 import { extname, join, normalize, resolve, sep } from 'node:path';
 import { Bot, Keyboard, type Context } from '@maxhub/max-bot-api';
-import { ALL_ELEMENTS, APP_META, DEFAULT_HOUSE_ID, getHouse, HOUSES, isHouseChosen, type HouseProfile } from '@esli-chto/core';
+import { ALL_ELEMENTS, APP_META, DEFAULT_HOUSE_ID, decodeDeepLink, getHouse, HOUSES, isHouseChosen, type HouseProfile } from '@esli-chto/core';
 import { maxFetch } from './tls';
 import {
-  addressReply, askAddressReply, brokenReply, categoryReply, elementReply, emergencyReply, help, houseChosenReply, houseFromStart, housesListReply,
-  menuReply, myHouseReply, nonTextReply, parseCallback, phonesReply, problemReply, startReply, textReply, welcome,
+  addressReply, askAddressReply, brokenReply, categoryReply, consentDeclinedReply, consentReply, elementReply, emergencyReply, help, houseChosenReply,
+  houseFromStart, housesListReply, menuReply, myHouseReply, nonTextReply, parseCallback, phonesReply, privacyReply, problemReply, startReply, textReply,
+  welcome,
   type ChatButton, type ChatReply,
 } from './chat';
 
@@ -56,16 +57,39 @@ const log = (level: 'info' | 'warn' | 'error', msg: string, extra?: unknown) => 
   (level === 'error' ? console.error : console.log)(line);
 };
 
-// ─────────────────────────── Выбор дома по пользователю (в памяти) ───────────────────────────
+// ─────────────────────────── Что бот помнит о пользователе (только в памяти) ───────────────────────────
 
 const houseByUser = new Map<number, string>();
-const remember = (userId: number | undefined, houseId: string) => {
+/** Кто дал согласие на хранение выбранного дома. Без него дом не запоминается; /forget отзывает согласие. */
+const consented = new Set<number>();
+const hasConsent = (userId: number | undefined) => userId !== undefined && consented.has(userId);
+const giveConsent = (userId: number | undefined) => {
   if (userId === undefined) return;
+  consented.add(userId);
+  if (consented.size > 5000) {
+    // вместе с самым старым согласием бот забывает и дом этого пользователя
+    const oldest = consented.values().next().value as number;
+    consented.delete(oldest);
+    houseByUser.delete(oldest);
+  }
+};
+/** Запомнить дом пользователя – только с его согласия. */
+const remember = (userId: number | undefined, houseId: string) => {
+  if (userId === undefined || !hasConsent(userId)) return;
   houseByUser.delete(userId);
   houseByUser.set(userId, houseId);
   if (houseByUser.size > 5000) houseByUser.delete(houseByUser.keys().next().value as number);
 };
+/**
+ * Защита от спама: не больше RATE_LIMIT_PER_MINUTE событий (сообщений и нажатий кнопок) в минуту от одного пользователя.
+ * Для этого бот помнит только время событий за последнюю минуту по идентификатору MAX – без текста, адреса
+ * и других данных. Записи без событий за последнюю минуту удаляются раз в минуту.
+ */
 const hits = new Map<number, number[]>();
+setInterval(() => {
+  const now = Date.now();
+  for (const [userId, times] of hits) if (!times.some((t) => now - t < 60_000)) hits.delete(userId);
+}, 60_000).unref();
 /** true – событие можно обработать; иначе пользователь превысил лимит за последнюю минуту. */
 const allow = (userId: number | undefined): boolean => {
   if (userId === undefined) return true;
@@ -80,7 +104,7 @@ const allow = (userId: number | undefined): boolean => {
   if (hits.size > 5000) hits.delete(hits.keys().next().value as number);
   return true;
 };
-/** Пользователи, от которых бот ждёт адрес дома (после /house или кнопки «Сменить дом») */
+/** Пользователи, от которых бот ждёт адрес дома (после /house или кнопки «Сменить дом» – и только с согласием) */
 const awaitingAddress = new Set<number>();
 const expectAddress = (userId: number | undefined, on: boolean) => {
   if (userId === undefined) return;
@@ -88,10 +112,11 @@ const expectAddress = (userId: number | undefined, on: boolean) => {
   else awaitingAddress.delete(userId);
   if (awaitingAddress.size > 5000) awaitingAddress.delete(awaitingAddress.values().next().value as number);
 };
-/** /forget: удалить всё, что бот хранит о пользователе (выбранный дом, счётчик запросов, ожидание адреса). */
+/** /forget: удалить всё, что бот хранит о пользователе (дом, согласие, счётчик запросов, ожидание адреса). */
 const forget = (userId: number | undefined) => {
   if (userId === undefined) return;
   houseByUser.delete(userId);
+  consented.delete(userId);
   hits.delete(userId);
   awaitingAddress.delete(userId);
 };
@@ -137,14 +162,30 @@ async function chooseHouse(ctx: Context, uid: number | undefined, text: string) 
 }
 
 /**
- * «Мой дом»: карточка выбранного дома, а если дом не выбран – приглашение написать адрес.
+ * Выбор дома: /house, «Выбрать свой дом», «Сменить дом». С согласием бот просит адрес или сразу ищет дом
+ * по адресу из команды. Без согласия сначала спрашивает его, а дом, найденный по адресу, передаёт в кнопке
+ * согласия – ничего не запоминая.
+ */
+async function askHouse(ctx: Context, uid: number | undefined, address?: string) {
+  if (hasConsent(uid)) {
+    if (address) return chooseHouse(ctx, uid, address);
+    expectAddress(uid, true);
+    return send(ctx, askAddressReply(houseOf(uid)));
+  }
+  if (!address) return send(ctx, consentReply());
+  const r = addressReply(address);
+  return send(ctx, r.houseId ? consentReply(getHouse(r.houseId)) : r.reply!);
+}
+
+/**
+ * «Мой дом»: карточка выбранного дома, а если дом не выбран – выбор дома.
  * Карточка снимает ожидание адреса (например, после «Сменить дом»): следующий текст – снова описание поломки.
  */
 async function showMyHouse(ctx: Context, uid: number | undefined) {
   const house = houseOf(uid);
-  const chosen = isHouseChosen(house);
-  expectAddress(uid, !chosen);
-  return send(ctx, chosen ? myHouseReply(house) : askAddressReply(house));
+  if (!isHouseChosen(house)) return askHouse(ctx, uid);
+  expectAddress(uid, false);
+  return send(ctx, myHouseReply(house));
 }
 
 function createBot(token: string): Bot {
@@ -165,7 +206,8 @@ function createBot(token: string): Bot {
     { name: 'phones', description: 'Телефоны городских служб' },
     { name: 'house', description: 'Выбрать или сменить дом' },
     { name: 'help', description: 'Как пользоваться' },
-    { name: 'forget', description: 'Удалить мои данные в боте' },
+    { name: 'privacy', description: 'Политика обработки данных' },
+    { name: 'forget', description: 'Удалить мои данные и отозвать согласие' },
   ]).catch((e) => log('warn', 'setMyCommands failed', String(e)));
 
   // Общие правила для всех событий: в групповых чатах бот молчит, частые запросы одного пользователя отбрасываются
@@ -181,13 +223,19 @@ function createBot(token: string): Bot {
 
   bot.on('bot_started', async (ctx) => {
     const uid = userIdOf(ctx);
-    // дом из диплинка становится домом пользователя – следующие ответы придут с телефонами его организации
     const linkHouse = houseFromStart(ctx.startPayload);
-    if (linkHouse) {
-      remember(uid, linkHouse);
-      expectAddress(uid, false);
+    // с согласием дом из диплинка становится домом пользователя – следующие ответы придут с телефонами его организации
+    if (!linkHouse || hasConsent(uid)) {
+      if (linkHouse) {
+        remember(uid, linkHouse);
+        expectAddress(uid, false);
+      }
+      return send(ctx, startReply(ctx.startPayload, houseOf(uid)));
     }
-    await send(ctx, startReply(ctx.startPayload, houseOf(uid)));
+    // без согласия ситуация из ссылки показывается для дома из ссылки, а запомнить дом бот предлагает отдельно
+    const link = decodeDeepLink(ctx.startPayload ?? undefined);
+    if (link.problemId || link.elementId) await send(ctx, startReply(ctx.startPayload, houseOf(uid)));
+    await send(ctx, consentReply(getHouse(linkHouse)));
   });
 
   bot.command('start', async (ctx) => {
@@ -207,18 +255,21 @@ function createBot(token: string): Bot {
   section('phones', phonesReply);
   section('help', help);
   bot.command('myhouse', async (ctx) => showMyHouse(ctx, userIdOf(ctx)));
+  // Политика: до согласия – с кнопками согласия, после – просто текст
+  bot.command('privacy', async (ctx) => {
+    const uid = userIdOf(ctx);
+    expectAddress(uid, false);
+    await send(ctx, privacyReply(hasConsent(uid) ? undefined : {}));
+  });
   bot.command('forget', async (ctx) => {
     forget(userIdOf(ctx));
-    await ctx.reply('Готово: бот забыл выбранный вами дом. Тексты сообщений бот не хранит.');
+    await ctx.reply('Готово: согласие отозвано, бот забыл выбранный вами дом. Тексты сообщений бот не хранит.');
   });
   // Адрес можно написать сразу после команды: «/house Коровина 11». Строковая команда в библиотеке
   // совпадает только со всей строкой, поэтому нужно регулярное выражение; «/houses» под него не попадает.
   bot.command(/^house(?:@\S+)?(?:\s+([\s\S]*))?$/i, async (ctx) => {
-    const uid = userIdOf(ctx);
     const rest = (ctx.match as RegExpExecArray | null | undefined)?.[1]?.trim().slice(0, 120);
-    if (rest) return chooseHouse(ctx, uid, rest);
-    expectAddress(uid, true);
-    await send(ctx, askAddressReply(houseOf(uid)));
+    await askHouse(ctx, userIdOf(ctx), rest || undefined);
   });
   bot.command('houses', async (ctx) => send(ctx, housesListReply(houseOf(userIdOf(ctx)).id)));
 
@@ -234,12 +285,23 @@ function createBot(token: string): Bot {
     let house = houseOf(uid);
     switch (action.t) {
       case 'house':
+        // без согласия дом не запоминается: сначала вопрос о согласии с этим домом в кнопке
+        if (!hasConsent(uid)) return void (await send(ctx, consentReply(getHouse(action.houseId))));
         remember(uid, action.houseId);
         house = getHouse(action.houseId);
         return void (await send(ctx, houseChosenReply(house)));
       case 'houses':
-        expectAddress(uid, true);
-        return void (await send(ctx, askAddressReply(house)));
+        return void (await askHouse(ctx, uid));
+      case 'agree':
+        giveConsent(uid);
+        if (!action.houseId) return void (await askHouse(ctx, uid));
+        remember(uid, action.houseId);
+        return void (await send(ctx, houseChosenReply(getHouse(action.houseId))));
+      case 'decline':
+        return void (await send(ctx, consentDeclinedReply(action.houseId ? getHouse(action.houseId) : undefined)));
+      case 'privacy':
+        // из вопроса о согласии (или пока согласия нет) – политика с кнопками согласия
+        return void (await send(ctx, privacyReply(hasConsent(uid) && !action.houseId ? undefined : { house: action.houseId ? getHouse(action.houseId) : undefined })));
       case 'housesPage':
         return void (await send(ctx, housesListReply(house.id, action.page)));
       case 'myhouse':
